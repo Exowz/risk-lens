@@ -384,9 +384,26 @@ BETTER_AUTH_URL=http://localhost:3000
 
 ## CURRENT TASK
 
-> **[FILL THIS IN AT THE START OF EACH SESSION]**
->
-> Example: "Implement the Monte Carlo simulation endpoint and its frontend visualization panel"
+Calculs de risque -- VaR, CVaR et Monte Carlo end-to-end :
+
+Backend :
+- app/schemas/risk.py              -- VaRRequest, VaRResponse, MonteCarloRequest, MonteCarloResponse, RiskSummaryResponse
+- app/services/risk_engine.py      -- calculate_var() historique + paramétrique, calculate_cvar(), get_risk_summary()
+- app/services/montecarlo_engine.py -- run_monte_carlo() GBM 10k trajectoires 252 jours, résultats summary stats
+- app/api/v1/risk.py               -- POST /risk/var, POST /risk/cvar, POST /risk/montecarlo, POST /risk/summary
+- app/api/v1/montecarlo.py         -- POST /risk/montecarlo (séparé si nécessaire)
+- Vérifier que le cache calculation_cache est utilisé sur tous les endpoints lourds
+- Enregistrer les routers dans app/main.py
+- Tests : tests/test_risk_engine.py, tests/test_montecarlo_engine.py
+
+Frontend :
+- types/risk.ts                          -- VaRResult, MonteCarloResult, RiskSummary (miroir schemas backend)
+- lib/api/risk.ts                        -- useVaR, useCVaR, useMonteCarlo, useRiskSummary (TanStack Query, staleTime 1h)
+- components/risk/var-card.tsx           -- KPI cards VaR 95%, VaR 99%, CVaR, méthode historique vs paramétrique
+- components/charts/monte-carlo-chart.tsx -- Recharts LineChart trajectoires simulées (échantillon 100 sur 10k)
+- components/charts/var-distribution.tsx  -- Recharts BarChart distribution des pertes finales
+- components/risk/monte-carlo-panel.tsx   -- Panel complet Monte Carlo avec contrôles
+- app/(dashboard)/risk/page.tsx           -- Page assemblant VaR cards + Monte Carlo panel
 
 ---
 
