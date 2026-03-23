@@ -3,18 +3,23 @@
 /**
  * User profile page.
  *
- * Displays avatar with initials, user info, and preferences
- * (Expert/Beginner mode).
+ * Displays avatar with initials, user info, preferences,
+ * and risk profile section (if profiled via Risk Profiler Express).
  *
  * Depends on: lib/auth/client.ts, lib/store/mode-context.tsx,
- *             lib/api/portfolios.ts, shadcn/ui
+ *             lib/api/portfolios.ts, lib/api/profile.ts, shadcn/ui
  * Used by: /profile route
  */
 
+import { useState } from "react";
+
 import { useSession } from "@/lib/auth/client";
 import { usePortfolios } from "@/lib/api/portfolios";
+import { useRiskProfile } from "@/lib/api/profile";
 import { useMode } from "@/lib/store/mode-context";
+import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -22,6 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 
@@ -34,10 +40,27 @@ function getInitials(email: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
+const LABEL_MAP: Record<string, string> = {
+  court: "Court terme (< 2 ans)",
+  moyen: "Moyen terme (2-5 ans)",
+  long: "Long terme (> 5 ans)",
+  faible: "Faible (< 10%)",
+  modere: "Modérée (10-25%)",
+  eleve: "Élevée (> 25%)",
+  preservation: "Préserver le capital",
+  equilibre: "Équilibre rendement/risque",
+  croissance: "Maximiser la croissance",
+  debutant: "Débutant",
+  intermediaire: "Intermédiaire",
+  expert: "Expert",
+};
+
 export default function ProfilePage() {
   const { data: session } = useSession();
   const { data: portfolios } = usePortfolios();
+  const { data: riskProfile } = useRiskProfile();
   const { mode, setMode } = useMode();
+  const [showProfiler, setShowProfiler] = useState(false);
 
   const email = session?.user?.email ?? "";
   const name = session?.user?.name ?? email.split("@")[0];
@@ -80,6 +103,107 @@ export default function ProfilePage() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Risk Profile */}
+      {riskProfile ? (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold">
+              {riskProfile.profile_name}
+            </CardTitle>
+            <CardDescription>Profil de risque personnalisé</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-5">
+            {/* Risk score */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs text-muted-foreground">
+                  Score de risque
+                </span>
+                <span className="font-mono text-sm text-foreground">
+                  {riskProfile.risk_score}/10
+                </span>
+              </div>
+              <Progress value={riskProfile.risk_score * 10} className="h-2" />
+              <div className="flex justify-between mt-1">
+                <span className="text-[10px] text-muted-foreground">
+                  Conservateur
+                </span>
+                <span className="text-[10px] text-muted-foreground">
+                  Agressif
+                </span>
+              </div>
+            </div>
+
+            {/* Questionnaire answers — 2x2 grid */}
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Horizon
+                </p>
+                <p className="text-sm font-medium mt-0.5">
+                  {LABEL_MAP[riskProfile.horizon] ?? riskProfile.horizon}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Tolérance aux pertes
+                </p>
+                <p className="text-sm font-medium mt-0.5">
+                  {LABEL_MAP[riskProfile.loss_tolerance] ??
+                    riskProfile.loss_tolerance}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Objectif
+                </p>
+                <p className="text-sm font-medium mt-0.5">
+                  {LABEL_MAP[riskProfile.objective] ?? riskProfile.objective}
+                </p>
+              </div>
+              <div className="rounded-lg border border-border p-3">
+                <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
+                  Expérience
+                </p>
+                <p className="text-sm font-medium mt-0.5">
+                  {LABEL_MAP[riskProfile.experience] ?? riskProfile.experience}
+                </p>
+              </div>
+            </div>
+
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowProfiler(true)}
+            >
+              Refaire le profil
+            </Button>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base font-medium">
+              Profil de risque
+            </CardTitle>
+            <CardDescription>
+              Découvrez votre profil d&apos;investisseur en quelques questions
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button onClick={() => setShowProfiler(true)}>
+              Créer mon profil de risque
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Risk Profiler Modal */}
+      <RiskProfilerModal
+        open={showProfiler}
+        onClose={() => setShowProfiler(false)}
+      />
 
       {/* Preferences */}
       <Card>
