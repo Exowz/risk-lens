@@ -46,3 +46,11 @@ export interface PricePoint {
 
 /** Normalized prices keyed by ticker */
 export type NormalizedPrices = Record<string, PricePoint[]>;
+
+/** Live quote for a single asset */
+export interface LiveQuote {
+  ticker: string;
+  price: number | null;
+  change_pct: number | null;
+  currency: string;
+}

@@ -1,30 +1,32 @@
 "use client";
 
 /**
- * VaR and CVaR KPI display with ExpandableMetric rows.
+ * VaR and CVaR KPI display using KpiExpandableCard.
  *
- * Shows VaR 95%, VaR 99%, CVaR 95%, CVaR 99% with method toggle
- * (historical vs parametric). Each metric has an expandable explanation.
+ * Each metric is a card with always-visible label + value.
+ * Clicking triggers Mistral AI explanation.
  *
- * Depends on: lib/api/risk.ts, types/risk.ts, shadcn/ui
+ * Depends on: lib/api/risk.ts, lib/api/explain.ts, types/risk.ts
  * Used by: app/(dashboard)/risk/page.tsx
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
-import { ExpandableMetric } from "@/components/shared/expandable-metric";
-import { CountUp } from "@/components/ui/count-up";
+import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { fetchMetricExplanation } from "@/lib/api/explain";
 import { useRiskSummary } from "@/lib/api/risk";
 import { useMode } from "@/lib/store/mode-context";
 import type { RiskSummary } from "@/types/risk";
 
 interface VaRCardsProps {
   portfolioId: string;
+  openCard: string | null;
+  onOpenCard: (id: string | null) => void;
 }
 
-export function VaRCards({ portfolioId }: VaRCardsProps) {
+export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
   const [method, setMethod] = useState<"historical" | "parametric">(
     "historical",
   );
@@ -42,12 +44,25 @@ export function VaRCards({ portfolioId }: VaRCardsProps) {
 
   const isLoading = riskSummary.isPending && !data;
 
+  const mkAnalyze = useCallback(
+    (metricName: string, metricValue: number, context?: Record<string, number | string | null>) =>
+      () =>
+        fetchMetricExplanation({
+          metric_name: metricName,
+          metric_value: metricValue,
+          portfolio_id: portfolioId,
+          mode,
+          context,
+        }),
+    [portfolioId, mode],
+  );
+
   if (isLoading) {
     return (
       <Card>
         <CardContent className="pt-6 space-y-3">
           {Array.from({ length: 4 }).map((_, i) => (
-            <Skeleton key={i} className="h-10 w-full" />
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
           ))}
         </CardContent>
       </Card>
@@ -64,6 +79,9 @@ export function VaRCards({ portfolioId }: VaRCardsProps) {
     method === "historical"
       ? data.var_99_historical
       : data.var_99_parametric;
+
+  const toggle = (key: string) =>
+    onOpenCard(openCard === key ? null : key);
 
   return (
     <div className="space-y-4">
@@ -99,112 +117,112 @@ export function VaRCards({ portfolioId }: VaRCardsProps) {
         )}
       </div>
 
-      <Card>
-        <CardContent className="pt-6">
-          <ExpandableMetric
-            labelBeginner="Perte max probable (VaR 95%)"
-            labelExpert="VaR 95%"
-            value={
-              <span className="font-mono text-amber-500">
-                <CountUp to={var95 * 100} duration={1200} suffix="%" />
-              </span>
-            }
-            explanationBeginner="Sur 20 jours de trading, vous perdrez plus que ce montant une seule fois. C'est votre perte journalière maximale probable dans des conditions normales."
-            explanationExpert="Value at Risk à 95% de confiance -- quantile empirique de la distribution des rendements historiques journaliers."
+      {/* Metric cards */}
+      <div className="grid gap-4 sm:grid-cols-2">
+        <KpiExpandableCard
+          label={mode === "beginner" ? "Perte max probable (VaR 95%)" : "VaR 95%"}
+          value={var95 * 100}
+          valueSuffix="%"
+          valueColor="amber"
+          metricKey="var95"
+          onAnalyze={mkAnalyze("var_95", var95, { method, confidence: 0.95 })}
+          isOpen={openCard === "var95"}
+          onToggle={() => toggle("var95")}
+        />
+
+        {mode === "expert" && (
+          <KpiExpandableCard
+            label="VaR 99%"
+            value={var99 * 100}
+            valueSuffix="%"
+            valueColor="red"
+            metricKey="var99"
+            onAnalyze={mkAnalyze("var_99", var99, { method, confidence: 0.99 })}
+            isOpen={openCard === "var99"}
+            onToggle={() => toggle("var99")}
           />
+        )}
 
-          {mode === "expert" && (
-            <ExpandableMetric
-              labelBeginner="VaR 99%"
-              labelExpert="VaR 99%"
-              value={
-                <span className="font-mono text-red-500">
-                  <CountUp to={var99 * 100} duration={1200} suffix="%" />
-                </span>
-              }
-              explanationBeginner="La perte que vous ne dépasserez que 1 jour sur 100."
-              explanationExpert="VaR au 99e percentile -- quantile extrême, utilisé pour les stress réglementaires (Bâle)."
-            />
-          )}
+        <KpiExpandableCard
+          label={mode === "beginner" ? "Perte moyenne extrême (CVaR 95%)" : "CVaR 95%"}
+          value={data.cvar_95 * 100}
+          valueSuffix="%"
+          valueColor="orange"
+          metricKey="cvar95"
+          onAnalyze={mkAnalyze("cvar_95", data.cvar_95, { var_95: var95 })}
+          isOpen={openCard === "cvar95"}
+          onToggle={() => toggle("cvar95")}
+        />
 
-          <ExpandableMetric
-            labelBeginner="Perte moyenne extrême (CVaR 95%)"
-            labelExpert="CVaR 95%"
-            value={
-              <span className="font-mono text-orange-500">
-                <CountUp to={data.cvar_95 * 100} duration={1200} suffix="%" />
-              </span>
-            }
-            explanationBeginner="Quand les choses tournent vraiment mal (les 5% pires jours), voici la perte moyenne à laquelle vous vous exposez."
-            explanationExpert="Expected Shortfall -- moyenne des pertes au-delà du quantile VaR 95%. Mesure cohérente du risque de queue."
+        {mode === "expert" && (
+          <KpiExpandableCard
+            label="CVaR 99%"
+            value={data.cvar_99 * 100}
+            valueSuffix="%"
+            valueColor="red"
+            metricKey="cvar99"
+            onAnalyze={mkAnalyze("cvar_99", data.cvar_99, { var_99: var99 })}
+            isOpen={openCard === "cvar99"}
+            onToggle={() => toggle("cvar99")}
           />
+        )}
 
-          {mode === "expert" && (
-            <ExpandableMetric
-              labelBeginner="CVaR 99%"
-              labelExpert="CVaR 99%"
-              value={
-                <span className="font-mono text-red-600">
-                  <CountUp to={data.cvar_99 * 100} duration={1200} suffix="%" />
-                </span>
-              }
-              explanationBeginner="La perte moyenne lors des 1% pires journées."
-              explanationExpert="Expected Shortfall au 99e percentile -- mesure des pertes extrêmes dans la queue gauche."
-            />
-          )}
+        <KpiExpandableCard
+          label={mode === "beginner" ? "Rendement annuel" : "Ann. Return"}
+          value={data.annualized_return * 100}
+          valuePrefix={data.annualized_return >= 0 ? "+" : ""}
+          valueSuffix="%"
+          valueColor={data.annualized_return >= 0 ? "emerald" : "red"}
+          metricKey="ann-return"
+          onAnalyze={mkAnalyze("annualized_return", data.annualized_return, {
+            volatility: data.annualized_volatility,
+            sharpe: data.sharpe_ratio,
+          })}
+          isOpen={openCard === "ann-return"}
+          onToggle={() => toggle("ann-return")}
+        />
 
-          <ExpandableMetric
-            labelBeginner="Rendement annuel"
-            labelExpert="Ann. Return"
-            value={
-              <span className={`font-mono ${data.annualized_return >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                {data.annualized_return >= 0 ? "+" : ""}
-                <CountUp to={data.annualized_return * 100} duration={1200} suffix="%" />
-              </span>
-            }
-            explanationBeginner="Le rendement moyen de votre portefeuille ramené sur une année complète."
-            explanationExpert="Rendement annualisé = moyenne géométrique des rendements journaliers × 252 jours."
+        <KpiExpandableCard
+          label={mode === "beginner" ? "Agitation du portefeuille" : "Ann. Volatility"}
+          value={data.annualized_volatility * 100}
+          valueSuffix="%"
+          valueColor="blue"
+          metricKey="ann-vol"
+          onAnalyze={mkAnalyze("annualized_volatility", data.annualized_volatility, {
+            return_: data.annualized_return,
+            sharpe: data.sharpe_ratio,
+          })}
+          isOpen={openCard === "ann-vol"}
+          onToggle={() => toggle("ann-vol")}
+        />
+
+        <KpiExpandableCard
+          label={mode === "beginner" ? "Score rendement/risque" : "Sharpe Ratio"}
+          value={data.sharpe_ratio}
+          decimals={3}
+          valueColor={data.sharpe_ratio >= 0 ? "emerald" : "red"}
+          metricKey="sharpe"
+          onAnalyze={mkAnalyze("sharpe_ratio", data.sharpe_ratio, {
+            return_: data.annualized_return,
+            volatility: data.annualized_volatility,
+          })}
+          isOpen={openCard === "sharpe"}
+          onToggle={() => toggle("sharpe")}
+        />
+
+        {mode === "expert" && (
+          <KpiExpandableCard
+            label="Observations"
+            value={data.n_observations}
+            decimals={0}
+            valueColor="foreground"
+            metricKey="observations"
+            onAnalyze={mkAnalyze("n_observations", data.n_observations)}
+            isOpen={openCard === "observations"}
+            onToggle={() => toggle("observations")}
           />
-
-          <ExpandableMetric
-            labelBeginner="Agitation du portefeuille"
-            labelExpert="Ann. Volatility"
-            value={
-              <span className="font-mono text-blue-400">
-                <CountUp to={data.annualized_volatility * 100} duration={1200} suffix="%" />
-              </span>
-            }
-            explanationBeginner="Mesure l'agitation de votre portefeuille. Plus ce chiffre est haut, plus les variations quotidiennes sont importantes et imprévisibles."
-            explanationExpert="Volatilité annualisée = σ_journalière × √252. Écart-type des rendements logarithmiques journaliers."
-          />
-
-          <ExpandableMetric
-            labelBeginner="Score rendement/risque"
-            labelExpert="Sharpe Ratio"
-            value={
-              <span className={`font-mono ${data.sharpe_ratio >= 0 ? "text-emerald-500" : "text-red-500"}`}>
-                <CountUp to={data.sharpe_ratio} duration={1200} decimals={3} />
-              </span>
-            }
-            explanationBeginner="Ce score mesure si le jeu en vaut la chandelle. En dessous de 1 = risque élevé pour le rendement obtenu. Au-dessus de 1 = bon équilibre."
-            explanationExpert="Ratio de Sharpe annualisé = (Rp - Rf) / σp. Rendement excédentaire par unité de volatilité totale."
-          />
-
-          {mode === "expert" && (
-            <ExpandableMetric
-              labelBeginner="Observations"
-              labelExpert="Observations"
-              value={
-                <span className="font-mono text-muted-foreground">
-                  <CountUp to={data.n_observations} duration={1200} decimals={0} />
-                </span>
-              }
-              explanationBeginner="Nombre de jours de données utilisés pour le calcul."
-              explanationExpert="Nombre d'observations de rendements journaliers dans l'échantillon historique."
-            />
-          )}
-        </CardContent>
-      </Card>
+        )}
+      </div>
 
       {riskSummary.isError && (
         <p className="text-sm text-destructive">

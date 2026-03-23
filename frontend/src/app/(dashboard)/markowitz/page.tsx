@@ -3,24 +3,22 @@
 /**
  * Markowitz efficient frontier page.
  *
- * Expert mode: full frontier chart, KPI cards, weights comparison table, WhyCard collapsed.
- * Beginner mode: frontier chart, simplified "recommended allocation" card, WhyCard expanded.
+ * KPI metrics in KpiExpandableCard, frontier in ChartExpandableCard,
+ * WhyExpandableCard for educational content.
  *
  * Depends on: components/charts/efficient-frontier.tsx, lib/api/markowitz.ts,
  *             lib/store/portfolio-store.ts, lib/store/mode-context.tsx
  * Used by: /markowitz route
  */
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { EfficientFrontier } from "@/components/charts/efficient-frontier";
-import { AiChartExplanation } from "@/components/shared/ai-chart-explanation";
-import { ExpandableMetric } from "@/components/shared/expandable-metric";
-import { WhyCard } from "@/components/shared/why-card";
-import { BlurText } from "@/components/ui/blur-text";
+import { ChartExpandableCard } from "@/components/shared/chart-expandable-card";
+import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
+import { WhyExpandableCard } from "@/components/shared/why-expandable-card";
 import { Button } from "@/components/ui/button";
-import { CountUp } from "@/components/ui/count-up";
 import {
   Card,
   CardContent,
@@ -36,7 +34,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { useMarkowitzExplanation } from "@/lib/api/explain";
+import { fetchMarkowitzExplanation, fetchMetricExplanation } from "@/lib/api/explain";
 import { useMarkowitz } from "@/lib/api/markowitz";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
@@ -49,11 +47,24 @@ export default function MarkowitzPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mutate, data, isPending, error, reset } = useMarkowitz();
   const { mode } = useMode();
-  const markowitzExplanation = useMarkowitzExplanation();
+  const [openCard, setOpenCard] = useState<string | null>(null);
 
-  const triggerExplanation = useCallback(() => {
-    if (!data) return;
-    markowitzExplanation.mutate({
+  const mkAnalyze = useCallback(
+    (metricName: string, metricValue: number, context?: Record<string, number | string | null>) =>
+      () =>
+        fetchMetricExplanation({
+          metric_name: metricName,
+          metric_value: metricValue,
+          portfolio_id: activePortfolioId ?? "",
+          mode,
+          context,
+        }),
+    [activePortfolioId, mode],
+  );
+
+  const mkFrontierAnalyze = useCallback(() => {
+    if (!data) return Promise.resolve("Analyse temporairement indisponible.");
+    return fetchMarkowitzExplanation({
       mode,
       current_sharpe: data.current_portfolio.sharpe_ratio,
       current_volatility: data.current_portfolio.volatility,
@@ -62,8 +73,8 @@ export default function MarkowitzPage() {
       max_sharpe_volatility: data.max_sharpe.volatility,
       max_sharpe_return: data.max_sharpe.expected_return,
       min_variance_volatility: data.min_variance.volatility,
-    });
-  }, [data, mode, markowitzExplanation]);
+    }).then((res) => res.explanation);
+  }, [data, mode]);
 
   useEffect(() => {
     if (activePortfolioId) {
@@ -78,29 +89,18 @@ export default function MarkowitzPage() {
 
   if (!activePortfolioId) {
     return (
-      <div className="space-y-8">
-        <div className="border-b border-border pb-3">
-          <BlurText
-            text="Markowitz Optimization"
-            className="text-3xl font-bold tracking-tight"
-          />
-          <p className="text-muted-foreground">
-            {mode === "beginner"
-              ? "Trouvez la meilleure répartition pour votre portefeuille"
-              : "Efficient frontier and optimal portfolio allocation"}
-          </p>
-        </div>
+      <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>No Portfolio Selected</CardTitle>
+            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
             <CardDescription>
-              Create or select a portfolio to compute the efficient frontier and
-              find optimal asset allocations.
+              Créez ou sélectionnez un portefeuille pour calculer la frontière
+              efficiente et trouver les allocations optimales.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Go to Portfolios</Button>
+              <Button>Voir les portefeuilles</Button>
             </Link>
           </CardContent>
         </Card>
@@ -117,22 +117,14 @@ export default function MarkowitzPage() {
       ].sort()
     : [];
 
+  const toggle = (key: string) =>
+    setOpenCard(openCard === key ? null : key);
+
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between border-b border-border pb-3">
-        <div>
-          <BlurText
-            text="Markowitz Optimization"
-            className="text-3xl font-bold tracking-tight"
-          />
-          <p className="text-muted-foreground">
-            {mode === "beginner"
-              ? "Trouvez la meilleure répartition pour votre portefeuille"
-              : "Efficient frontier and optimal portfolio allocation"}
-          </p>
-        </div>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-end">
         <Button onClick={handleCompute} disabled={isPending}>
-          {isPending ? "Computing..." : "Compute Frontier"}
+          {isPending ? "Calcul..." : "Calculer la frontière"}
         </Button>
       </div>
 
@@ -149,90 +141,97 @@ export default function MarkowitzPage() {
       {data && (
         <>
           {/* Efficient Frontier Chart */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {mode === "beginner"
-                  ? "Carte des portefeuilles possibles"
-                  : "Efficient Frontier"}
-              </CardTitle>
-              {mode === "expert" && (
-                <CardDescription>
-                  {data.from_cache ? "Cached result" : "Freshly computed"} —{" "}
-                  {data.frontier_points.length} frontier points
-                </CardDescription>
-              )}
-            </CardHeader>
-            <CardContent>
-              <EfficientFrontier
-                frontierPoints={data.frontier_points}
-                minVariance={data.min_variance}
-                maxSharpe={data.max_sharpe}
-                currentPortfolio={data.current_portfolio}
-              />
-              <AiChartExplanation
-                onAnalyze={triggerExplanation}
-                explanation={markowitzExplanation.data?.explanation}
-                isPending={markowitzExplanation.isPending}
-                isError={markowitzExplanation.isError}
-              />
-            </CardContent>
-          </Card>
+          <ChartExpandableCard
+            title={mode === "beginner" ? "Carte des portefeuilles possibles" : "Efficient Frontier"}
+            legend={[
+              { color: "#10b981", label: "Min Variance" },
+              { color: "#3b82f6", label: "Max Sharpe" },
+              { color: "#ef4444", label: mode === "beginner" ? "Votre portefeuille" : "Current" },
+            ]}
+            onAnalyze={mkFrontierAnalyze}
+            isOpen={openCard === "frontier-chart"}
+            onToggle={() => toggle("frontier-chart")}
+          >
+            <EfficientFrontier
+              frontierPoints={data.frontier_points}
+              minVariance={data.min_variance}
+              maxSharpe={data.max_sharpe}
+              currentPortfolio={data.current_portfolio}
+            />
+          </ChartExpandableCard>
 
-          {/* Summary KPIs with ExpandableMetric */}
-          <Card>
-            <CardHeader>
-              <CardTitle>
-                {mode === "beginner" ? "Résumé des portefeuilles" : "Portfolio Comparison"}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ExpandableMetric
-                labelBeginner="Votre score rendement/risque"
-                labelExpert="Current Sharpe"
-                value={
-                  <span className="font-mono text-red-500">
-                    <CountUp to={data.current_portfolio.sharpe_ratio} duration={1200} decimals={2} />
-                  </span>
-                }
-                explanationBeginner="Votre portefeuille actuel obtient ce score rendement/risque. Le portefeuille optimal obtient un meilleur score."
-                explanationExpert="Sharpe ratio du portefeuille actuel vs max-Sharpe sur la frontière efficiente."
-              />
-              <ExpandableMetric
-                labelBeginner="Meilleur score possible"
-                labelExpert="Max Sharpe"
-                value={
-                  <span className="font-mono text-blue-400">
-                    <CountUp to={data.max_sharpe.sharpe_ratio} duration={1200} decimals={2} />
-                  </span>
-                }
-                explanationBeginner="Le meilleur score rendement/risque atteignable en réorganisant vos actifs."
-                explanationExpert="Sharpe ratio du portefeuille tangent (max-Sharpe) sur la frontière efficiente, Rf = 0."
-              />
-              <ExpandableMetric
-                labelBeginner="Risque minimum possible"
-                labelExpert="Min Variance Vol"
-                value={
-                  <span className="font-mono text-emerald-500">
-                    <CountUp to={data.min_variance.volatility * 100} duration={1200} suffix="%" />
-                  </span>
-                }
-                explanationBeginner="La volatilité la plus basse possible avec vos actifs. Moins de volatilité = moins de surprise."
-                explanationExpert="Volatilité du portefeuille de variance minimale sur la frontière efficiente."
-              />
-              <ExpandableMetric
-                labelBeginner="Votre volatilité actuelle"
-                labelExpert="Current Vol"
-                value={
-                  <span className="font-mono text-foreground">
-                    <CountUp to={data.current_portfolio.volatility * 100} duration={1200} suffix="%" />
-                  </span>
-                }
-                explanationBeginner="Mesure l'agitation de votre portefeuille. Plus ce chiffre est haut, plus les variations quotidiennes sont importantes et imprévisibles."
-                explanationExpert="Volatilité annualisée = σ_journalière × √252. Écart-type des rendements logarithmiques journaliers."
-              />
-            </CardContent>
-          </Card>
+          {/* Summary KPI cards */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Votre score rendement/risque" : "Current Sharpe"}
+              value={data.current_portfolio.sharpe_ratio}
+              decimals={2}
+              valueColor="red"
+              metricKey="mk-current-sharpe"
+              onAnalyze={mkAnalyze("current_sharpe", data.current_portfolio.sharpe_ratio, {
+                max_sharpe: data.max_sharpe.sharpe_ratio,
+                current_volatility: data.current_portfolio.volatility,
+              })}
+              isOpen={openCard === "mk-current-sharpe"}
+              onToggle={() => toggle("mk-current-sharpe")}
+            />
+
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Meilleur score possible" : "Max Sharpe"}
+              value={data.max_sharpe.sharpe_ratio}
+              decimals={2}
+              valueColor="blue"
+              metricKey="mk-max-sharpe"
+              onAnalyze={mkAnalyze("max_sharpe_ratio", data.max_sharpe.sharpe_ratio, {
+                current_sharpe: data.current_portfolio.sharpe_ratio,
+                max_sharpe_volatility: data.max_sharpe.volatility,
+              })}
+              isOpen={openCard === "mk-max-sharpe"}
+              onToggle={() => toggle("mk-max-sharpe")}
+            />
+
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Risque minimum possible" : "Min Variance Vol"}
+              value={data.min_variance.volatility * 100}
+              valueSuffix="%"
+              valueColor="emerald"
+              metricKey="mk-min-var"
+              onAnalyze={mkAnalyze("min_variance_volatility", data.min_variance.volatility, {
+                current_volatility: data.current_portfolio.volatility,
+              })}
+              isOpen={openCard === "mk-min-var"}
+              onToggle={() => toggle("mk-min-var")}
+            />
+
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Votre volatilité actuelle" : "Current Vol"}
+              value={data.current_portfolio.volatility * 100}
+              valueSuffix="%"
+              valueColor="foreground"
+              metricKey="mk-current-vol"
+              onAnalyze={mkAnalyze("current_volatility", data.current_portfolio.volatility, {
+                min_variance_volatility: data.min_variance.volatility,
+                current_return: data.current_portfolio.expected_return,
+              })}
+              isOpen={openCard === "mk-current-vol"}
+              onToggle={() => toggle("mk-current-vol")}
+            />
+
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Rendement attendu actuel" : "Current Return"}
+              value={data.current_portfolio.expected_return * 100}
+              valuePrefix={data.current_portfolio.expected_return >= 0 ? "+" : ""}
+              valueSuffix="%"
+              valueColor={data.current_portfolio.expected_return >= 0 ? "emerald" : "red"}
+              metricKey="mk-current-return"
+              onAnalyze={mkAnalyze("current_expected_return", data.current_portfolio.expected_return, {
+                max_sharpe_return: data.max_sharpe.expected_return,
+                current_volatility: data.current_portfolio.volatility,
+              })}
+              isOpen={openCard === "mk-current-return"}
+              onToggle={() => toggle("mk-current-return")}
+            />
+          </div>
 
           {/* Beginner: simplified recommended allocation card */}
           {mode === "beginner" && (
@@ -305,7 +304,7 @@ export default function MarkowitzPage() {
             </Card>
           )}
 
-          <WhyCard
+          <WhyExpandableCard
             beginnerContent={
               <>
                 <p className="mb-2">

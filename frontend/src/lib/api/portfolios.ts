@@ -10,7 +10,9 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient } from "@/lib/api/client";
+import { usePortfolioStore } from "@/lib/store/portfolio-store";
 import type {
+  LiveQuote,
   NormalizedPrices,
   PortfolioCreateRequest,
   PortfolioListItem,
@@ -21,6 +23,7 @@ const PORTFOLIO_KEYS = {
   all: ["portfolios"] as const,
   detail: (id: string) => ["portfolios", id] as const,
   prices: (id: string) => ["portfolios", id, "prices"] as const,
+  livePrices: (id: string) => ["portfolios", id, "live-prices"] as const,
 };
 
 /** Fetch all portfolios for the current user */
@@ -53,6 +56,11 @@ async function deletePortfolio(id: string): Promise<void> {
 /** Fetch normalized historical prices for a portfolio's assets */
 async function fetchPortfolioPrices(id: string): Promise<NormalizedPrices> {
   return apiClient<NormalizedPrices>(`/api/v1/portfolios/${id}/prices`);
+}
+
+/** Fetch live quotes (current price + daily change) for portfolio assets */
+async function fetchLivePrices(id: string): Promise<LiveQuote[]> {
+  return apiClient<LiveQuote[]>(`/api/v1/portfolios/${id}/live-prices`);
 }
 
 // ── TanStack Query Hooks ──
@@ -88,8 +96,22 @@ export function useDeletePortfolio() {
 
   return useMutation({
     mutationFn: deletePortfolio,
-    onSuccess: () => {
+    onSuccess: (_data, deletedId) => {
+      // Clear active portfolio if it was the one deleted
+      const { activePortfolioId, setActivePortfolio } =
+        usePortfolioStore.getState();
+      if (activePortfolioId === deletedId) {
+        setActivePortfolio(null);
+      }
+
+      // Invalidate list and remove stale detail/prices queries
       queryClient.invalidateQueries({ queryKey: PORTFOLIO_KEYS.all });
+      queryClient.removeQueries({
+        queryKey: PORTFOLIO_KEYS.detail(deletedId),
+      });
+      queryClient.removeQueries({
+        queryKey: PORTFOLIO_KEYS.prices(deletedId),
+      });
     },
   });
 }
@@ -100,5 +122,15 @@ export function usePortfolioPrices(id: string | null) {
     queryFn: () => fetchPortfolioPrices(id!),
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes (price data doesn't change often)
+  });
+}
+
+export function useLivePrices(id: string | null) {
+  return useQuery({
+    queryKey: PORTFOLIO_KEYS.livePrices(id ?? ""),
+    queryFn: () => fetchLivePrices(id!),
+    enabled: !!id,
+    refetchInterval: 60_000, // Auto-refresh every 60 seconds
+    staleTime: 30_000,
   });
 }

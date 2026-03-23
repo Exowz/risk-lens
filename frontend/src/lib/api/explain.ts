@@ -17,7 +17,7 @@ type Mode = "beginner" | "expert";
 
 // ── API functions ──
 
-async function fetchMonteCarloExplanation(params: {
+export async function fetchMonteCarloExplanation(params: {
   mode: Mode;
   mean_final_value: number;
   var_95: number;
@@ -31,7 +31,7 @@ async function fetchMonteCarloExplanation(params: {
   });
 }
 
-async function fetchDistributionExplanation(params: {
+export async function fetchDistributionExplanation(params: {
   mode: Mode;
   var_95: number;
   mean_final_value: number;
@@ -45,7 +45,7 @@ async function fetchDistributionExplanation(params: {
   });
 }
 
-async function fetchMarkowitzExplanation(params: {
+export async function fetchMarkowitzExplanation(params: {
   mode: Mode;
   current_sharpe: number;
   current_volatility: number;
@@ -61,7 +61,7 @@ async function fetchMarkowitzExplanation(params: {
   );
 }
 
-async function fetchStressExplanation(params: {
+export async function fetchStressExplanation(params: {
   mode: Mode;
   scenarios: {
     scenario_name: string;
@@ -74,6 +74,22 @@ async function fetchStressExplanation(params: {
     method: "POST",
     body: params,
   });
+}
+
+// ── Generic metric explanation (plain async, not a hook) ──
+
+export async function fetchMetricExplanation(params: {
+  metric_name: string;
+  metric_value: number;
+  portfolio_id: string;
+  mode: Mode;
+  context?: Record<string, number | string | null>;
+}): Promise<string> {
+  const res = await apiClient<ExplanationResponse>("/api/v1/risk/explain-metric", {
+    method: "POST",
+    body: params,
+  });
+  return res.explanation;
 }
 
 // ── Hooks (useMutation — triggered on click, not on load) ──

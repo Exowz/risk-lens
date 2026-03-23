@@ -3,19 +3,19 @@
 /**
  * Risk analysis page.
  *
- * Assembles: VaRCards, MonteCarloPanel.
- * Requires an active portfolio selection from Zustand store.
+ * Assembles: VaRCards, MonteCarloPanel, WhyExpandableCard.
+ * Single openCard state for one-at-a-time expandable cards.
  *
- * Depends on: components/risk/*, lib/store/portfolio-store.ts
+ * Depends on: components/risk/*, components/shared/why-expandable-card
  * Used by: /risk route
  */
 
+import { useState } from "react";
 import Link from "next/link";
 
 import { MonteCarloPanel } from "@/components/risk/monte-carlo-panel";
 import { VaRCards } from "@/components/risk/var-card";
-import { WhyCard } from "@/components/shared/why-card";
-import { BlurText } from "@/components/ui/blur-text";
+import { WhyExpandableCard } from "@/components/shared/why-expandable-card";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -28,43 +28,40 @@ import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 export default function RiskPage() {
   const { activePortfolioId } = usePortfolioStore();
+  const [openCard, setOpenCard] = useState<string | null>(null);
 
   return (
-    <div className="space-y-8">
-      <div className="border-b border-border pb-3">
-        <BlurText
-          text="Risk Analysis"
-          className="text-3xl font-bold tracking-tight"
-        />
-        <p className="text-muted-foreground">
-          Value at Risk, CVaR, and Monte Carlo simulation
-        </p>
-      </div>
-
+    <div className="p-6 space-y-6">
       {!activePortfolioId ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>No Portfolio Selected</CardTitle>
+            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
             <CardDescription>
-              Create or select a portfolio to compute VaR, CVaR, and run Monte
-              Carlo simulations on your holdings.
+              Créez ou sélectionnez un portefeuille pour calculer la VaR, la CVaR
+              et lancer des simulations Monte Carlo.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Go to Portfolios</Button>
+              <Button>Voir les portefeuilles</Button>
             </Link>
           </CardContent>
         </Card>
       ) : (
         <>
-          {/* VaR & CVaR KPI cards + summary metrics */}
-          <VaRCards portfolioId={activePortfolioId} />
+          <VaRCards
+            portfolioId={activePortfolioId}
+            openCard={openCard}
+            onOpenCard={setOpenCard}
+          />
 
-          {/* Monte Carlo simulation */}
-          <MonteCarloPanel portfolioId={activePortfolioId} />
+          <MonteCarloPanel
+            portfolioId={activePortfolioId}
+            openCard={openCard}
+            onOpenCard={setOpenCard}
+          />
 
-          <WhyCard
+          <WhyExpandableCard
             beginnerContent={
               <>
                 <p className="mb-2">

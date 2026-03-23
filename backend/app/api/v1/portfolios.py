@@ -27,7 +27,7 @@ from app.schemas.portfolio import (
     PortfolioListResponse,
     PortfolioResponse,
 )
-from app.services.market_data import get_normalized_prices, validate_ticker
+from app.services.market_data import get_live_quotes, get_normalized_prices, validate_ticker
 
 logger = logging.getLogger(__name__)
 
@@ -199,3 +199,35 @@ async def get_portfolio_prices(
 
     tickers = [asset.ticker for asset in portfolio.assets]
     return await get_normalized_prices(tickers, period=period)
+
+
+@router.get("/{portfolio_id}/live-prices")
+async def get_portfolio_live_prices(
+    portfolio_id: str,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, object]]:
+    """
+    Get current price and daily change for all assets in a portfolio.
+
+    Returns a list of {ticker, price, change_pct, currency} objects.
+    Uses yfinance .info for real-time quotes with 5-minute in-memory cache.
+    """
+    result = await db.execute(
+        select(Portfolio)
+        .where(
+            Portfolio.id == portfolio_id,
+            Portfolio.user_id == current_user.id,
+        )
+        .options(selectinload(Portfolio.assets))
+    )
+    portfolio = result.scalar_one_or_none()
+
+    if portfolio is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Portfolio '{portfolio_id}' not found",
+        )
+
+    tickers = [asset.ticker for asset in portfolio.assets]
+    return await get_live_quotes(tickers)

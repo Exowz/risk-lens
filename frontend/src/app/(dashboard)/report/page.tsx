@@ -15,7 +15,6 @@ import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 
-import { BlurText } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -253,24 +252,18 @@ export default function ReportPage() {
 
   if (!activePortfolioId) {
     return (
-      <div className="space-y-8">
-        <div>
-          <BlurText text="Risk Report" className="text-3xl font-bold tracking-tight" />
-          <p className="text-muted-foreground">
-            AI-generated narrative risk analysis with PDF export
-          </p>
-        </div>
+      <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>No Portfolio Selected</CardTitle>
+            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
             <CardDescription>
-              Create or select a portfolio to generate an AI-powered narrative
-              risk report with PDF export.
+              Créez ou sélectionnez un portefeuille pour générer un rapport
+              d&apos;analyse de risque avec export PDF.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Go to Portfolios</Button>
+              <Button>Voir les portefeuilles</Button>
             </Link>
           </CardContent>
         </Card>
@@ -279,28 +272,20 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <BlurText text="Risk Report" className="text-3xl font-bold tracking-tight" />
-          <p className="text-muted-foreground">
-            AI-generated narrative risk analysis with PDF export
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? "Generating..." : "Generate Report"}
+    <div className="p-6 space-y-6">
+      <div className="flex justify-end gap-2">
+        <Button onClick={handleGenerate} disabled={isGenerating}>
+          {isGenerating ? "Génération..." : "Générer le rapport"}
+        </Button>
+        {data && (
+          <Button
+            variant="outline"
+            onClick={handleDownloadPDF}
+            disabled={isExporting}
+          >
+            {isExporting ? "Export..." : "Télécharger PDF"}
           </Button>
-          {data && (
-            <Button
-              variant="outline"
-              onClick={handleDownloadPDF}
-              disabled={isExporting}
-            >
-              {isExporting ? "Exporting..." : "Download PDF"}
-            </Button>
-          )}
-        </div>
+        )}
       </div>
 
       {generateError && (

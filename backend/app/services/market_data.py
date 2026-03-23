@@ -24,6 +24,10 @@ logger = logging.getLogger(__name__)
 _price_cache: dict[str, tuple[pd.DataFrame, float]] = {}
 _CACHE_TTL_SECONDS = 3600  # 1 hour
 
+# Separate cache for live quotes (shorter TTL)
+_quote_cache: dict[str, tuple[dict[str, object], float]] = {}
+_QUOTE_CACHE_TTL = 300  # 5 minutes
+
 
 class TickerValidationResult(TypedDict):
     """Result of ticker validation."""
@@ -214,3 +218,56 @@ async def get_normalized_prices(
         ]
 
     return result
+
+
+async def get_live_quotes(tickers: list[str]) -> list[dict[str, object]]:
+    """
+    Get current price and daily change % for a list of tickers.
+
+    Uses yfinance fast_info/info with a 5-minute in-memory cache.
+
+    Args:
+        tickers: List of ticker symbols
+
+    Returns:
+        List of {ticker, price, change_pct, currency} dicts
+    """
+    quotes: list[dict[str, object]] = []
+
+    for ticker in tickers:
+        now = time.time()
+
+        # Check cache
+        if ticker in _quote_cache:
+            cached_quote, cached_ts = _quote_cache[ticker]
+            if now - cached_ts < _QUOTE_CACHE_TTL:
+                quotes.append(cached_quote)
+                continue
+
+        try:
+            info = yf.Ticker(ticker)
+            fast = info.fast_info
+            price = float(fast.last_price)
+            prev_close = float(fast.previous_close)
+            change_pct = ((price - prev_close) / prev_close) * 100 if prev_close else 0.0
+            currency = str(getattr(fast, "currency", "USD"))
+
+            quote: dict[str, object] = {
+                "ticker": ticker,
+                "price": round(price, 2),
+                "change_pct": round(change_pct, 2),
+                "currency": currency,
+            }
+        except Exception as e:
+            logger.warning("Failed to get live quote for %s: %s", ticker, str(e))
+            quote = {
+                "ticker": ticker,
+                "price": None,
+                "change_pct": None,
+                "currency": "USD",
+            }
+
+        _quote_cache[ticker] = (quote, now)
+        quotes.append(quote)
+
+    return quotes

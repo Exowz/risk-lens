@@ -3,8 +3,7 @@
 /**
  * VaR distribution chart — histogram of Monte Carlo final portfolio values.
  *
- * Bins the final_values array into a histogram and highlights the
- * VaR 95% threshold with a reference line.
+ * Can be used standalone (with Card wrapper) or bare (inside ExpandableCard).
  *
  * Depends on: recharts
  * Used by: components/risk/monte-carlo-panel.tsx
@@ -35,6 +34,8 @@ interface VaRDistributionProps {
   explanationPending?: boolean;
   /** Whether explanation errored */
   explanationError?: boolean;
+  /** If true, render without Card wrapper (for use inside ExpandableCard) */
+  bare?: boolean;
 }
 
 function buildHistogram(
@@ -62,6 +63,56 @@ function buildHistogram(
   return bins;
 }
 
+function HistogramContent({ finalValues, var95 }: { finalValues: number[]; var95: number }) {
+  const histogram = buildHistogram(finalValues, 50);
+  const varLine = 1 + var95;
+
+  return (
+    <ResponsiveContainer width="100%" height={300}>
+      <BarChart data={histogram}>
+        <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
+        <XAxis
+          dataKey="midpoint"
+          tick={{ fontSize: 10 }}
+          tickFormatter={(v: number) => v.toFixed(2)}
+          label={{
+            value: "Final Portfolio Value",
+            position: "insideBottom",
+            offset: -5,
+            fontSize: 11,
+          }}
+        />
+        <YAxis
+          tick={{ fontSize: 10 }}
+          label={{
+            value: "Frequency",
+            angle: -90,
+            position: "insideLeft",
+            fontSize: 11,
+          }}
+        />
+        <Tooltip
+          formatter={(value) => [value, "Count"]}
+          labelFormatter={(label) => `Value: ${Number(label).toFixed(4)}`}
+        />
+        <Bar dataKey="count" fill="hsl(221, 83%, 53%)" opacity={0.7} />
+        <ReferenceLine
+          x={varLine}
+          stroke="hsl(0, 84%, 60%)"
+          strokeWidth={2}
+          strokeDasharray="5 5"
+          label={{
+            value: `VaR 95%`,
+            position: "top",
+            fontSize: 11,
+            fill: "hsl(0, 84%, 60%)",
+          }}
+        />
+      </BarChart>
+    </ResponsiveContainer>
+  );
+}
+
 export function VaRDistribution({
   finalValues,
   var95,
@@ -69,12 +120,11 @@ export function VaRDistribution({
   explanation,
   explanationPending,
   explanationError,
+  bare,
 }: VaRDistributionProps) {
-  const histogram = buildHistogram(finalValues, 50);
-
-  // var95 is expressed as a return (e.g., -0.15 = 15% loss)
-  // Convert to final value: initial_value * (1 + var95) = 1 + var95
-  const varLine = 1 + var95;
+  if (bare) {
+    return <HistogramContent finalValues={finalValues} var95={var95} />;
+  }
 
   return (
     <Card>
@@ -82,48 +132,7 @@ export function VaRDistribution({
         <CardTitle>Final Value Distribution</CardTitle>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={histogram}>
-            <CartesianGrid strokeDasharray="3 3" opacity={0.2} />
-            <XAxis
-              dataKey="midpoint"
-              tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => v.toFixed(2)}
-              label={{
-                value: "Final Portfolio Value",
-                position: "insideBottom",
-                offset: -5,
-                fontSize: 11,
-              }}
-            />
-            <YAxis
-              tick={{ fontSize: 10 }}
-              label={{
-                value: "Frequency",
-                angle: -90,
-                position: "insideLeft",
-                fontSize: 11,
-              }}
-            />
-            <Tooltip
-              formatter={(value) => [value, "Count"]}
-              labelFormatter={(label) => `Value: ${Number(label).toFixed(4)}`}
-            />
-            <Bar dataKey="count" fill="hsl(221, 83%, 53%)" opacity={0.7} />
-            <ReferenceLine
-              x={varLine}
-              stroke="hsl(0, 84%, 60%)"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              label={{
-                value: `VaR 95%`,
-                position: "top",
-                fontSize: 11,
-                fill: "hsl(0, 84%, 60%)",
-              }}
-            />
-          </BarChart>
-        </ResponsiveContainer>
+        <HistogramContent finalValues={finalValues} var95={var95} />
         {onAnalyze && (
           <AiChartExplanation
             onAnalyze={onAnalyze}

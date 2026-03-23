@@ -7,6 +7,7 @@ for autogenerate migrations.
 
 from app.models.calculation_cache import CalculationCache
 from app.models.portfolio import Asset, Portfolio
+from app.models.report import Report
 from app.models.user import User
 
-__all__ = ["User", "Portfolio", "Asset", "CalculationCache"]
+__all__ = ["User", "Portfolio", "Asset", "CalculationCache", "Report"]

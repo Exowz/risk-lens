@@ -3,21 +3,22 @@
 /**
  * Stress testing page.
  *
- * Displays 3 crisis scenario cards + grouped bar chart comparing
- * current portfolio drawdowns vs Markowitz-optimised.
+ * Scenario cards with KpiExpandableCard metrics,
+ * drawdown comparison in ChartExpandableCard,
+ * WhyExpandableCard for educational content.
  *
  * Depends on: components/stress/*, components/charts/stress-bar-chart.tsx,
  *             lib/api/stress.ts, lib/store/portfolio-store.ts
  * Used by: /stress route
  */
 
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
 import { StressBarChart } from "@/components/charts/stress-bar-chart";
-import { WhyCard } from "@/components/shared/why-card";
+import { ChartExpandableCard } from "@/components/shared/chart-expandable-card";
+import { WhyExpandableCard } from "@/components/shared/why-expandable-card";
 import { StressScenarioCard } from "@/components/stress/stress-scenario-card";
-import { BlurText } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +27,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { useStressExplanation } from "@/lib/api/explain";
+import { fetchStressExplanation } from "@/lib/api/explain";
 import { useStressTest } from "@/lib/api/stress";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
@@ -35,11 +36,11 @@ export default function StressPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mode } = useMode();
   const { mutate, data, isPending, error, reset } = useStressTest();
-  const stressExplanation = useStressExplanation();
+  const [openCard, setOpenCard] = useState<string | null>(null);
 
-  const triggerExplanation = useCallback(() => {
-    if (!data) return;
-    stressExplanation.mutate({
+  const mkStressChartAnalyze = useCallback(() => {
+    if (!data) return Promise.resolve("Analyse temporairement indisponible.");
+    return fetchStressExplanation({
       mode,
       scenarios: data.scenarios.map((s) => ({
         scenario_name: s.scenario_name,
@@ -47,10 +48,9 @@ export default function StressPage() {
         max_drawdown: s.max_drawdown,
         recovery_days: s.recovery_days,
       })),
-    });
-  }, [data, mode, stressExplanation]);
+    }).then((res) => res.explanation);
+  }, [data, mode]);
 
-  // Reset when portfolio changes
   useEffect(() => {
     if (activePortfolioId) {
       reset();
@@ -64,24 +64,18 @@ export default function StressPage() {
 
   if (!activePortfolioId) {
     return (
-      <div className="space-y-8">
-        <div>
-          <BlurText text="Stress Testing" className="text-3xl font-bold tracking-tight" />
-          <p className="text-muted-foreground">
-            Historical crisis scenario analysis
-          </p>
-        </div>
+      <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>No Portfolio Selected</CardTitle>
+            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
             <CardDescription>
-              Create or select a portfolio to simulate how it would have
-              performed during the 2008, 2020, and 2022 crises.
+              Créez ou sélectionnez un portefeuille pour simuler son comportement
+              lors des crises de 2008, 2020 et 2022.
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Go to Portfolios</Button>
+              <Button>Voir les portefeuilles</Button>
             </Link>
           </CardContent>
         </Card>
@@ -90,18 +84,10 @@ export default function StressPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <BlurText text="Stress Testing" className="text-3xl font-bold tracking-tight" />
-          <p className="text-muted-foreground">
-            {mode === "beginner"
-              ? "Comment votre portefeuille aurait survécu aux crises passées"
-              : "Historical crisis scenario analysis — 2008, 2020, 2022"}
-          </p>
-        </div>
+    <div className="p-6 space-y-6">
+      <div className="flex justify-end">
         <Button onClick={handleRun} disabled={isPending}>
-          {isPending ? "Running..." : "Run Stress Test"}
+          {isPending ? "Exécution..." : "Lancer le stress test"}
         </Button>
       </div>
 
@@ -109,7 +95,7 @@ export default function StressPage() {
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Stress test failed"}
+              {error instanceof Error ? error.message : "Échec du stress test"}
             </p>
           </CardContent>
         </Card>
@@ -123,20 +109,28 @@ export default function StressPage() {
               <StressScenarioCard
                 key={scenario.scenario_name}
                 scenario={scenario}
+                portfolioId={activePortfolioId}
+                openCard={openCard}
+                onOpenCard={setOpenCard}
               />
             ))}
           </div>
 
-          {/* Drawdown comparison bar chart */}
-          <StressBarChart
-            comparisons={data.comparisons}
-            onAnalyze={triggerExplanation}
-            explanation={stressExplanation.data?.explanation}
-            explanationPending={stressExplanation.isPending}
-            explanationError={stressExplanation.isError}
-          />
+          {/* Drawdown comparison chart */}
+          <ChartExpandableCard
+            title={mode === "beginner" ? "Comparaison des chutes" : "Comparaison des drawdowns"}
+            legend={[
+              { color: "hsl(0, 84%, 60%)", label: "Portefeuille actuel" },
+              { color: "hsl(221, 83%, 53%)", label: "Optimisé Max Sharpe" },
+            ]}
+            onAnalyze={mkStressChartAnalyze}
+            isOpen={openCard === "stress-chart"}
+            onToggle={() => setOpenCard(openCard === "stress-chart" ? null : "stress-chart")}
+          >
+            <StressBarChart comparisons={data.comparisons} bare />
+          </ChartExpandableCard>
 
-          <WhyCard
+          <WhyExpandableCard
             beginnerContent={
               <>
                 <p className="mb-2">
@@ -175,7 +169,7 @@ export default function StressPage() {
 
           {data.from_cache && (
             <p className="text-xs text-muted-foreground text-center">
-              Results loaded from cache
+              Résultats chargés depuis le cache
             </p>
           )}
         </>

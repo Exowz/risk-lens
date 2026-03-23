@@ -1,20 +1,23 @@
 "use client";
 
 /**
- * Animated tooltip wrapper for financial metrics.
+ * Metric tooltip built on shadcn Tooltip (Radix) primitive.
  *
- * Uses Framer Motion spring animation (Aceternity-style) on hover.
- * In expert mode: shows technical label + expert tooltip.
- * In beginner mode: shows simplified label + vulgarization tooltip.
+ * Shows a mode-aware explanation on hover with collision avoidance.
+ * Trigger: metric label with dotted underline + cursor-help.
+ * Content: max-w-[260px], wrapping text, side="top", sideOffset=8.
  *
- * Depends on: motion/react, lib/store/mode-context.tsx
+ * Depends on: components/ui/tooltip.tsx, lib/store/mode-context.tsx
  * Used by: risk, markowitz, stress, dashboard pages
  */
 
-import { useState } from "react";
-import { motion, AnimatePresence, useMotionValue, useSpring, useTransform } from "motion/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useMode } from "@/lib/store/mode-context";
-import { Info } from "lucide-react";
 
 /** Known metric keys with beginner/expert explanations. */
 const METRIC_EXPLANATIONS: Record<
@@ -102,13 +105,6 @@ export function MetricTooltip({
 }: MetricTooltipProps) {
   const { mode } = useMode();
   const explanation = METRIC_EXPLANATIONS[metricKey];
-  const [hovered, setHovered] = useState(false);
-  const springConfig = { stiffness: 200, damping: 15 };
-  const x = useMotionValue(0);
-  const translateX = useSpring(
-    useTransform(x, [-100, 100], [-30, 30]),
-    springConfig,
-  );
 
   const displayLabel =
     mode === "beginner" && explanation ? explanation.beginner : label;
@@ -129,36 +125,23 @@ export function MetricTooltip({
 
   return (
     <div>
-      <div
-        className="relative inline-flex"
-        onMouseEnter={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onMouseMove={(e) => {
-          const half = e.currentTarget.offsetWidth / 2;
-          x.set(e.nativeEvent.offsetX - half);
-        }}
-      >
-        <AnimatePresence>
-          {hovered && (
-            <motion.div
-              initial={{ opacity: 0, y: 10, scale: 0.9 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={{ opacity: 0, y: 10, scale: 0.9 }}
-              style={{ translateX }}
-              className="absolute -top-2 left-1/2 z-50 -translate-x-1/2 -translate-y-full whitespace-normal"
-            >
-              <div className="max-w-xs rounded-lg border border-border bg-card px-3 py-2 text-xs text-card-foreground shadow-xl">
-                <div className="absolute inset-x-10 -bottom-px z-30 h-px w-[20%] bg-gradient-to-r from-transparent via-blue-500 to-transparent" />
-                {tipText}
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-        <p className="inline-flex cursor-help items-center gap-1 text-xs text-muted-foreground">
-          {displayLabel}
-          <Info className="size-3 text-muted-foreground/60" />
-        </p>
-      </div>
+      <TooltipProvider delayDuration={150}>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <p className="inline-flex cursor-help items-center gap-1 border-b border-dashed border-muted-foreground/40 pb-0.5 text-xs text-muted-foreground">
+              {displayLabel}
+            </p>
+          </TooltipTrigger>
+          <TooltipContent
+            side="top"
+            sideOffset={8}
+            avoidCollisions
+            className="max-w-[260px] whitespace-normal text-sm p-3"
+          >
+            {tipText}
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
       {children}
     </div>
   );

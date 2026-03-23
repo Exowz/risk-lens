@@ -3,10 +3,10 @@
 /**
  * Monte Carlo simulation panel with controls and results.
  *
- * Uses CountUp for animated stats, MetricTooltip for explanations,
- * and mode-aware display (hides exact sim count in beginner mode).
+ * Metrics in KpiExpandableCard, charts in ChartExpandableCard.
+ * All AI explanations via Mistral — no static fallbacks.
  *
- * Depends on: lib/api/risk.ts, charts/monte-carlo-chart.tsx, charts/var-distribution.tsx
+ * Depends on: lib/api/risk.ts, lib/api/explain.ts, charts/*
  * Used by: app/(dashboard)/risk/page.tsx
  */
 
@@ -14,17 +14,17 @@ import { useCallback, useState } from "react";
 
 import { MonteCarloChart } from "@/components/charts/monte-carlo-chart";
 import { VaRDistribution } from "@/components/charts/var-distribution";
-import { ExpandableMetric } from "@/components/shared/expandable-metric";
-import { MetricTooltip } from "@/components/shared/metric-tooltip";
-import { CountUp } from "@/components/ui/count-up";
+import { ChartExpandableCard } from "@/components/shared/chart-expandable-card";
+import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  useDistributionExplanation,
-  useMonteCarloExplanation,
+  fetchMonteCarloExplanation,
+  fetchDistributionExplanation,
+  fetchMetricExplanation,
 } from "@/lib/api/explain";
 import { useMonteCarlo } from "@/lib/api/risk";
 import { useMode } from "@/lib/store/mode-context";
@@ -32,41 +32,54 @@ import type { MonteCarloResult } from "@/types/risk";
 
 interface MonteCarloProps {
   portfolioId: string;
+  openCard: string | null;
+  onOpenCard: (id: string | null) => void;
 }
 
-export function MonteCarloPanel({ portfolioId }: MonteCarloProps) {
+export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarloProps) {
   const [nSimulations, setNSimulations] = useState(10_000);
   const [nDays, setNDays] = useState(252);
   const [result, setResult] = useState<MonteCarloResult | null>(null);
   const { mode } = useMode();
 
   const monteCarlo = useMonteCarlo();
-  const mcExplanation = useMonteCarloExplanation();
-  const distExplanation = useDistributionExplanation();
 
-  const triggerMcExplanation = useCallback(() => {
-    if (!result) return;
-    mcExplanation.mutate({
+  const mkAnalyze = useCallback(
+    (metricName: string, metricValue: number, context?: Record<string, number | string | null>) =>
+      () =>
+        fetchMetricExplanation({
+          metric_name: metricName,
+          metric_value: metricValue,
+          portfolio_id: portfolioId,
+          mode,
+          context,
+        }),
+    [portfolioId, mode],
+  );
+
+  const mkMcChartAnalyze = useCallback(() => {
+    if (!result) return Promise.resolve("Analyse temporairement indisponible.");
+    return fetchMonteCarloExplanation({
       mode,
       mean_final_value: result.mean_final_value,
       var_95: result.var_95,
       probability_of_loss: result.probability_of_loss,
       n_simulations: result.n_simulations,
       n_days: result.n_days,
-    });
-  }, [result, mode, mcExplanation]);
+    }).then((res) => res.explanation);
+  }, [result, mode]);
 
-  const triggerDistExplanation = useCallback(() => {
-    if (!result) return;
-    distExplanation.mutate({
+  const mkDistChartAnalyze = useCallback(() => {
+    if (!result) return Promise.resolve("Analyse temporairement indisponible.");
+    return fetchDistributionExplanation({
       mode,
       var_95: result.var_95,
       mean_final_value: result.mean_final_value,
       std_final_value: result.std_final_value,
       percentile_5: result.percentile_5,
       percentile_95: result.percentile_95,
-    });
-  }, [result, mode, distExplanation]);
+    }).then((res) => res.explanation);
+  }, [result, mode]);
 
   function handleRun() {
     monteCarlo.mutate(
@@ -78,6 +91,9 @@ export function MonteCarloPanel({ portfolioId }: MonteCarloProps) {
       { onSuccess: (data) => setResult(data) },
     );
   }
+
+  const toggle = (key: string) =>
+    onOpenCard(openCard === key ? null : key);
 
   return (
     <div className="space-y-6">
@@ -140,95 +156,113 @@ export function MonteCarloPanel({ portfolioId }: MonteCarloProps) {
 
       {/* Loading state */}
       {monteCarlo.isPending && !result && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardContent className="pt-6">
-              <Skeleton className="h-[350px] w-full" />
-            </CardContent>
-          </Card>
-          <Card>
-            <CardContent className="pt-6">
-              <Skeleton className="h-[300px] w-full" />
-            </CardContent>
-          </Card>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton key={i} className="h-20 w-full rounded-lg" />
+          ))}
         </div>
       )}
 
       {/* Results */}
       {result && (
         <>
-          {/* Summary statistics */}
-          <Card>
-            <CardContent className="pt-6">
-              <ExpandableMetric
-                labelBeginner="Valeur finale moyenne"
-                labelExpert="Mean Final Value"
-                value={
-                  <span className="font-mono text-foreground">
-                    <CountUp to={result.mean_final_value} duration={1200} decimals={4} />
-                  </span>
-                }
-                explanationBeginner="Après 10 000 simulations d'une année, voici la valeur moyenne à laquelle votre portefeuille arrive. 1.0 = la valeur de départ."
-                explanationExpert="Espérance de la valeur finale du portefeuille sous GBM. 1.0 = valeur initiale normalisée."
+          {/* Summary metric cards */}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Valeur finale moyenne" : "Mean Final Value"}
+              value={result.mean_final_value}
+              decimals={4}
+              valueColor="foreground"
+              metricKey="mc-mean"
+              onAnalyze={mkAnalyze("mean_final_value", result.mean_final_value, {
+                n_simulations: result.n_simulations,
+                n_days: result.n_days,
+              })}
+              isOpen={openCard === "mc-mean"}
+              onToggle={() => toggle("mc-mean")}
+            />
+
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Perte max probable (VaR 95%)" : "VaR 95% (Sim)"}
+              value={result.var_95 * 100}
+              valueSuffix="%"
+              valueColor="red"
+              metricKey="mc-var95"
+              onAnalyze={mkAnalyze("var_95_simulation", result.var_95, {
+                mean_final_value: result.mean_final_value,
+                probability_of_loss: result.probability_of_loss,
+              })}
+              isOpen={openCard === "mc-var95"}
+              onToggle={() => toggle("mc-var95")}
+            />
+
+            <KpiExpandableCard
+              label={mode === "beginner" ? "Probabilité de perte" : "P(Loss)"}
+              value={result.probability_of_loss * 100}
+              valueSuffix="%"
+              valueColor="amber"
+              metricKey="mc-ploss"
+              onAnalyze={mkAnalyze("probability_of_loss", result.probability_of_loss, {
+                mean_final_value: result.mean_final_value,
+                var_95: result.var_95,
+              })}
+              isOpen={openCard === "mc-ploss"}
+              onToggle={() => toggle("mc-ploss")}
+            />
+
+            {mode === "expert" && (
+              <KpiExpandableCard
+                label="5th–95th Range"
+                value={result.percentile_5}
+                decimals={3}
+                valueSuffix={` – ${result.percentile_95.toFixed(3)}`}
+                valueColor="foreground"
+                metricKey="mc-range"
+                onAnalyze={mkAnalyze("percentile_range", result.percentile_5, {
+                  percentile_95: result.percentile_95,
+                  mean_final_value: result.mean_final_value,
+                })}
+                isOpen={openCard === "mc-range"}
+                onToggle={() => toggle("mc-range")}
               />
-              <ExpandableMetric
-                labelBeginner="Perte max probable (VaR 95%)"
-                labelExpert="VaR 95% (Sim)"
-                value={
-                  <span className="font-mono text-red-500">
-                    <CountUp to={result.var_95 * 100} duration={1200} suffix="%" />
-                  </span>
-                }
-                explanationBeginner="Sur 20 jours de trading, vous perdrez plus que ce montant une seule fois. C'est votre perte journalière maximale probable dans des conditions normales."
-                explanationExpert="Value at Risk à 95% de confiance -- quantile empirique de la distribution des rendements historiques journaliers."
-              />
-              <ExpandableMetric
-                labelBeginner="Probabilité de perte"
-                labelExpert="P(Loss)"
-                value={
-                  <span className="font-mono text-amber-500">
-                    <CountUp to={result.probability_of_loss * 100} duration={1200} suffix="%" />
-                  </span>
-                }
-                explanationBeginner="Sur 10 000 simulations d'une année complète, voici le pourcentage qui se terminent en perte."
-                explanationExpert="Probabilité empirique P(Rp < 0) estimée par simulation Monte Carlo GBM sur 10 000 trajectoires."
-              />
-              {mode === "expert" && (
-                <ExpandableMetric
-                  labelBeginner="Fourchette 5%–95%"
-                  labelExpert="5th–95th Range"
-                  value={
-                    <span className="font-mono text-foreground">
-                      <CountUp to={result.percentile_5} duration={1200} decimals={3} />
-                      {" – "}
-                      <CountUp to={result.percentile_95} duration={1200} decimals={3} />
-                    </span>
-                  }
-                  explanationBeginner="La fourchette dans laquelle 90% des scénarios se terminent."
-                  explanationExpert="Intervalle inter-décile [P5, P95] de la distribution des valeurs finales simulées."
-                />
-              )}
-            </CardContent>
-          </Card>
+            )}
+          </div>
 
           {/* Charts */}
           <div className="grid gap-6 lg:grid-cols-2">
-            <MonteCarloChart
-              samplePaths={result.sample_paths}
-              nDays={result.n_days}
-              onAnalyze={triggerMcExplanation}
-              explanation={mcExplanation.data?.explanation}
-              explanationPending={mcExplanation.isPending}
-              explanationError={mcExplanation.isError}
-            />
-            <VaRDistribution
-              finalValues={result.final_values}
-              var95={result.var_95}
-              onAnalyze={triggerDistExplanation}
-              explanation={distExplanation.data?.explanation}
-              explanationPending={distExplanation.isPending}
-              explanationError={distExplanation.isError}
-            />
+            <ChartExpandableCard
+              title={mode === "beginner" ? "Trajectoires simulées" : "Simulation Paths"}
+              legend={[
+                { color: "hsl(221, 83%, 53%)", label: mode === "beginner" ? "Scénarios" : "Paths" },
+                { color: "hsl(0, 0%, 50%)", label: "Initial" },
+              ]}
+              onAnalyze={mkMcChartAnalyze}
+              isOpen={openCard === "mc-chart"}
+              onToggle={() => toggle("mc-chart")}
+            >
+              <MonteCarloChart
+                samplePaths={result.sample_paths}
+                nDays={result.n_days}
+                bare
+              />
+            </ChartExpandableCard>
+
+            <ChartExpandableCard
+              title={mode === "beginner" ? "Distribution des résultats" : "Final Value Distribution"}
+              legend={[
+                { color: "hsl(221, 83%, 53%)", label: mode === "beginner" ? "Résultats" : "Frequency" },
+                { color: "hsl(0, 84%, 60%)", label: "VaR 95%" },
+              ]}
+              onAnalyze={mkDistChartAnalyze}
+              isOpen={openCard === "dist-chart"}
+              onToggle={() => toggle("dist-chart")}
+            >
+              <VaRDistribution
+                finalValues={result.final_values}
+                var95={result.var_95}
+                bare
+              />
+            </ChartExpandableCard>
           </div>
         </>
       )}

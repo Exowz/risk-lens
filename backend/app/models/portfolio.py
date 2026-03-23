@@ -42,6 +42,9 @@ class Portfolio(Base):
     assets: Mapped[list["Asset"]] = relationship(
         back_populates="portfolio", cascade="all, delete-orphan"
     )
+    reports: Mapped[list["Report"]] = relationship(  # noqa: F821
+        back_populates="portfolio", cascade="all, delete-orphan"
+    )
 
     def __repr__(self) -> str:
         return f"<Portfolio id={self.id} name={self.name}>"

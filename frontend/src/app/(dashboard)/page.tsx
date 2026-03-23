@@ -23,10 +23,9 @@ import {
   Tooltip as RechartsTooltip,
 } from "recharts";
 
+import { ChartDescription } from "@/components/shared/chart-description";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-import { BlurText } from "@/components/ui/blur-text";
 import { CountUp } from "@/components/ui/count-up";
-import { WobbleCard } from "@/components/ui/wobble-card";
 import { MetricTooltip } from "@/components/shared/metric-tooltip";
 import { Button } from "@/components/ui/button";
 import {
@@ -77,26 +76,17 @@ export default function DashboardPage() {
 
   if (!activePortfolioId || !portfolios || portfolios.length === 0) {
     return (
-      <div className="space-y-8">
-        <div className="border-b border-border pb-3">
-          <BlurText
-            text="Dashboard"
-            className="text-3xl font-semibold tracking-tight"
-          />
-          <p className="text-muted-foreground">
-            Overview of your portfolio risk metrics
-          </p>
-        </div>
+      <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Welcome to RiskLens</CardTitle>
+            <CardTitle>Bienvenue sur RiskLens</CardTitle>
             <CardDescription>
-              Create your first portfolio to unlock risk analytics
+              Créez votre premier portefeuille pour accéder aux analyses de risque
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Create a Portfolio</Button>
+              <Button>Créer un portefeuille</Button>
             </Link>
           </CardContent>
         </Card>
@@ -110,17 +100,7 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="space-y-8">
-      <div className="border-b border-border pb-3">
-        <BlurText
-          text="Dashboard"
-          className="text-3xl font-semibold tracking-tight"
-        />
-        <p className="text-muted-foreground">
-          {portfolio?.name ?? "Portfolio"} — risk overview
-        </p>
-      </div>
-
+    <div className="p-6 space-y-6">
       {/* KPI Bento Grid */}
       <BentoGrid className="md:auto-rows-[10rem] md:grid-cols-4">
         {/* VaR 95% — large card spanning 2 cols */}
@@ -314,7 +294,12 @@ export default function DashboardPage() {
               <span className="text-base font-medium">Composition</span>
             }
             header={
-              <div className="h-32 w-full">
+              <div>
+                <ChartDescription
+                  beginner="Répartition de votre portefeuille entre vos différents actifs."
+                  expert="Allocation actuelle du portefeuille par actif (pondérations en %)."
+                />
+                <div className="h-32 w-full">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -339,6 +324,7 @@ export default function DashboardPage() {
                     />
                   </PieChart>
                 </ResponsiveContainer>
+                </div>
               </div>
             }
             description={

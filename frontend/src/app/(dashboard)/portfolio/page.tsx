@@ -27,18 +27,10 @@ export default function PortfolioPage() {
     usePortfolioPrices(activePortfolioId);
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight">Portfolio</h2>
-        <p className="text-muted-foreground">
-          Manage your portfolio composition and view historical performance
-        </p>
-      </div>
-
+    <div className="p-6 space-y-6">
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
         {/* Main content area */}
         <div className="space-y-6">
-          {/* Portfolio details + table */}
           {activePortfolioId ? (
             portfolioLoading ? (
               <Card>
@@ -62,17 +54,16 @@ export default function PortfolioPage() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>No Portfolio Selected</CardTitle>
+                <CardTitle>Aucun portefeuille sélectionné</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Select a portfolio from the sidebar or create a new one.
+                  Sélectionnez un portefeuille ou créez-en un nouveau.
                 </p>
               </CardContent>
             </Card>
           )}
 
-          {/* Performance chart */}
           <PerformanceChart data={prices} isLoading={pricesLoading} />
         </div>
 
