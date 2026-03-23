@@ -304,6 +304,17 @@ export default function MarkowitzPage() {
             </Card>
           )}
 
+          {/* Link to stress test */}
+          <div className="flex justify-end">
+            <Link href="/stress">
+              <Button variant="outline" size="sm">
+                {mode === "beginner"
+                  ? "Tester cette allocation en période de crise →"
+                  : "Stress tester cette allocation →"}
+              </Button>
+            </Link>
+          </div>
+
           <WhyExpandableCard
             beginnerContent={
               <>

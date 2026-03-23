@@ -73,6 +73,10 @@ class ExplainStressScenario(BaseModel):
     total_return: float
     max_drawdown: float
     recovery_days: int | None
+    optimized_drawdown: float | None = Field(
+        default=None,
+        description="Max drawdown of the optimized (Max Sharpe) portfolio for comparison",
+    )
 
 
 class ExplainStressRequest(BaseModel):

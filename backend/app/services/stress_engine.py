@@ -196,8 +196,8 @@ def run_stress_test(
             )
             w_optimized = w_current
 
-        # Optimised portfolio drawdown for comparison
-        _, opt_dd, _ = _compute_scenario_metrics(
+        # Optimised portfolio metrics for comparison
+        opt_return, opt_dd, opt_recovery = _compute_scenario_metrics(
             prices, w_optimized, scenario.start_date, scenario.end_date,
         )
 
@@ -206,6 +206,8 @@ def run_stress_test(
                 scenario_name=scenario.name,
                 current_drawdown=round(max_dd, 6),
                 optimized_drawdown=round(opt_dd, 6),
+                optimized_return=round(opt_return, 6),
+                optimized_recovery_days=opt_recovery,
             )
         )
 

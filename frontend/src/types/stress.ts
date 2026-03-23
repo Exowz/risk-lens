@@ -18,6 +18,8 @@ export interface ScenarioComparison {
   scenario_name: string;
   current_drawdown: number;
   optimized_drawdown: number;
+  optimized_return: number;
+  optimized_recovery_days: number | null;
 }
 
 export interface StressTestResult {

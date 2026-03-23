@@ -269,28 +269,45 @@ async def explain_stress_result(
         Explanation text in French.
     """
     scenario_lines = []
+    has_comparison = False
     for s in scenarios:
         recovery = (
             "non récupéré" if s.get("recovery_days") is None
             else f"{s['recovery_days']} jours"
         )
-        scenario_lines.append(
+        line = (
             f"- {s['scenario_name']}: rendement={s['total_return']:.2%}, "
             f"drawdown max={s['max_drawdown']:.2%}, recovery={recovery}"
         )
+        opt_dd = s.get("optimized_drawdown")
+        if opt_dd is not None:
+            has_comparison = True
+            line += f", drawdown portefeuille optimisé={opt_dd:.2%}"
+        scenario_lines.append(line)
     scenarios_text = "\n".join(scenario_lines)
+
+    comparison_instruction = ""
+    if has_comparison:
+        comparison_instruction = (
+            "Le graphique montre deux courbes : le portefeuille actuel (rouge) et "
+            "le portefeuille optimisé Max Sharpe (bleu pointillé). "
+            "Compare les deux et explique pourquoi l'optimisé peut parfois chuter "
+            "plus que l'actuel (il est optimisé pour le rendement, pas la résistance aux crises). "
+        )
 
     if mode == "beginner":
         prompt = (
             f"Explique simplement ces résultats de stress test à un investisseur débutant. "
             f"Voici ce qui serait arrivé au portefeuille pendant les crises passées :\n"
             f"{scenarios_text}\n"
+            f"{comparison_instruction}"
             f"Utilise des comparaisons simples pour expliquer l'impact. {_SUFFIX}"
         )
     else:
         prompt = (
             f"Analyse les résultats de ces stress tests historiques :\n"
             f"{scenarios_text}\n"
+            f"{comparison_instruction}"
             f"Compare la résilience du portefeuille à travers les différents régimes "
             f"de marché. Commente les drawdowns et temps de recovery. {_SUFFIX}"
         )

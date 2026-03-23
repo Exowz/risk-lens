@@ -39,6 +39,13 @@ class ScenarioComparison(BaseModel):
     optimized_drawdown: float = Field(
         description="Max drawdown of max-Sharpe optimised portfolio"
     )
+    optimized_return: float = Field(
+        default=0.0, description="Cumulative return of optimised portfolio"
+    )
+    optimized_recovery_days: int | None = Field(
+        default=None,
+        description="Trading days from trough to recovery for optimised portfolio",
+    )
 
 
 class StressTestResponse(BaseModel):

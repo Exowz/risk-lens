@@ -37,7 +37,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { CountUp } from "@/components/ui/count-up";
-import { fetchMetricExplanation } from "@/lib/api/explain";
+import { fetchMetricExplanation, fetchStressExplanation } from "@/lib/api/explain";
 import { useStressTest } from "@/lib/api/stress";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
@@ -85,33 +85,30 @@ const CRISES: CrisisCard[] = [
 
 type AnimPhase = "idle" | "narrative" | "fall" | "counter" | "recovery" | "done";
 
-// ── Generate normalized curve data from scenario ──
+// ── Generate normalized curve data ──
 
-function buildCurveData(scenario: ScenarioResult): { day: number; value: number }[] {
-  const totalDays = scenario.recovery_days
-    ? Math.max(scenario.recovery_days, 60)
-    : 60;
-  const drawdown = Math.abs(scenario.max_drawdown);
+function buildCurveData(
+  drawdownPct: number,
+  recoveryDays: number | null,
+): { day: number; value: number }[] {
+  const totalDays = recoveryDays ? Math.max(recoveryDays, 60) : 60;
+  const drawdown = Math.abs(drawdownPct);
   const troughDay = Math.round(totalDays * 0.3);
   const points: { day: number; value: number }[] = [];
 
   for (let d = 0; d <= totalDays; d++) {
     let value: number;
     if (d <= troughDay) {
-      // Fall phase: ease from 100 to trough
       const t = d / troughDay;
-      const eased = t * t; // quadratic ease-in
+      const eased = t * t;
       value = 100 - drawdown * 100 * eased;
     } else {
-      // Recovery phase
       const recoveryProgress = (d - troughDay) / (totalDays - troughDay);
       const troughValue = 100 - drawdown * 100;
-      if (scenario.recovery_days !== null) {
-        // Full recovery
+      if (recoveryDays !== null) {
         const eased = 1 - Math.pow(1 - recoveryProgress, 2);
         value = troughValue + (100 - troughValue) * eased;
       } else {
-        // Partial recovery — doesn't reach 100
         const partialTarget = troughValue + (100 - troughValue) * 0.4;
         const eased = 1 - Math.pow(1 - recoveryProgress, 2);
         value = troughValue + (partialTarget - troughValue) * eased;
@@ -120,6 +117,24 @@ function buildCurveData(scenario: ScenarioResult): { day: number; value: number 
     points.push({ day: d, value: Math.round(value * 100) / 100 });
   }
   return points;
+}
+
+/** Merge current + optimized curves into one array for dual-line chart */
+function buildDualCurveData(
+  scenario: ScenarioResult,
+  optimizedDrawdown: number | undefined,
+): { day: number; current: number; optimized?: number }[] {
+  const currentCurve = buildCurveData(scenario.max_drawdown, scenario.recovery_days);
+  // Optimized uses same timeline but shallower drawdown, assume similar recovery shape
+  const optCurve = optimizedDrawdown != null
+    ? buildCurveData(optimizedDrawdown, scenario.recovery_days)
+    : null;
+
+  return currentCurve.map((pt, i) => ({
+    day: pt.day,
+    current: pt.value,
+    optimized: optCurve?.[i]?.value,
+  }));
 }
 
 // ── Main page ──
@@ -133,6 +148,8 @@ export default function StressPage() {
   const [phase, setPhase] = useState<AnimPhase>("idle");
   const [visiblePoints, setVisiblePoints] = useState(0);
   const [openCard, setOpenCard] = useState<string | null>(null);
+  const [chartExplanation, setChartExplanation] = useState<string | null>(null);
+  const [isExplaining, setIsExplaining] = useState(false);
   const animTimers = useRef<NodeJS.Timeout[]>([]);
 
   // Cleanup timers
@@ -148,13 +165,9 @@ export default function StressPage() {
       setPhase("idle");
       setVisiblePoints(0);
       mutate({ portfolio_id: activePortfolioId, period: "max" });
+      setChartExplanation(null);
     }
   }, [activePortfolioId, reset, mutate]);
-
-  const handleRun = () => {
-    if (!activePortfolioId) return;
-    mutate({ portfolio_id: activePortfolioId, period: "max" });
-  };
 
   // Find selected scenario data
   const selectedScenario = useMemo(
@@ -162,20 +175,17 @@ export default function StressPage() {
     [data, selectedCrisis],
   );
 
-  const curveData = useMemo(
-    () => (selectedScenario ? buildCurveData(selectedScenario) : []),
-    [selectedScenario],
+  // Find comparison data for selected scenario
+  const selectedComparison = useMemo(
+    () => data?.comparisons?.find((c) => c.scenario_name === selectedCrisis) ?? null,
+    [data, selectedCrisis],
   );
+  const optimizedDrawdown = selectedComparison?.optimized_drawdown;
 
-  // Trough index for color split
-  const troughIndex = useMemo(() => {
-    if (!curveData.length) return 0;
-    let minIdx = 0;
-    for (let i = 1; i < curveData.length; i++) {
-      if (curveData[i].value < curveData[minIdx].value) minIdx = i;
-    }
-    return minIdx;
-  }, [curveData]);
+  const curveData = useMemo(
+    () => (selectedScenario ? buildDualCurveData(selectedScenario, optimizedDrawdown) : []),
+    [selectedScenario, optimizedDrawdown],
+  );
 
   // Select crisis and start animation
   const selectCrisis = (key: string) => {
@@ -186,6 +196,7 @@ export default function StressPage() {
     setPhase("idle");
     setSelectedCrisis(key);
     setOpenCard(null);
+    setChartExplanation(null);
 
     if (!data?.scenarios.find((s) => s.scenario_name === key)) return;
 
@@ -197,10 +208,11 @@ export default function StressPage() {
       setPhase("fall");
       // Animate points up to trough
       const scenario = data!.scenarios.find((s) => s.scenario_name === key)!;
-      const curve = buildCurveData(scenario);
+      const optDD = data!.comparisons?.find((c) => c.scenario_name === key)?.optimized_drawdown;
+      const curve = buildDualCurveData(scenario, optDD);
       let minIdx = 0;
       for (let i = 1; i < curve.length; i++) {
-        if (curve[i].value < curve[minIdx].value) minIdx = i;
+        if (curve[i].current < curve[minIdx].current) minIdx = i;
       }
       const fallSteps = minIdx + 1;
       const fallDuration = 800;
@@ -255,6 +267,36 @@ export default function StressPage() {
     [activePortfolioId, mode, selectedCrisis],
   );
 
+  // Chart AI analyze handler — includes comparison data for the AI
+  const handleAnalyzeChart = useCallback(() => {
+    if (!data || isExplaining) return;
+    setIsExplaining(true);
+    setChartExplanation(null);
+    fetchStressExplanation({
+      mode,
+      scenarios: data.scenarios.map((s) => {
+        const comp = data.comparisons?.find((c) => c.scenario_name === s.scenario_name);
+        return {
+          scenario_name: s.scenario_name,
+          total_return: s.total_return,
+          max_drawdown: s.max_drawdown,
+          recovery_days: s.recovery_days,
+          optimized_drawdown: comp?.optimized_drawdown ?? null,
+        };
+      }),
+    })
+      .then((res) => setChartExplanation(res.explanation))
+      .catch(() => setChartExplanation("Analyse temporairement indisponible."))
+      .finally(() => setIsExplaining(false));
+  }, [data, mode, isExplaining]);
+
+  // Auto-trigger AI explanation when animation finishes
+  useEffect(() => {
+    if (phase === "done" && data && !chartExplanation && !isExplaining) {
+      handleAnalyzeChart();
+    }
+  }, [phase, data, chartExplanation, isExplaining, handleAnalyzeChart]);
+
   const toggle = (key: string) =>
     setOpenCard(openCard === key ? null : key);
 
@@ -294,12 +336,12 @@ export default function StressPage() {
 
   return (
     <div className="p-6 space-y-6">
-      {/* Run button */}
-      <div className="flex justify-end">
-        <Button onClick={handleRun} disabled={isPending}>
-          {isPending ? "Exécution..." : "Lancer le stress test"}
-        </Button>
-      </div>
+      {isPending && (
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <div className="size-3 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin" />
+          Chargement des stress tests...
+        </div>
+      )}
 
       {error && (
         <Card className="border-destructive">
@@ -413,7 +455,7 @@ export default function StressPage() {
                 )}
               </AnimatePresence>
 
-              {/* Chart */}
+              {/* Animated dual curve */}
               <div className="p-4" style={{ height: 320 }}>
                 <ResponsiveContainer width="100%" height="100%">
                   <LineChart data={displayData}>
@@ -437,101 +479,238 @@ export default function StressPage() {
                       tick={{ fontSize: 11, fill: "rgba(255,255,255,0.3)" }}
                       axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
                     />
+                    {/* Current portfolio */}
                     <Line
                       type="monotone"
-                      dataKey="value"
+                      dataKey="current"
                       stroke={lineColor}
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={false}
+                      name="Portefeuille actuel"
                     />
+                    {/* Optimized portfolio */}
+                    {optimizedDrawdown != null && (
+                      <Line
+                        type="monotone"
+                        dataKey="optimized"
+                        stroke="#3b82f6"
+                        strokeWidth={2}
+                        strokeDasharray="6 3"
+                        dot={false}
+                        isAnimationActive={false}
+                        name="Optimisé Max Sharpe"
+                      />
+                    )}
                   </LineChart>
                 </ResponsiveContainer>
               </div>
+
+              {/* Legend + AI explanation — appears after animation */}
+              <AnimatePresence>
+                {phase === "done" && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: "auto" }}
+                    exit={{ opacity: 0, height: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="border-t border-border px-4 pb-4 pt-3 space-y-3">
+                      {/* Legend */}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1.5">
+                          <span className="size-2 rounded-full" style={{ backgroundColor: lineColor }} />
+                          Portefeuille actuel
+                        </span>
+                        {optimizedDrawdown != null && (
+                          <span className="flex items-center gap-1.5">
+                            <span className="size-2 rounded-full bg-blue-500" />
+                            Optimisé Max Sharpe
+                          </span>
+                        )}
+                      </div>
+
+                      {/* AI explanation — auto-triggered after animation */}
+                      <div className="pt-2 border-t border-border">
+                        {isExplaining && (
+                          <div className="space-y-2">
+                            <div className="h-3 w-full rounded bg-muted animate-pulse" />
+                            <div className="h-3 w-3/4 rounded bg-muted animate-pulse" />
+                            <div className="h-3 w-1/2 rounded bg-muted animate-pulse" />
+                          </div>
+                        )}
+                        {chartExplanation && !isExplaining && (
+                          <motion.div
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.3 }}
+                            className="space-y-2"
+                          >
+                            <p className="text-sm text-muted-foreground italic leading-relaxed">
+                              {chartExplanation}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <span className="text-[10px] text-white/20">Analysé par IA</span>
+                              <button
+                                type="button"
+                                onClick={handleAnalyzeChart}
+                                className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
+                              >
+                                Rafraîchir
+                              </button>
+                            </div>
+                          </motion.div>
+                        )}
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
             </motion.div>
           )}
 
-          {/* Zone 3 — Post-animation KPIs */}
+          {/* Zone 3 — Post-animation KPIs: current vs optimized */}
           <AnimatePresence>
             {phase === "done" && selectedScenario && (
               <motion.div
                 className="space-y-4"
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, staggerChildren: 0.1 }}
+                transition={{ duration: 0.4 }}
               >
-                <div className="grid gap-4 sm:grid-cols-3">
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0 }}
-                  >
-                    <KpiExpandableCard
-                      label={mode === "beginner" ? "Rendement total" : "Total Return"}
-                      value={selectedScenario.total_return * 100}
-                      valuePrefix={selectedScenario.total_return >= 0 ? "+" : ""}
-                      valueSuffix="%"
-                      valueColor={selectedScenario.total_return >= 0 ? "emerald" : "red"}
-                      metricKey="stress-return"
-                      onAnalyze={mkAnalyze("total_return", selectedScenario.total_return, {
-                        max_drawdown: selectedScenario.max_drawdown,
-                        recovery_days: selectedScenario.recovery_days,
-                        scenario: selectedScenario.scenario_name,
-                      })}
-                      isOpen={openCard === "stress-return"}
-                      onToggle={() => toggle("stress-return")}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.08 }}
-                  >
-                    <KpiExpandableCard
-                      label={mode === "beginner" ? "Pire chute" : "Max Drawdown"}
-                      value={selectedScenario.max_drawdown * 100}
-                      valueSuffix="%"
-                      valueColor="red"
-                      metricKey="stress-drawdown"
-                      onAnalyze={mkAnalyze("max_drawdown", selectedScenario.max_drawdown, {
-                        total_return: selectedScenario.total_return,
-                        recovery_days: selectedScenario.recovery_days,
-                        scenario: selectedScenario.scenario_name,
-                      })}
-                      isOpen={openCard === "stress-drawdown"}
-                      onToggle={() => toggle("stress-drawdown")}
-                    />
-                  </motion.div>
-
-                  <motion.div
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.16 }}
-                  >
-                    <KpiExpandableCard
-                      label={mode === "beginner" ? "Temps de récupération" : "Recovery Days"}
-                      value={selectedScenario.recovery_days ?? 0}
-                      decimals={0}
-                      valueSuffix={
-                        selectedScenario.recovery_days !== null
-                          ? mode === "beginner"
-                            ? " jours"
-                            : " days"
-                          : undefined
-                      }
-                      valueColor="foreground"
-                      metricKey="stress-recovery"
-                      onAnalyze={mkAnalyze("recovery_days", selectedScenario.recovery_days ?? -1, {
-                        max_drawdown: selectedScenario.max_drawdown,
-                        total_return: selectedScenario.total_return,
-                        scenario: selectedScenario.scenario_name,
-                      })}
-                      isOpen={openCard === "stress-recovery"}
-                      onToggle={() => toggle("stress-recovery")}
-                    />
-                  </motion.div>
+                {/* Current portfolio row */}
+                <div>
+                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                    <span className="size-2 rounded-full" style={{ backgroundColor: lineColor }} />
+                    {mode === "beginner" ? "Votre portefeuille" : "Portefeuille actuel"}
+                  </p>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
+                      <KpiExpandableCard
+                        label={mode === "beginner" ? "Rendement total" : "Total Return"}
+                        value={selectedScenario.total_return * 100}
+                        valuePrefix={selectedScenario.total_return >= 0 ? "+" : ""}
+                        valueSuffix="%"
+                        valueColor={selectedScenario.total_return >= 0 ? "emerald" : "red"}
+                        metricKey="stress-return"
+                        onAnalyze={mkAnalyze("total_return", selectedScenario.total_return, {
+                          max_drawdown: selectedScenario.max_drawdown,
+                          recovery_days: selectedScenario.recovery_days,
+                          scenario: selectedScenario.scenario_name,
+                        })}
+                        isOpen={openCard === "stress-return"}
+                        onToggle={() => toggle("stress-return")}
+                      />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
+                      <KpiExpandableCard
+                        label={mode === "beginner" ? "Pire chute" : "Max Drawdown"}
+                        value={selectedScenario.max_drawdown * 100}
+                        valueSuffix="%"
+                        valueColor="red"
+                        metricKey="stress-drawdown"
+                        onAnalyze={mkAnalyze("max_drawdown", selectedScenario.max_drawdown, {
+                          total_return: selectedScenario.total_return,
+                          recovery_days: selectedScenario.recovery_days,
+                          scenario: selectedScenario.scenario_name,
+                        })}
+                        isOpen={openCard === "stress-drawdown"}
+                        onToggle={() => toggle("stress-drawdown")}
+                      />
+                    </motion.div>
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+                      <KpiExpandableCard
+                        label={mode === "beginner" ? "Temps de récupération" : "Recovery Days"}
+                        value={selectedScenario.recovery_days ?? 0}
+                        decimals={0}
+                        valueSuffix={
+                          selectedScenario.recovery_days !== null
+                            ? mode === "beginner" ? " jours" : " days"
+                            : undefined
+                        }
+                        valueColor="foreground"
+                        metricKey="stress-recovery"
+                        onAnalyze={mkAnalyze("recovery_days", selectedScenario.recovery_days ?? -1, {
+                          max_drawdown: selectedScenario.max_drawdown,
+                          total_return: selectedScenario.total_return,
+                          scenario: selectedScenario.scenario_name,
+                        })}
+                        isOpen={openCard === "stress-recovery"}
+                        onToggle={() => toggle("stress-recovery")}
+                      />
+                    </motion.div>
+                  </div>
                 </div>
+
+                {/* Optimized portfolio row */}
+                {selectedComparison && (
+                  <div>
+                    <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
+                      <span className="size-2 rounded-full bg-blue-500" />
+                      {mode === "beginner" ? "Portefeuille optimisé" : "Optimisé Max Sharpe"}
+                    </p>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }}>
+                        <KpiExpandableCard
+                          label={mode === "beginner" ? "Rendement total" : "Total Return"}
+                          value={selectedComparison.optimized_return * 100}
+                          valuePrefix={selectedComparison.optimized_return >= 0 ? "+" : ""}
+                          valueSuffix="%"
+                          valueColor={selectedComparison.optimized_return >= 0 ? "emerald" : "red"}
+                          metricKey="stress-opt-return"
+                          onAnalyze={mkAnalyze("total_return", selectedComparison.optimized_return, {
+                            max_drawdown: selectedComparison.optimized_drawdown,
+                            recovery_days: selectedComparison.optimized_recovery_days,
+                            scenario: selectedScenario.scenario_name,
+                            portfolio_type: "optimized_max_sharpe",
+                          })}
+                          isOpen={openCard === "stress-opt-return"}
+                          onToggle={() => toggle("stress-opt-return")}
+                        />
+                      </motion.div>
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
+                        <KpiExpandableCard
+                          label={mode === "beginner" ? "Pire chute" : "Max Drawdown"}
+                          value={selectedComparison.optimized_drawdown * 100}
+                          valueSuffix="%"
+                          valueColor="red"
+                          metricKey="stress-opt-drawdown"
+                          onAnalyze={mkAnalyze("max_drawdown", selectedComparison.optimized_drawdown, {
+                            total_return: selectedComparison.optimized_return,
+                            recovery_days: selectedComparison.optimized_recovery_days,
+                            scenario: selectedScenario.scenario_name,
+                            portfolio_type: "optimized_max_sharpe",
+                          })}
+                          isOpen={openCard === "stress-opt-drawdown"}
+                          onToggle={() => toggle("stress-opt-drawdown")}
+                        />
+                      </motion.div>
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
+                        <KpiExpandableCard
+                          label={mode === "beginner" ? "Temps de récupération" : "Recovery Days"}
+                          value={selectedComparison.optimized_recovery_days ?? 0}
+                          decimals={0}
+                          valueSuffix={
+                            selectedComparison.optimized_recovery_days !== null
+                              ? mode === "beginner" ? " jours" : " days"
+                              : undefined
+                          }
+                          valueColor="foreground"
+                          metricKey="stress-opt-recovery"
+                          onAnalyze={mkAnalyze("recovery_days", selectedComparison.optimized_recovery_days ?? -1, {
+                            max_drawdown: selectedComparison.optimized_drawdown,
+                            total_return: selectedComparison.optimized_return,
+                            scenario: selectedScenario.scenario_name,
+                            portfolio_type: "optimized_max_sharpe",
+                          })}
+                          isOpen={openCard === "stress-opt-recovery"}
+                          onToggle={() => toggle("stress-opt-recovery")}
+                        />
+                      </motion.div>
+                    </div>
+                  </div>
+                )}
               </motion.div>
             )}
           </AnimatePresence>

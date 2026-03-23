@@ -68,6 +68,7 @@ export async function fetchStressExplanation(params: {
     total_return: number;
     max_drawdown: number;
     recovery_days: number | null;
+    optimized_drawdown?: number | null;
   }[];
 }): Promise<ExplanationResponse> {
   return apiClient<ExplanationResponse>("/api/v1/stress/explain-result", {
