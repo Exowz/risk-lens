@@ -1,17 +1,16 @@
 "use client";
 
 /**
- * Stress test scenario result card with WobbleCard + CountUp.
+ * Stress test scenario result card with WobbleCard + ExpandableMetric.
  *
- * In beginner mode: shows only total_return and max_drawdown.
- * In expert mode: shows all metrics including recovery days.
+ * Each metric row is expandable with mode-aware explanations.
  *
  * Depends on: types/stress.ts, Aceternity WobbleCard, ReactBits CountUp
  * Used by: app/(dashboard)/stress/page.tsx
  */
 
+import { ExpandableMetric } from "@/components/shared/expandable-metric";
 import { CountUp } from "@/components/ui/count-up";
-import { MetricTooltip } from "@/components/shared/metric-tooltip";
 import { WobbleCard } from "@/components/ui/wobble-card";
 import { useMode } from "@/lib/store/mode-context";
 import type { ScenarioResult } from "@/types/stress";
@@ -33,13 +32,13 @@ export function StressScenarioCard({ scenario }: StressScenarioCardProps) {
           {scenario.start_date} — {scenario.end_date}
         </p>
       </div>
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="text-sm text-muted-foreground">
-            {mode === "beginner" ? "Rendement total" : "Total Return"}
-          </span>
+
+      <ExpandableMetric
+        labelBeginner="Rendement total"
+        labelExpert="Total Return"
+        value={
           <span
-            className={`text-sm font-mono font-semibold ${
+            className={`font-mono ${
               scenario.total_return >= 0
                 ? "text-emerald-500"
                 : "text-red-500"
@@ -52,41 +51,51 @@ export function StressScenarioCard({ scenario }: StressScenarioCardProps) {
               prefix={scenario.total_return >= 0 ? "+" : ""}
             />
           </span>
-        </div>
+        }
+        explanationBeginner="Ce que vous auriez gagné ou perdu sur l'ensemble de la période de crise si vous aviez gardé ce portefeuille."
+        explanationExpert="Rendement cumulé total sur la fenêtre de stress = (Prix_final / Prix_initial) - 1."
+      />
 
-        <div className="flex items-center justify-between">
-          <MetricTooltip metricKey="drawdown" label="Max Drawdown">
-            <span className="text-sm font-mono font-semibold text-red-500">
-              <CountUp
-                to={scenario.max_drawdown * 100}
-                duration={1200}
-                suffix="%"
-              />
+      <ExpandableMetric
+        labelBeginner="Pire chute"
+        labelExpert="Max Drawdown"
+        value={
+          <span className="font-mono text-red-500">
+            <CountUp
+              to={scenario.max_drawdown * 100}
+              duration={1200}
+              suffix="%"
+            />
+          </span>
+        }
+        explanationBeginner="La pire chute subie pendant cette crise, depuis le point le plus haut jusqu'au point le plus bas."
+        explanationExpert="Drawdown maximal intra-crise sur la fenêtre temporelle du scénario de stress."
+      />
+
+      {(mode === "expert" || scenario.recovery_days !== null) && (
+        <ExpandableMetric
+          labelBeginner="Temps de récupération"
+          labelExpert="Recovery Days"
+          value={
+            <span className="font-mono text-foreground">
+              {scenario.recovery_days !== null ? (
+                <>
+                  <CountUp
+                    to={scenario.recovery_days}
+                    duration={1200}
+                    decimals={0}
+                  />{" "}
+                  {mode === "beginner" ? "jours" : "days"}
+                </>
+              ) : (
+                mode === "beginner" ? "Non récupéré" : "Not recovered"
+              )}
             </span>
-          </MetricTooltip>
-        </div>
-
-        {mode === "expert" && (
-          <div className="flex items-center justify-between">
-            <MetricTooltip metricKey="recovery" label="Recovery">
-              <span className="text-sm font-mono font-semibold">
-                {scenario.recovery_days !== null ? (
-                  <>
-                    <CountUp
-                      to={scenario.recovery_days}
-                      duration={1200}
-                      decimals={0}
-                    />{" "}
-                    days
-                  </>
-                ) : (
-                  "Not recovered"
-                )}
-              </span>
-            </MetricTooltip>
-          </div>
-        )}
-      </div>
+          }
+          explanationBeginner="Combien de jours il aurait fallu pour retrouver votre niveau d'avant la crise. 'Non récupéré' signifie que le portefeuille n'a pas retrouvé son niveau sur la période."
+          explanationExpert="Nombre de jours de trading entre le creux maximal et le retour au niveau pré-crise. Null si non récupéré dans la fenêtre d'analyse."
+        />
+      )}
     </WobbleCard>
   );
 }

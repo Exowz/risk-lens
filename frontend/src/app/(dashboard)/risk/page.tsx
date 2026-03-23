@@ -64,23 +64,42 @@ export default function RiskPage() {
           {/* Monte Carlo simulation */}
           <MonteCarloPanel portfolioId={activePortfolioId} />
 
-          <WhyCard>
-            <p className="mb-2">
-              <strong>Value at Risk (VaR)</strong> quantifie la perte maximale attendue sur un jour
-              à un niveau de confiance donné. C'est l'indicateur de risque le plus utilisé par les
-              institutions financières pour fixer des limites de trading et calculer les réserves de capital.
-            </p>
-            <p className="mb-2">
-              <strong>CVaR (Expected Shortfall)</strong> va plus loin en mesurant la perte moyenne
-              dans les pires scénarios — ceux au-delà de la VaR. C'est une mesure plus conservatrice
-              qui capture le risque de queue de distribution.
-            </p>
-            <p>
-              <strong>Monte Carlo</strong> simule des milliers de trajectoires possibles pour votre
-              portefeuille afin d'estimer la distribution complète des rendements futurs, pas
-              seulement les cas extrêmes.
-            </p>
-          </WhyCard>
+          <WhyCard
+            beginnerContent={
+              <>
+                <p className="mb-2">
+                  La <strong>VaR</strong> vous dit combien vous pourriez perdre en un jour dans le pire
+                  des cas « normal ». C&apos;est comme une limite de vitesse pour votre risque.
+                </p>
+                <p className="mb-2">
+                  Le <strong>CVaR</strong> regarde ce qui se passe quand les choses tournent vraiment
+                  mal — la perte moyenne dans les pires scénarios.
+                </p>
+                <p>
+                  <strong>Monte Carlo</strong> simule des milliers de futurs possibles pour voir
+                  comment votre portefeuille pourrait évoluer sur un an.
+                </p>
+              </>
+            }
+            expertContent={
+              <>
+                <p className="mb-2">
+                  <strong>Value at Risk (VaR)</strong> quantifies the maximum expected loss at a given
+                  confidence level. It is the standard risk measure used by financial institutions for
+                  trading limits and capital reserve calculations.
+                </p>
+                <p className="mb-2">
+                  <strong>CVaR (Expected Shortfall)</strong> measures the mean loss beyond the VaR
+                  threshold — a coherent risk measure that captures tail risk better than VaR alone.
+                </p>
+                <p>
+                  <strong>Monte Carlo (GBM)</strong> simulates thousands of portfolio trajectories
+                  using Geometric Brownian Motion to estimate the full return distribution, not just
+                  tail percentiles.
+                </p>
+              </>
+            }
+          />
         </>
       )}
     </div>

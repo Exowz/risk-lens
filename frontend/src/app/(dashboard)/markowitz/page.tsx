@@ -11,16 +11,16 @@
  * Used by: /markowitz route
  */
 
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import Link from "next/link";
 
 import { EfficientFrontier } from "@/components/charts/efficient-frontier";
-import { MetricTooltip } from "@/components/shared/metric-tooltip";
+import { AiChartExplanation } from "@/components/shared/ai-chart-explanation";
+import { ExpandableMetric } from "@/components/shared/expandable-metric";
 import { WhyCard } from "@/components/shared/why-card";
 import { BlurText } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
 import { CountUp } from "@/components/ui/count-up";
-import { WobbleCard } from "@/components/ui/wobble-card";
 import {
   Card,
   CardContent,
@@ -36,6 +36,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useMarkowitzExplanation } from "@/lib/api/explain";
 import { useMarkowitz } from "@/lib/api/markowitz";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
@@ -48,6 +49,21 @@ export default function MarkowitzPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mutate, data, isPending, error, reset } = useMarkowitz();
   const { mode } = useMode();
+  const markowitzExplanation = useMarkowitzExplanation();
+
+  const triggerExplanation = useCallback(() => {
+    if (!data) return;
+    markowitzExplanation.mutate({
+      mode,
+      current_sharpe: data.current_portfolio.sharpe_ratio,
+      current_volatility: data.current_portfolio.volatility,
+      current_return: data.current_portfolio.expected_return,
+      max_sharpe_ratio: data.max_sharpe.sharpe_ratio,
+      max_sharpe_volatility: data.max_sharpe.volatility,
+      max_sharpe_return: data.max_sharpe.expected_return,
+      min_variance_volatility: data.min_variance.volatility,
+    });
+  }, [data, mode, markowitzExplanation]);
 
   useEffect(() => {
     if (activePortfolioId) {
@@ -154,52 +170,69 @@ export default function MarkowitzPage() {
                 maxSharpe={data.max_sharpe}
                 currentPortfolio={data.current_portfolio}
               />
+              <AiChartExplanation
+                onAnalyze={triggerExplanation}
+                explanation={markowitzExplanation.data?.explanation}
+                isPending={markowitzExplanation.isPending}
+                isError={markowitzExplanation.isError}
+              />
             </CardContent>
           </Card>
 
-          {/* Summary KPIs with WobbleCard */}
-          <div className="grid gap-4 sm:grid-cols-3">
-            <WobbleCard containerClassName="bg-card" className="p-4 !py-4">
-              <p className="text-xs text-muted-foreground mb-1">
-                {mode === "beginner" ? "Risque minimum" : "Min Variance"}
-              </p>
-              <p className="text-2xl font-mono font-bold text-emerald-500">
-                <CountUp to={data.min_variance.volatility * 100} duration={1200} suffix="% vol" />
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Return: <CountUp to={data.min_variance.expected_return * 100} duration={1200} suffix="%" />
-                {" · Sharpe: "}
-                <CountUp to={data.min_variance.sharpe_ratio} duration={1200} decimals={2} />
-              </p>
-            </WobbleCard>
-
-            <WobbleCard containerClassName="bg-card" className="p-4 !py-4">
-              <MetricTooltip metricKey="sharpe" label={mode === "beginner" ? "Meilleur ratio rendement/risque" : "Max Sharpe"}>
-                <p className="text-2xl font-mono font-bold text-blue-400">
-                  <CountUp to={data.max_sharpe.sharpe_ratio} duration={1200} decimals={2} suffix=" Sharpe" />
-                </p>
-              </MetricTooltip>
-              <p className="text-xs text-muted-foreground mt-1">
-                Return: <CountUp to={data.max_sharpe.expected_return * 100} duration={1200} suffix="%" />
-                {" · Vol: "}
-                <CountUp to={data.max_sharpe.volatility * 100} duration={1200} suffix="%" />
-              </p>
-            </WobbleCard>
-
-            <WobbleCard containerClassName="bg-card" className="p-4 !py-4">
-              <p className="text-xs text-muted-foreground mb-1">
-                {mode === "beginner" ? "Votre portefeuille" : "Current Portfolio"}
-              </p>
-              <p className="text-2xl font-mono font-bold text-red-500">
-                <CountUp to={data.current_portfolio.sharpe_ratio} duration={1200} decimals={2} suffix=" Sharpe" />
-              </p>
-              <p className="text-xs text-muted-foreground mt-1">
-                Return: <CountUp to={data.current_portfolio.expected_return * 100} duration={1200} suffix="%" />
-                {" · Vol: "}
-                <CountUp to={data.current_portfolio.volatility * 100} duration={1200} suffix="%" />
-              </p>
-            </WobbleCard>
-          </div>
+          {/* Summary KPIs with ExpandableMetric */}
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {mode === "beginner" ? "Résumé des portefeuilles" : "Portfolio Comparison"}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <ExpandableMetric
+                labelBeginner="Votre score rendement/risque"
+                labelExpert="Current Sharpe"
+                value={
+                  <span className="font-mono text-red-500">
+                    <CountUp to={data.current_portfolio.sharpe_ratio} duration={1200} decimals={2} />
+                  </span>
+                }
+                explanationBeginner="Votre portefeuille actuel obtient ce score rendement/risque. Le portefeuille optimal obtient un meilleur score."
+                explanationExpert="Sharpe ratio du portefeuille actuel vs max-Sharpe sur la frontière efficiente."
+              />
+              <ExpandableMetric
+                labelBeginner="Meilleur score possible"
+                labelExpert="Max Sharpe"
+                value={
+                  <span className="font-mono text-blue-400">
+                    <CountUp to={data.max_sharpe.sharpe_ratio} duration={1200} decimals={2} />
+                  </span>
+                }
+                explanationBeginner="Le meilleur score rendement/risque atteignable en réorganisant vos actifs."
+                explanationExpert="Sharpe ratio du portefeuille tangent (max-Sharpe) sur la frontière efficiente, Rf = 0."
+              />
+              <ExpandableMetric
+                labelBeginner="Risque minimum possible"
+                labelExpert="Min Variance Vol"
+                value={
+                  <span className="font-mono text-emerald-500">
+                    <CountUp to={data.min_variance.volatility * 100} duration={1200} suffix="%" />
+                  </span>
+                }
+                explanationBeginner="La volatilité la plus basse possible avec vos actifs. Moins de volatilité = moins de surprise."
+                explanationExpert="Volatilité du portefeuille de variance minimale sur la frontière efficiente."
+              />
+              <ExpandableMetric
+                labelBeginner="Votre volatilité actuelle"
+                labelExpert="Current Vol"
+                value={
+                  <span className="font-mono text-foreground">
+                    <CountUp to={data.current_portfolio.volatility * 100} duration={1200} suffix="%" />
+                  </span>
+                }
+                explanationBeginner="Mesure l'agitation de votre portefeuille. Plus ce chiffre est haut, plus les variations quotidiennes sont importantes et imprévisibles."
+                explanationExpert="Volatilité annualisée = σ_journalière × √252. Écart-type des rendements logarithmiques journaliers."
+              />
+            </CardContent>
+          </Card>
 
           {/* Beginner: simplified recommended allocation card */}
           {mode === "beginner" && (
@@ -272,22 +305,41 @@ export default function MarkowitzPage() {
             </Card>
           )}
 
-          <WhyCard>
-            <p className="mb-2">
-              <strong>L&apos;optimisation de Markowitz</strong> trouve les allocations d&apos;actifs offrant le
-              meilleur compromis rendement/risque. Le portefeuille &quot;Min Variance&quot; minimise la volatilité
-              totale, tandis que le &quot;Max Sharpe&quot; maximise le rendement par unité de risque.
-            </p>
-            <p className="mb-2">
-              La <strong>frontière efficiente</strong> représente l&apos;ensemble des portefeuilles optimaux :
-              tout portefeuille en dessous de cette courbe est sous-optimal (on peut obtenir plus de
-              rendement pour le même risque, ou moins de risque pour le même rendement).
-            </p>
-            <p>
-              Comparez votre portefeuille actuel aux allocations optimales pour identifier des
-              opportunités de rééquilibrage.
-            </p>
-          </WhyCard>
+          <WhyCard
+            beginnerContent={
+              <>
+                <p className="mb-2">
+                  L&apos;optimisation de Markowitz cherche la <strong>meilleure répartition</strong> de
+                  vos actifs : celle qui donne le plus de rendement pour un niveau de risque donné.
+                </p>
+                <p className="mb-2">
+                  La <strong>courbe bleue</strong> montre tous les portefeuilles optimaux possibles.
+                  Si votre point rouge est en dessous, vous pouvez faire mieux sans prendre plus de risque.
+                </p>
+                <p>
+                  Regardez l&apos;&quot;allocation recommandée&quot; pour voir comment rééquilibrer vos actifs.
+                </p>
+              </>
+            }
+            expertContent={
+              <>
+                <p className="mb-2">
+                  <strong>Markowitz Mean-Variance Optimization</strong> computes the efficient frontier
+                  — the set of portfolios maximizing expected return for each volatility level using
+                  PyPortfolioOpt.
+                </p>
+                <p className="mb-2">
+                  The <strong>Min Variance</strong> portfolio minimizes total volatility. The{" "}
+                  <strong>Max Sharpe</strong> portfolio maximizes excess return per unit of risk
+                  (Sharpe ratio with Rf = 0).
+                </p>
+                <p>
+                  Compare your current allocation against optimal weights to identify rebalancing
+                  opportunities and quantify the efficiency gap.
+                </p>
+              </>
+            }
+          />
         </>
       )}
     </div>
