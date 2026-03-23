@@ -250,7 +250,16 @@ export default function DashboardPage() {
           <BentoGridItem
             className="md:col-span-2"
             title={
-              <span className="text-base font-medium">Live Prices</span>
+              <span className="text-base font-medium flex items-center gap-2">
+                Live Prices
+                <span className="flex items-center gap-1 text-xs text-emerald-500 font-normal">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
+                  </span>
+                  Live
+                </span>
+              </span>
             }
             description={
               <div className="space-y-2 mt-1">
