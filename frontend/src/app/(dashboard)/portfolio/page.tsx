@@ -10,6 +10,9 @@
  * Used by: /dashboard/portfolio route
  */
 
+import { useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+
 import { PerformanceChart } from "@/components/charts/performance-chart";
 import { PortfolioForm } from "@/components/portfolio/portfolio-form";
 import { PortfolioSelector } from "@/components/portfolio/portfolio-selector";
@@ -21,6 +24,26 @@ import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 export default function PortfolioPage() {
   const { activePortfolioId } = usePortfolioStore();
+  const searchParams = useSearchParams();
+
+  // Parse pre-fill params from Risk Profiler redirect
+  const prefillData = useMemo(() => {
+    if (searchParams.get("prefill") !== "true") return null;
+
+    const name = searchParams.get("name") ?? "";
+    const assetsParam = searchParams.get("assets") ?? "";
+    const assets = assetsParam
+      .split(",")
+      .map((a) => {
+        const [ticker, weightStr] = a.split(":");
+        const weight = parseFloat(weightStr);
+        if (!ticker || isNaN(weight)) return null;
+        return { ticker, weight };
+      })
+      .filter(Boolean) as { ticker: string; weight: number }[];
+
+    return assets.length > 0 ? { name, assets } : null;
+  }, [searchParams]);
   const { data: portfolio, isLoading: portfolioLoading } =
     usePortfolio(activePortfolioId);
   const { data: prices, isLoading: pricesLoading } =
@@ -70,7 +93,10 @@ export default function PortfolioPage() {
         {/* Right sidebar: selector + form */}
         <div className="space-y-6">
           <PortfolioSelector />
-          <PortfolioForm />
+          <PortfolioForm
+            initialName={prefillData?.name}
+            initialAssets={prefillData?.assets}
+          />
         </div>
       </div>
     </div>

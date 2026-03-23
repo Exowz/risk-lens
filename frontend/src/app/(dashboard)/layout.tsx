@@ -11,15 +11,17 @@
  * Used by: all (dashboard)/* pages
  */
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { AvatarZone } from "@/components/layout/avatar-zone";
 import { CanvasHeader } from "@/components/layout/canvas-header";
 import { SidebarRail } from "@/components/layout/sidebar-rail";
 import { TopBar } from "@/components/layout/top-bar";
+import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolios } from "@/lib/api/portfolios";
+import { useRiskProfile } from "@/lib/api/profile";
 import { useSession } from "@/lib/auth/client";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
@@ -30,8 +32,11 @@ export default function DashboardLayout({
 }) {
   const router = useRouter();
   const { data: session, isPending } = useSession();
-  const { data: portfolios } = usePortfolios();
+  const { data: portfolios, isSuccess: portfoliosLoaded } = usePortfolios();
+  const { data: riskProfile, isSuccess: profileLoaded } = useRiskProfile();
   const { activePortfolioId, setActivePortfolio } = usePortfolioStore();
+  const [showProfiler, setShowProfiler] = useState(false);
+  const [profilerDismissed, setProfilerDismissed] = useState(false);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -44,6 +49,20 @@ export default function DashboardLayout({
       setActivePortfolio(portfolios[0].id);
     }
   }, [activePortfolioId, portfolios, setActivePortfolio]);
+
+  // Show Risk Profiler onboarding if user has no portfolios and no existing profile
+  useEffect(() => {
+    if (
+      portfoliosLoaded &&
+      profileLoaded &&
+      portfolios &&
+      portfolios.length === 0 &&
+      !riskProfile &&
+      !profilerDismissed
+    ) {
+      setShowProfiler(true);
+    }
+  }, [portfoliosLoaded, profileLoaded, portfolios, riskProfile, profilerDismissed]);
 
   if (isPending || !session) {
     return (
@@ -70,6 +89,15 @@ export default function DashboardLayout({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Risk Profiler Onboarding */}
+      <RiskProfilerModal
+        open={showProfiler}
+        onClose={() => {
+          setShowProfiler(false);
+          setProfilerDismissed(true);
+        }}
+      />
+
       {/* Layer 1 — Top Bar */}
       <TopBar />
 

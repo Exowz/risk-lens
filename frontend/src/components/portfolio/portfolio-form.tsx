@@ -26,9 +26,15 @@ import {
 
 interface PortfolioFormProps {
   onSuccess?: () => void;
+  initialName?: string;
+  initialAssets?: { ticker: string; weight: number }[];
 }
 
-export function PortfolioForm({ onSuccess }: PortfolioFormProps) {
+export function PortfolioForm({
+  onSuccess,
+  initialName,
+  initialAssets,
+}: PortfolioFormProps) {
   const createMutation = useCreatePortfolio();
 
   const {
@@ -40,8 +46,11 @@ export function PortfolioForm({ onSuccess }: PortfolioFormProps) {
   } = useForm<PortfolioFormData>({
     resolver: zodResolver(portfolioCreateSchema),
     defaultValues: {
-      name: "",
-      assets: [{ ticker: "", weight: 0 }],
+      name: initialName ?? "",
+      assets:
+        initialAssets && initialAssets.length > 0
+          ? initialAssets
+          : [{ ticker: "", weight: 0 }],
     },
   });
 
