@@ -3,11 +3,11 @@
 /**
  * Markowitz efficient frontier page.
  *
- * Displays D3 scatter plot of the efficient frontier and a table comparing
- * optimal portfolio weights (min variance vs max Sharpe) against current.
+ * Expert mode: full frontier chart, KPI cards, weights comparison table, WhyCard collapsed.
+ * Beginner mode: frontier chart, simplified "recommended allocation" card, WhyCard expanded.
  *
  * Depends on: components/charts/efficient-frontier.tsx, lib/api/markowitz.ts,
- *             lib/store/portfolio-store.ts
+ *             lib/store/portfolio-store.ts, lib/store/mode-context.tsx
  * Used by: /markowitz route
  */
 
@@ -15,9 +15,12 @@ import { useEffect } from "react";
 import Link from "next/link";
 
 import { EfficientFrontier } from "@/components/charts/efficient-frontier";
+import { MetricTooltip } from "@/components/shared/metric-tooltip";
 import { WhyCard } from "@/components/shared/why-card";
 import { BlurText } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
+import { CountUp } from "@/components/ui/count-up";
+import { WobbleCard } from "@/components/ui/wobble-card";
 import {
   Card,
   CardContent,
@@ -34,6 +37,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { useMarkowitz } from "@/lib/api/markowitz";
+import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 function fmt(value: number, decimals = 2): string {
@@ -43,8 +47,8 @@ function fmt(value: number, decimals = 2): string {
 export default function MarkowitzPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mutate, data, isPending, error, reset } = useMarkowitz();
+  const { mode } = useMode();
 
-  // Auto-compute when portfolio changes
   useEffect(() => {
     if (activePortfolioId) {
       reset();
@@ -59,13 +63,15 @@ export default function MarkowitzPage() {
   if (!activePortfolioId) {
     return (
       <div className="space-y-8">
-        <div>
+        <div className="border-b border-border pb-3">
           <BlurText
             text="Markowitz Optimization"
             className="text-3xl font-bold tracking-tight"
           />
           <p className="text-muted-foreground">
-            Efficient frontier and optimal portfolio allocation
+            {mode === "beginner"
+              ? "Trouvez la meilleure répartition pour votre portefeuille"
+              : "Efficient frontier and optimal portfolio allocation"}
           </p>
         </div>
         <Card className="border-dashed">
@@ -86,7 +92,6 @@ export default function MarkowitzPage() {
     );
   }
 
-  // Gather all tickers from weights data for the table
   const allTickers = data
     ? [
         ...new Set([
@@ -98,14 +103,16 @@ export default function MarkowitzPage() {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between border-b border-border pb-3">
         <div>
           <BlurText
             text="Markowitz Optimization"
             className="text-3xl font-bold tracking-tight"
           />
           <p className="text-muted-foreground">
-            Efficient frontier and optimal portfolio allocation
+            {mode === "beginner"
+              ? "Trouvez la meilleure répartition pour votre portefeuille"
+              : "Efficient frontier and optimal portfolio allocation"}
           </p>
         </div>
         <Button onClick={handleCompute} disabled={isPending}>
@@ -128,11 +135,17 @@ export default function MarkowitzPage() {
           {/* Efficient Frontier Chart */}
           <Card>
             <CardHeader>
-              <CardTitle>Efficient Frontier</CardTitle>
-              <CardDescription>
-                {data.from_cache ? "Cached result" : "Freshly computed"} —{" "}
-                {data.frontier_points.length} frontier points
-              </CardDescription>
+              <CardTitle>
+                {mode === "beginner"
+                  ? "Carte des portefeuilles possibles"
+                  : "Efficient Frontier"}
+              </CardTitle>
+              {mode === "expert" && (
+                <CardDescription>
+                  {data.from_cache ? "Cached result" : "Freshly computed"} —{" "}
+                  {data.frontier_points.length} frontier points
+                </CardDescription>
+              )}
             </CardHeader>
             <CardContent>
               <EfficientFrontier
@@ -144,100 +157,129 @@ export default function MarkowitzPage() {
             </CardContent>
           </Card>
 
-          {/* Summary KPIs */}
+          {/* Summary KPIs with WobbleCard */}
           <div className="grid gap-4 sm:grid-cols-3">
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Min Variance</CardDescription>
-                <CardTitle className="text-2xl text-green-600 dark:text-green-400">
-                  {fmt(data.min_variance.volatility)} vol
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Return: {fmt(data.min_variance.expected_return)} · Sharpe:{" "}
-                  {data.min_variance.sharpe_ratio.toFixed(2)}
-                </p>
-              </CardContent>
-            </Card>
+            <WobbleCard containerClassName="bg-card" className="p-4 !py-4">
+              <p className="text-xs text-muted-foreground mb-1">
+                {mode === "beginner" ? "Risque minimum" : "Min Variance"}
+              </p>
+              <p className="text-2xl font-mono font-bold text-emerald-500">
+                <CountUp to={data.min_variance.volatility * 100} duration={1200} suffix="% vol" />
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Return: <CountUp to={data.min_variance.expected_return * 100} duration={1200} suffix="%" />
+                {" · Sharpe: "}
+                <CountUp to={data.min_variance.sharpe_ratio} duration={1200} decimals={2} />
+              </p>
+            </WobbleCard>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Max Sharpe</CardDescription>
-                <CardTitle className="text-2xl text-blue-600 dark:text-blue-400">
-                  {data.max_sharpe.sharpe_ratio.toFixed(2)} Sharpe
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Return: {fmt(data.max_sharpe.expected_return)} · Vol:{" "}
-                  {fmt(data.max_sharpe.volatility)}
+            <WobbleCard containerClassName="bg-card" className="p-4 !py-4">
+              <MetricTooltip metricKey="sharpe" label={mode === "beginner" ? "Meilleur ratio rendement/risque" : "Max Sharpe"}>
+                <p className="text-2xl font-mono font-bold text-blue-400">
+                  <CountUp to={data.max_sharpe.sharpe_ratio} duration={1200} decimals={2} suffix=" Sharpe" />
                 </p>
-              </CardContent>
-            </Card>
+              </MetricTooltip>
+              <p className="text-xs text-muted-foreground mt-1">
+                Return: <CountUp to={data.max_sharpe.expected_return * 100} duration={1200} suffix="%" />
+                {" · Vol: "}
+                <CountUp to={data.max_sharpe.volatility * 100} duration={1200} suffix="%" />
+              </p>
+            </WobbleCard>
 
-            <Card>
-              <CardHeader className="pb-2">
-                <CardDescription>Current Portfolio</CardDescription>
-                <CardTitle className="text-2xl text-red-600 dark:text-red-400">
-                  {data.current_portfolio.sharpe_ratio.toFixed(2)} Sharpe
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <p className="text-xs text-muted-foreground">
-                  Return: {fmt(data.current_portfolio.expected_return)} · Vol:{" "}
-                  {fmt(data.current_portfolio.volatility)}
-                </p>
-              </CardContent>
-            </Card>
+            <WobbleCard containerClassName="bg-card" className="p-4 !py-4">
+              <p className="text-xs text-muted-foreground mb-1">
+                {mode === "beginner" ? "Votre portefeuille" : "Current Portfolio"}
+              </p>
+              <p className="text-2xl font-mono font-bold text-red-500">
+                <CountUp to={data.current_portfolio.sharpe_ratio} duration={1200} decimals={2} suffix=" Sharpe" />
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                Return: <CountUp to={data.current_portfolio.expected_return * 100} duration={1200} suffix="%" />
+                {" · Vol: "}
+                <CountUp to={data.current_portfolio.volatility * 100} duration={1200} suffix="%" />
+              </p>
+            </WobbleCard>
           </div>
 
-          {/* Weights Comparison Table */}
-          <Card>
-            <CardHeader>
-              <CardTitle>Optimal Weights Comparison</CardTitle>
-              <CardDescription>
-                Suggested allocations vs your current portfolio
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Ticker</TableHead>
-                    <TableHead className="text-right text-green-600 dark:text-green-400">
-                      Min Variance
-                    </TableHead>
-                    <TableHead className="text-right text-blue-600 dark:text-blue-400">
-                      Max Sharpe
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {allTickers.map((ticker) => (
-                    <TableRow key={ticker}>
-                      <TableCell className="font-medium">{ticker}</TableCell>
-                      <TableCell className="text-right">
-                        {fmt(data.min_variance.weights[ticker] ?? 0, 1)}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        {fmt(data.max_sharpe.weights[ticker] ?? 0, 1)}
-                      </TableCell>
+          {/* Beginner: simplified recommended allocation card */}
+          {mode === "beginner" && (
+            <Card className="border-blue-500/20">
+              <CardHeader>
+                <CardTitle className="text-blue-400">
+                  Allocation recommandée
+                </CardTitle>
+                <CardDescription>
+                  Répartition optimale selon le ratio de Sharpe maximum
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {Object.entries(data.max_sharpe.weights)
+                    .sort(([, a], [, b]) => b - a)
+                    .map(([ticker, weight]) => (
+                      <div
+                        key={ticker}
+                        className="flex items-center justify-between rounded-md border px-3 py-2"
+                      >
+                        <span className="font-medium">{ticker}</span>
+                        <span className="font-mono text-blue-400">
+                          {fmt(weight, 1)}
+                        </span>
+                      </div>
+                    ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Expert: full weights comparison table */}
+          {mode === "expert" && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Optimal Weights Comparison</CardTitle>
+                <CardDescription>
+                  Suggested allocations vs your current portfolio
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Ticker</TableHead>
+                      <TableHead className="text-right text-emerald-500">
+                        Min Variance
+                      </TableHead>
+                      <TableHead className="text-right text-blue-400">
+                        Max Sharpe
+                      </TableHead>
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                  </TableHeader>
+                  <TableBody>
+                    {allTickers.map((ticker) => (
+                      <TableRow key={ticker}>
+                        <TableCell className="font-medium">{ticker}</TableCell>
+                        <TableCell className="text-right font-mono">
+                          {fmt(data.min_variance.weights[ticker] ?? 0, 1)}
+                        </TableCell>
+                        <TableCell className="text-right font-mono">
+                          {fmt(data.max_sharpe.weights[ticker] ?? 0, 1)}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </CardContent>
+            </Card>
+          )}
 
           <WhyCard>
             <p className="mb-2">
-              <strong>L'optimisation de Markowitz</strong> trouve les allocations d'actifs offrant le
+              <strong>L&apos;optimisation de Markowitz</strong> trouve les allocations d&apos;actifs offrant le
               meilleur compromis rendement/risque. Le portefeuille &quot;Min Variance&quot; minimise la volatilité
               totale, tandis que le &quot;Max Sharpe&quot; maximise le rendement par unité de risque.
             </p>
             <p className="mb-2">
-              La <strong>frontière efficiente</strong> représente l'ensemble des portefeuilles optimaux :
+              La <strong>frontière efficiente</strong> représente l&apos;ensemble des portefeuilles optimaux :
               tout portefeuille en dessous de cette courbe est sous-optimal (on peut obtenir plus de
               rendement pour le même risque, ou moins de risque pour le même rendement).
             </p>

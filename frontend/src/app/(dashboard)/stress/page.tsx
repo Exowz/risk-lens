@@ -27,10 +27,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useStressTest } from "@/lib/api/stress";
+import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 export default function StressPage() {
   const { activePortfolioId } = usePortfolioStore();
+  const { mode } = useMode();
   const { mutate, data, isPending, error, reset } = useStressTest();
 
   // Reset when portfolio changes
@@ -78,7 +80,9 @@ export default function StressPage() {
         <div>
           <BlurText text="Stress Testing" className="text-3xl font-bold tracking-tight" />
           <p className="text-muted-foreground">
-            Historical crisis scenario analysis — 2008, 2020, 2022
+            {mode === "beginner"
+              ? "Comment votre portefeuille aurait survécu aux crises passées"
+              : "Historical crisis scenario analysis — 2008, 2020, 2022"}
           </p>
         </div>
         <Button onClick={handleRun} disabled={isPending}>

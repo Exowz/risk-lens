@@ -27,6 +27,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolios } from "@/lib/api/portfolios";
 import { useGenerateReport } from "@/lib/api/report";
+import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 // ── PDF text renderer ──
