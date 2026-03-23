@@ -56,7 +56,7 @@ interface CrisisCard {
 
 const CRISES: CrisisCard[] = [
   {
-    key: "financial_crisis_2008",
+    key: "Financial Crisis 2008",
     title: "Crise Financière 2008",
     period: "Sep 2008 → Mar 2009",
     phrase: "L'effondrement de Lehman Brothers",
@@ -64,7 +64,7 @@ const CRISES: CrisisCard[] = [
     icon: Lightning,
   },
   {
-    key: "covid_2020",
+    key: "COVID-19 2020",
     title: "Pandémie COVID-19",
     period: "Fév 2020 → Avr 2020",
     phrase: "Les marchés s'effondrent en 33 jours",
@@ -72,7 +72,7 @@ const CRISES: CrisisCard[] = [
     icon: Warning,
   },
   {
-    key: "rate_hikes_2022",
+    key: "Rate Hikes 2022",
     title: "Hausse des taux Fed",
     period: "Jan 2022 → Oct 2022",
     phrase: "La fin de l'argent gratuit",
@@ -140,9 +140,16 @@ export default function StressPage() {
     return () => animTimers.current.forEach(clearTimeout);
   }, []);
 
+  // Auto-run stress test when portfolio changes
   useEffect(() => {
-    if (activePortfolioId) reset();
-  }, [activePortfolioId, reset]);
+    if (activePortfolioId) {
+      reset();
+      setSelectedCrisis(null);
+      setPhase("idle");
+      setVisiblePoints(0);
+      mutate({ portfolio_id: activePortfolioId, period: "max" });
+    }
+  }, [activePortfolioId, reset, mutate]);
 
   const handleRun = () => {
     if (!activePortfolioId) return;
