@@ -135,18 +135,18 @@
 }
 
 .dark {
-  --layout-body: #0a0b0e;
-  --layout-canvas: #111318;
-  --layout-canvas-border: rgba(255, 255, 255, 0.06);
-  --layout-canvas-shadow: 0 0 0 1px rgba(255, 255, 255, 0.03), 0 20px 40px rgba(0, 0, 0, 0.4);
-  --layout-surface: rgba(255, 255, 255, 0.03);
-  --layout-surface-border: rgba(255, 255, 255, 0.06);
+  --layout-body: #08090c;
+  --layout-canvas: #131620;
+  --layout-canvas-border: rgba(255, 255, 255, 0.08);
+  --layout-canvas-shadow: 0 0 0 1px rgba(255, 255, 255, 0.04), 0 20px 40px rgba(0, 0, 0, 0.5);
+  --layout-surface: #0f1116;
+  --layout-surface-border: rgba(255, 255, 255, 0.10);
   --layout-text: rgba(255, 255, 255, 0.7);
   --layout-text-muted: rgba(255, 255, 255, 0.5);
   --layout-text-faint: rgba(255, 255, 255, 0.3);
-  --layout-separator: rgba(255, 255, 255, 0.06);
-  --layout-hover: rgba(255, 255, 255, 0.05);
-  --layout-active: rgba(255, 255, 255, 0.10);
+  --layout-separator: rgba(255, 255, 255, 0.08);
+  --layout-hover: rgba(255, 255, 255, 0.07);
+  --layout-active: rgba(255, 255, 255, 0.12);
   --layout-active-text: white;
 }
 
