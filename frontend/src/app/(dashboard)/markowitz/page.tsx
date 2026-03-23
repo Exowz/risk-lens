@@ -14,7 +14,10 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 
-import { EfficientFrontier } from "@/components/charts/efficient-frontier";
+import {
+  EfficientFrontier,
+  type SelectedFrontierPoint,
+} from "@/components/charts/efficient-frontier";
 import { ChartExpandableCard } from "@/components/shared/chart-expandable-card";
 import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { WhyExpandableCard } from "@/components/shared/why-expandable-card";
@@ -26,6 +29,16 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -35,7 +48,12 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { fetchMarkowitzExplanation, fetchMetricExplanation } from "@/lib/api/explain";
-import { useMarkowitz } from "@/lib/api/markowitz";
+import {
+  fetchMarkowitzPointExplanation,
+  type MarkowitzPointExplanation,
+  useMarkowitz,
+} from "@/lib/api/markowitz";
+import { usePortfolio } from "@/lib/api/portfolios";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
@@ -46,8 +64,70 @@ function fmt(value: number, decimals = 2): string {
 export default function MarkowitzPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mutate, data, isPending, error, reset } = useMarkowitz();
+  const { data: portfolio } = usePortfolio(activePortfolioId);
   const { mode } = useMode();
   const [openCard, setOpenCard] = useState<string | null>(null);
+
+  // Build current weights map from portfolio assets
+  const currentWeights: Record<string, number> = {};
+  if (portfolio?.assets) {
+    for (const a of portfolio.assets) {
+      currentWeights[a.ticker] = a.weight;
+    }
+  }
+
+  // Portefeuille Bavard — Sheet state
+  const [selectedPoint, setSelectedPoint] = useState<SelectedFrontierPoint | null>(null);
+  const [pointExplanation, setPointExplanation] = useState<MarkowitzPointExplanation | null>(null);
+  const [isExplainingPoint, setIsExplainingPoint] = useState(false);
+  const [explanationCache, setExplanationCache] = useState<
+    Record<string, MarkowitzPointExplanation>
+  >({});
+  const [cachedMode, setCachedMode] = useState(mode);
+
+  // Clear cache when mode changes
+  useEffect(() => {
+    if (mode !== cachedMode) {
+      setExplanationCache({});
+      setCachedMode(mode);
+      setPointExplanation(null);
+    }
+  }, [mode, cachedMode]);
+
+  const handlePointClick = useCallback(
+    (point: SelectedFrontierPoint) => {
+      setSelectedPoint(point);
+      const cacheKey = `${point.point_type}-${point.volatility.toFixed(6)}-${point.expected_return.toFixed(6)}`;
+      const cached = explanationCache[cacheKey];
+      if (cached) {
+        setPointExplanation(cached);
+        setIsExplainingPoint(false);
+        return;
+      }
+      setPointExplanation(null);
+      setIsExplainingPoint(true);
+      fetchMarkowitzPointExplanation({
+        portfolio_id: activePortfolioId ?? "",
+        point_type: point.point_type,
+        volatility: point.volatility,
+        expected_return: point.expected_return,
+        weights: point.weights,
+        mode,
+      })
+        .then((res) => {
+          setPointExplanation(res);
+          setExplanationCache((prev) => ({ ...prev, [cacheKey]: res }));
+        })
+        .catch(() => {
+          setPointExplanation({
+            explanation: "Analyse temporairement indisponible.",
+            suggested_action: "",
+          });
+        })
+        .finally(() => setIsExplainingPoint(false));
+    },
+    [activePortfolioId, mode, explanationCache],
+  );
 
   const mkAnalyze = useCallback(
     (metricName: string, metricValue: number, context?: Record<string, number | string | null>) =>
@@ -157,6 +237,8 @@ export default function MarkowitzPage() {
               minVariance={data.min_variance}
               maxSharpe={data.max_sharpe}
               currentPortfolio={data.current_portfolio}
+              onPointClick={handlePointClick}
+              currentWeights={currentWeights}
             />
           </ChartExpandableCard>
 
@@ -352,6 +434,104 @@ export default function MarkowitzPage() {
           />
         </>
       )}
+
+      {/* Portefeuille Bavard — Sheet */}
+      <Sheet
+        open={!!selectedPoint}
+        onOpenChange={(open) => {
+          if (!open) setSelectedPoint(null);
+        }}
+      >
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          {selectedPoint && (
+            <>
+              <SheetHeader>
+                <SheetTitle>
+                  {selectedPoint.point_type === "min_variance" && "Portefeuille Minimum Variance"}
+                  {selectedPoint.point_type === "max_sharpe" && "Portefeuille Maximum Sharpe"}
+                  {selectedPoint.point_type === "current" && "Votre Portefeuille Actuel"}
+                  {selectedPoint.point_type === "frontier" && "Portefeuille sur la Frontière"}
+                </SheetTitle>
+                <SheetDescription className="space-y-1">
+                  <span className="flex gap-4 font-mono text-sm">
+                    <span>
+                      Vol: <span className="text-foreground">{(selectedPoint.volatility * 100).toFixed(2)}%</span>
+                    </span>
+                    <span>
+                      Return: <span className={selectedPoint.expected_return >= 0 ? "text-emerald-500" : "text-red-500"}>
+                        {selectedPoint.expected_return >= 0 ? "+" : ""}{(selectedPoint.expected_return * 100).toFixed(2)}%
+                      </span>
+                    </span>
+                    <span>
+                      Sharpe: <span className="text-blue-400">{selectedPoint.sharpe.toFixed(2)}</span>
+                    </span>
+                  </span>
+                </SheetDescription>
+              </SheetHeader>
+
+              <div className="mt-6 space-y-6">
+                {/* AI Explanation */}
+                <div className="space-y-3">
+                  {isExplainingPoint && (
+                    <div className="space-y-2">
+                      <Skeleton className="h-4 w-full" />
+                      <Skeleton className="h-4 w-5/6" />
+                      <Skeleton className="h-4 w-3/4" />
+                      <Skeleton className="h-4 w-1/2" />
+                    </div>
+                  )}
+                  {pointExplanation && !isExplainingPoint && (
+                    <>
+                      <p className="text-sm text-muted-foreground italic leading-relaxed">
+                        {pointExplanation.explanation}
+                      </p>
+                      <span className="text-[10px] text-white/20">Analysé par IA</span>
+                    </>
+                  )}
+                </div>
+
+                {/* Allocation weights */}
+                {Object.keys(selectedPoint.weights).length > 0 && (
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-medium text-foreground">Allocation</h4>
+                    <div className="space-y-2">
+                      {Object.entries(selectedPoint.weights)
+                        .sort(([, a], [, b]) => b - a)
+                        .map(([ticker, weight]) => (
+                          <div key={ticker} className="space-y-1">
+                            <div className="flex items-center justify-between text-sm">
+                              <span className="font-medium">{ticker}</span>
+                              <span className="font-mono text-muted-foreground">
+                                {(weight * 100).toFixed(1)}%
+                              </span>
+                            </div>
+                            <Progress value={weight * 100} className="h-1.5" />
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Suggested action */}
+                {pointExplanation?.suggested_action && (
+                  <div className="rounded-md border-l-2 border-blue-400 bg-blue-400/5 p-3">
+                    <p className="text-xs font-medium text-blue-400 mb-1">Action suggérée</p>
+                    <p className="text-sm text-muted-foreground">
+                      {pointExplanation.suggested_action}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <SheetFooter className="mt-6">
+                <Button disabled className="w-full opacity-50">
+                  Appliquer cette allocation
+                </Button>
+              </SheetFooter>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }

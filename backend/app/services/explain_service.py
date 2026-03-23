@@ -202,6 +202,90 @@ async def explain_markowitz_position(
     return await _call_mistral(prompt)
 
 
+async def explain_markowitz_point(
+    mode: Literal["beginner", "expert"],
+    point_type: str,
+    volatility: float,
+    expected_return: float,
+    weights: dict[str, float],
+) -> dict[str, str]:
+    """
+    Generate a contextual explanation for a specific point on the efficient frontier.
+
+    The AI adopts a different persona based on point_type:
+    - min_variance: defensive advisor
+    - max_sharpe: optimizer
+    - current: diagnostician
+    - frontier: neutral analyst
+
+    Returns:
+        Dict with 'explanation' and 'suggested_action' keys.
+    """
+    weights_text = ", ".join(f"{t}: {w:.1%}" for t, w in weights.items()) if weights else "non disponibles"
+    sharpe = (expected_return / volatility) if volatility > 0 else 0
+
+    personas = {
+        "min_variance": (
+            "Tu es un conseiller prudent. Ton rôle : 'Je suis le portefeuille le plus "
+            "défensif possible avec vos actifs.'"
+        ),
+        "max_sharpe": (
+            "Tu es un optimisateur. Ton rôle : 'Je suis le meilleur compromis "
+            "rendement/risque mathématiquement possible.'"
+        ),
+        "current": (
+            "Tu es un diagnosticien. Ton rôle : 'Voici où vous êtes actuellement "
+            "et ce que cela signifie.'"
+        ),
+        "frontier": (
+            "Tu es un analyste neutre. Ce portefeuille représente un équilibre "
+            "spécifique entre risque et rendement sur la frontière efficiente."
+        ),
+    }
+
+    persona = personas.get(point_type, personas["frontier"])
+
+    if mode == "beginner":
+        prompt = (
+            f"{persona}\n\n"
+            f"Explique simplement ce portefeuille à un investisseur débutant.\n"
+            f"Volatilité : {volatility:.2%}, Rendement attendu : {expected_return:.2%}, "
+            f"Sharpe : {sharpe:.2f}.\n"
+            f"Allocation : {weights_text}.\n"
+            f"Utilise des analogies simples. Termine par une action concrète suggérée "
+            f"en une phrase (commence cette phrase par 'Action suggérée : ').\n"
+            f"{_SUFFIX}"
+        )
+    else:
+        prompt = (
+            f"{persona}\n\n"
+            f"Analyse ce portefeuille sur la frontière efficiente.\n"
+            f"Vol={volatility:.4%}, E(R)={expected_return:.4%}, Sharpe={sharpe:.3f}.\n"
+            f"Weights : {weights_text}.\n"
+            f"Commente le positionnement risk/return et la concentration. "
+            f"Termine par une action concrète suggérée "
+            f"en une phrase (commence cette phrase par 'Action suggérée : ').\n"
+            f"{_SUFFIX}"
+        )
+
+    text = await _call_mistral(prompt)
+
+    # Split explanation from suggested action
+    if "Action suggérée :" in text:
+        parts = text.split("Action suggérée :", 1)
+        explanation = parts[0].strip()
+        suggested_action = parts[1].strip()
+    elif "Action suggérée:" in text:
+        parts = text.split("Action suggérée:", 1)
+        explanation = parts[0].strip()
+        suggested_action = parts[1].strip()
+    else:
+        explanation = text
+        suggested_action = ""
+
+    return {"explanation": explanation, "suggested_action": suggested_action}
+
+
 async def explain_metric(
     metric_name: str,
     metric_value: float,

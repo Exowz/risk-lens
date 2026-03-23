@@ -27,11 +27,23 @@ import type {
   PortfolioWeights,
 } from "@/types/markowitz";
 
+export interface SelectedFrontierPoint {
+  point_type: "min_variance" | "max_sharpe" | "current" | "frontier";
+  volatility: number;
+  expected_return: number;
+  sharpe: number;
+  weights: Record<string, number>;
+}
+
 interface EfficientFrontierProps {
   frontierPoints: FrontierPoint[];
   minVariance: PortfolioWeights;
   maxSharpe: PortfolioWeights;
   currentPortfolio: PortfolioPoint;
+  /** Called when user clicks a point or frontier curve */
+  onPointClick?: (point: SelectedFrontierPoint) => void;
+  /** Current portfolio weights for the "current" point */
+  currentWeights?: Record<string, number>;
 }
 
 interface TooltipState {
@@ -50,6 +62,8 @@ export function EfficientFrontier({
   minVariance,
   maxSharpe,
   currentPortfolio,
+  onPointClick,
+  currentWeights,
 }: EfficientFrontierProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -226,26 +240,48 @@ export function EfficientFrontier({
         .attr("stroke-opacity", 0.7)
         .attr("d", line);
 
-      // Frontier dots
+      // Frontier dots (clickable)
       g.selectAll(".frontier-dot")
         .data(sorted)
         .join("circle")
         .attr("class", "frontier-dot")
         .attr("cx", (d) => xScale(d.volatility))
         .attr("cy", (d) => yScale(d.expected_return))
-        .attr("r", 2)
+        .attr("r", 3)
         .attr("fill", "hsl(221, 83%, 53%)")
-        .attr("fill-opacity", 0.4);
+        .attr("fill-opacity", 0.4)
+        .style("cursor", "pointer")
+        .on("click", (_e: MouseEvent, d: FrontierPoint) => {
+          const s = d.volatility > 0 ? d.expected_return / d.volatility : 0;
+          onPointClick?.({
+            point_type: "frontier",
+            volatility: d.volatility,
+            expected_return: d.expected_return,
+            sharpe: s,
+            weights: {},
+          });
+        });
 
-      // Annotated points
+      // Annotated points (clickable)
       const drawPoint = (
         x: number,
         y: number,
         color: string,
         label: string,
         yOffset: number,
+        clickData?: SelectedFrontierPoint,
       ) => {
-        g.append("circle")
+        const group = g.append("g").style("cursor", clickData ? "pointer" : "default");
+
+        if (clickData) {
+          group.on("click", (e: MouseEvent) => {
+            e.stopPropagation();
+            onPointClick?.(clickData);
+          });
+        }
+
+        group
+          .append("circle")
           .attr("cx", xScale(x))
           .attr("cy", yScale(y))
           .attr("r", 8)
@@ -254,13 +290,15 @@ export function EfficientFrontier({
           .attr("stroke", color)
           .attr("stroke-width", 1.5);
 
-        g.append("circle")
+        group
+          .append("circle")
           .attr("cx", xScale(x))
           .attr("cy", yScale(y))
           .attr("r", 4)
           .attr("fill", color);
 
-        g.append("text")
+        group
+          .append("text")
           .attr("x", xScale(x) + 12)
           .attr("y", yScale(y) + yOffset)
           .attr("fill", color)
@@ -275,6 +313,13 @@ export function EfficientFrontier({
         "hsl(142, 71%, 45%)",
         "Min Variance",
         4,
+        {
+          point_type: "min_variance",
+          volatility: minVariance.volatility,
+          expected_return: minVariance.expected_return,
+          sharpe: minVariance.sharpe_ratio,
+          weights: minVariance.weights,
+        },
       );
 
       drawPoint(
@@ -283,7 +328,19 @@ export function EfficientFrontier({
         "hsl(221, 83%, 53%)",
         "Max Sharpe",
         -8,
+        {
+          point_type: "max_sharpe",
+          volatility: maxSharpe.volatility,
+          expected_return: maxSharpe.expected_return,
+          sharpe: maxSharpe.sharpe_ratio,
+          weights: maxSharpe.weights,
+        },
       );
+
+      const currentSharpe =
+        currentPortfolio.volatility > 0
+          ? currentPortfolio.expected_return / currentPortfolio.volatility
+          : 0;
 
       drawPoint(
         currentPortfolio.volatility,
@@ -291,6 +348,13 @@ export function EfficientFrontier({
         "hsl(0, 84%, 60%)",
         "Current",
         4,
+        {
+          point_type: "current",
+          volatility: currentPortfolio.volatility,
+          expected_return: currentPortfolio.expected_return,
+          sharpe: currentSharpe,
+          weights: currentWeights ?? {},
+        },
       );
 
       g.selectAll(".domain")
@@ -312,7 +376,7 @@ export function EfficientFrontier({
         d3.select(svgRef.current).selectAll("*").remove();
       }
     };
-  }, [frontierPoints, minVariance, maxSharpe, currentPortfolio]);
+  }, [frontierPoints, minVariance, maxSharpe, currentPortfolio, onPointClick, currentWeights]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {

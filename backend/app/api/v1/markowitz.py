@@ -25,9 +25,14 @@ from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.portfolio import Portfolio
 from app.models.user import User
-from app.schemas.explain import ExplainMarkowitzRequest, ExplanationResponse
+from app.schemas.explain import (
+    ExplainMarkowitzPointRequest,
+    ExplainMarkowitzRequest,
+    ExplanationResponse,
+    MarkowitzPointExplanationResponse,
+)
 from app.schemas.markowitz import MarkowitzRequest, MarkowitzResponse
-from app.services.explain_service import explain_markowitz_position
+from app.services.explain_service import explain_markowitz_point, explain_markowitz_position
 from app.services.market_data import get_historical_prices
 from app.services.markowitz_engine import compute_efficient_frontier
 
@@ -120,6 +125,28 @@ async def get_markowitz_explanation(
             min_variance_volatility=request.min_variance_volatility,
         )
         return ExplanationResponse(explanation=text)
+    except RuntimeError as e:
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY,
+            detail=str(e),
+        ) from e
+
+
+@router.post("/explain", response_model=MarkowitzPointExplanationResponse)
+async def explain_markowitz_point_endpoint(
+    request: ExplainMarkowitzPointRequest,
+    current_user: User = Depends(get_current_user),
+) -> MarkowitzPointExplanationResponse:
+    """Portefeuille Bavard — contextual AI explanation for a frontier point."""
+    try:
+        result = await explain_markowitz_point(
+            mode=request.mode,
+            point_type=request.point_type,
+            volatility=request.volatility,
+            expected_return=request.expected_return,
+            weights=request.weights,
+        )
+        return MarkowitzPointExplanationResponse(**result)
     except RuntimeError as e:
         raise HTTPException(
             status_code=status.HTTP_502_BAD_GATEWAY,

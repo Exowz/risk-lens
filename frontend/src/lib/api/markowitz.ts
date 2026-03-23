@@ -31,3 +31,24 @@ export function useMarkowitz() {
     gcTime: 60 * 60 * 1000, // 1 hour
   });
 }
+
+// ── Portefeuille Bavard ──
+
+export interface MarkowitzPointExplanation {
+  explanation: string;
+  suggested_action: string;
+}
+
+export async function fetchMarkowitzPointExplanation(params: {
+  portfolio_id: string;
+  point_type: "min_variance" | "max_sharpe" | "current" | "frontier";
+  volatility: number;
+  expected_return: number;
+  weights: Record<string, number>;
+  mode: "beginner" | "expert";
+}): Promise<MarkowitzPointExplanation> {
+  return apiClient<MarkowitzPointExplanation>("/api/v1/markowitz/explain", {
+    method: "POST",
+    body: params,
+  });
+}

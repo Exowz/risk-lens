@@ -63,6 +63,29 @@ class ExplainMarkowitzRequest(BaseModel):
     min_variance_volatility: float
 
 
+# ── Markowitz Point (Portefeuille Bavard) ──
+
+
+class ExplainMarkowitzPointRequest(BaseModel):
+    """Request body for Portefeuille Bavard — contextual point explanation."""
+
+    portfolio_id: str = Field(description="Portfolio UUID")
+    point_type: Literal["min_variance", "max_sharpe", "current", "frontier"] = Field(
+        description="Type of portfolio point on the frontier"
+    )
+    volatility: float
+    expected_return: float
+    weights: dict[str, float] = Field(default_factory=dict)
+    mode: Literal["beginner", "expert"] = Field(description="UI mode")
+
+
+class MarkowitzPointExplanationResponse(BaseModel):
+    """AI explanation for a specific point on the frontier."""
+
+    explanation: str = Field(description="Contextual explanation in French")
+    suggested_action: str = Field(description="Suggested rebalancing action in French")
+
+
 # ── Stress ──
 
 
