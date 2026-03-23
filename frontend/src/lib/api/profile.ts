@@ -41,8 +41,19 @@ export interface UserRiskProfileResponse {
   risk_score: number;
 }
 
+export interface UserPreferencesResponse {
+  mode: "beginner" | "expert";
+  monte_carlo_simulations: number;
+}
+
+export interface UserPreferencesRequest {
+  mode: "beginner" | "expert";
+  monte_carlo_simulations: number;
+}
+
 const PROFILE_KEYS = {
   riskProfile: ["risk-profile"] as const,
+  preferences: ["user-preferences"] as const,
 };
 
 // ── API Functions ──
@@ -62,6 +73,19 @@ async function fetchRiskProfile(): Promise<UserRiskProfileResponse | null> {
   );
 }
 
+async function fetchPreferences(): Promise<UserPreferencesResponse> {
+  return apiClient<UserPreferencesResponse>("/api/v1/profile/preferences");
+}
+
+async function updatePreferences(
+  data: UserPreferencesRequest,
+): Promise<UserPreferencesResponse> {
+  return apiClient<UserPreferencesResponse>("/api/v1/profile/preferences", {
+    method: "PUT",
+    body: data,
+  });
+}
+
 // ── Hooks ──
 
 export function useRiskProfile() {
@@ -79,6 +103,25 @@ export function useSubmitRiskProfiler() {
     mutationFn: submitRiskProfiler,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.riskProfile });
+    },
+  });
+}
+
+export function usePreferences() {
+  return useQuery({
+    queryKey: PROFILE_KEYS.preferences,
+    queryFn: fetchPreferences,
+    staleTime: 5 * 60 * 1000,
+  });
+}
+
+export function useUpdatePreferences() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updatePreferences,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: PROFILE_KEYS.preferences });
     },
   });
 }

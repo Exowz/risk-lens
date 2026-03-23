@@ -56,3 +56,23 @@ class UserRiskProfileResponse(BaseModel):
     experience: str
     profile_name: str
     risk_score: int
+
+
+class UserPreferencesRequest(BaseModel):
+    """Request body for updating user preferences."""
+
+    mode: Literal["beginner", "expert"] = Field(
+        default="beginner", description="Display mode"
+    )
+    monte_carlo_simulations: int = Field(
+        default=10000, ge=1000, le=10000, description="Number of Monte Carlo simulations"
+    )
+
+
+class UserPreferencesResponse(BaseModel):
+    """Stored user preferences."""
+
+    model_config = ConfigDict(from_attributes=True)
+
+    mode: str
+    monte_carlo_simulations: int

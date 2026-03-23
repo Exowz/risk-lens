@@ -11,11 +11,15 @@
  * Used by: /profile route
  */
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useSession } from "@/lib/auth/client";
 import { usePortfolios } from "@/lib/api/portfolios";
-import { useRiskProfile } from "@/lib/api/profile";
+import {
+  usePreferences,
+  useRiskProfile,
+  useUpdatePreferences,
+} from "@/lib/api/profile";
 import { useMode } from "@/lib/store/mode-context";
 import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -55,12 +59,25 @@ const LABEL_MAP: Record<string, string> = {
   expert: "Expert",
 };
 
+const MC_OPTIONS = [1000, 5000, 10000] as const;
+
 export default function ProfilePage() {
   const { data: session } = useSession();
   const { data: portfolios } = usePortfolios();
   const { data: riskProfile } = useRiskProfile();
+  const { data: dbPreferences } = usePreferences();
+  const updatePrefs = useUpdatePreferences();
   const { mode, setMode } = useMode();
   const [showProfiler, setShowProfiler] = useState(false);
+  const [mcSims, setMcSims] = useState(10000);
+  const [saved, setSaved] = useState(false);
+
+  // Hydrate MC sims from DB
+  useEffect(() => {
+    if (dbPreferences) {
+      setMcSims(dbPreferences.monte_carlo_simulations);
+    }
+  }, [dbPreferences]);
 
   const email = session?.user?.email ?? "";
   const name = session?.user?.name ?? email.split("@")[0];
@@ -234,12 +251,55 @@ export default function ProfilePage() {
           <Separator />
 
           <div>
-            <p className="text-sm font-medium">
-              Simulations Monte Carlo
+            <p className="text-sm font-medium">Simulations Monte Carlo</p>
+            <p className="text-xs text-muted-foreground mb-3">
+              Nombre de trajectoires simulées · 252 jours de trading
             </p>
-            <p className="text-xs text-muted-foreground">
-              Par défaut : 10 000 trajectoires · 252 jours de trading
-            </p>
+            <div className="flex gap-2">
+              {MC_OPTIONS.map((opt) => (
+                <button
+                  key={opt}
+                  onClick={() => {
+                    setMcSims(opt);
+                    setSaved(false);
+                  }}
+                  className={`rounded-lg border px-4 py-2 text-sm font-mono transition-all ${
+                    mcSims === opt
+                      ? "border-white/30 bg-white/5 text-foreground"
+                      : "border-border bg-card text-muted-foreground hover:border-white/20"
+                  }`}
+                >
+                  {opt.toLocaleString()}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <Separator />
+
+          <div className="flex items-center gap-3">
+            <Button
+              size="sm"
+              disabled={updatePrefs.isPending}
+              onClick={() => {
+                updatePrefs.mutate(
+                  { mode, monte_carlo_simulations: mcSims },
+                  {
+                    onSuccess: () => {
+                      setSaved(true);
+                      setTimeout(() => setSaved(false), 2000);
+                    },
+                  },
+                );
+              }}
+            >
+              {updatePrefs.isPending ? "Sauvegarde..." : "Sauvegarder"}
+            </Button>
+            {saved && (
+              <span className="text-xs text-emerald-500">
+                Préférences sauvegardées
+              </span>
+            )}
           </div>
         </CardContent>
       </Card>

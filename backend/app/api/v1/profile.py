@@ -19,10 +19,13 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_db
 from app.core.security import get_current_user
 from app.models.user import User
+from app.models.user_preferences import UserPreferences
 from app.models.user_risk_profile import UserRiskProfile
 from app.schemas.profile import (
     RiskProfilerRequest,
     RiskProfilerResponse,
+    UserPreferencesRequest,
+    UserPreferencesResponse,
     UserRiskProfileResponse,
 )
 from app.services.risk_profiler_service import generate_risk_profile
@@ -102,3 +105,53 @@ async def get_risk_profile(
     if not profile:
         return None
     return UserRiskProfileResponse.model_validate(profile)
+
+
+@router.get("/preferences", response_model=UserPreferencesResponse)
+async def get_preferences(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserPreferencesResponse:
+    """Get user preferences. Returns defaults if none saved."""
+    result = await db.execute(
+        select(UserPreferences).where(UserPreferences.user_id == current_user.id)
+    )
+    prefs = result.scalar_one_or_none()
+    if not prefs:
+        return UserPreferencesResponse(mode="beginner", monte_carlo_simulations=10000)
+    return UserPreferencesResponse.model_validate(prefs)
+
+
+@router.put("/preferences", response_model=UserPreferencesResponse)
+async def update_preferences(
+    request: UserPreferencesRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> UserPreferencesResponse:
+    """Update user preferences (upsert)."""
+    result = await db.execute(
+        select(UserPreferences).where(UserPreferences.user_id == current_user.id)
+    )
+    prefs = result.scalar_one_or_none()
+
+    if prefs:
+        prefs.mode = request.mode
+        prefs.monte_carlo_simulations = request.monte_carlo_simulations
+    else:
+        prefs = UserPreferences(
+            user_id=current_user.id,
+            mode=request.mode,
+            monte_carlo_simulations=request.monte_carlo_simulations,
+        )
+        db.add(prefs)
+
+    await db.commit()
+
+    logger.info(
+        "Preferences updated for user=%s: mode=%s, mc_sims=%d",
+        current_user.id,
+        request.mode,
+        request.monte_carlo_simulations,
+    )
+
+    return UserPreferencesResponse.model_validate(prefs)

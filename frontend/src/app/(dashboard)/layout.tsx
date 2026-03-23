@@ -21,8 +21,9 @@ import { TopBar } from "@/components/layout/top-bar";
 import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolios } from "@/lib/api/portfolios";
-import { useRiskProfile } from "@/lib/api/profile";
+import { usePreferences, useRiskProfile } from "@/lib/api/profile";
 import { useSession } from "@/lib/auth/client";
+import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 export default function DashboardLayout({
@@ -34,7 +35,9 @@ export default function DashboardLayout({
   const { data: session, isPending } = useSession();
   const { data: portfolios, isSuccess: portfoliosLoaded } = usePortfolios();
   const { data: riskProfile, isSuccess: profileLoaded } = useRiskProfile();
+  const { data: dbPreferences, isSuccess: prefsLoaded } = usePreferences();
   const { activePortfolioId, setActivePortfolio } = usePortfolioStore();
+  const { setMode } = useMode();
   const [showProfiler, setShowProfiler] = useState(false);
   const [profilerDismissed, setProfilerDismissed] = useState(false);
 
@@ -49,6 +52,13 @@ export default function DashboardLayout({
       setActivePortfolio(portfolios[0].id);
     }
   }, [activePortfolioId, portfolios, setActivePortfolio]);
+
+  // Sync mode from DB preferences (DB has priority over localStorage)
+  useEffect(() => {
+    if (prefsLoaded && dbPreferences) {
+      setMode(dbPreferences.mode);
+    }
+  }, [prefsLoaded, dbPreferences, setMode]);
 
   // Show Risk Profiler onboarding if user has no portfolios and no existing profile
   useEffect(() => {
