@@ -26,7 +26,6 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Magnet } from "@/components/ui/magnet";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 import { usePortfolios } from "@/lib/api/portfolios";
@@ -298,11 +297,9 @@ export default function ReportPage() {
     <div className="p-6 space-y-6">
       {/* Actions */}
       <div className="flex justify-end gap-2">
-        <Magnet>
-          <Button onClick={handleGenerate} disabled={isGenerating}>
-            {isGenerating ? "Génération..." : "Générer le rapport"}
-          </Button>
-        </Magnet>
+        <Button onClick={handleGenerate} disabled={isGenerating}>
+          {isGenerating ? "Génération..." : "Générer le rapport"}
+        </Button>
         {data && (
           <Button
             variant="outline"
