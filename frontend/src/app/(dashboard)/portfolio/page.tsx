@@ -10,13 +10,15 @@
  * Used by: /dashboard/portfolio route
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 import { PerformanceChart } from "@/components/charts/performance-chart";
+import { PortfolioComparison } from "@/components/portfolio/portfolio-comparison";
 import { PortfolioForm } from "@/components/portfolio/portfolio-form";
 import { PortfolioSelector } from "@/components/portfolio/portfolio-selector";
 import { PortfolioTable } from "@/components/portfolio/portfolio-table";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolio, usePortfolioPrices } from "@/lib/api/portfolios";
@@ -24,6 +26,7 @@ import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 export default function PortfolioPage() {
   const { activePortfolioId } = usePortfolioStore();
+  const [compareMode, setCompareMode] = useState(false);
   const searchParams = useSearchParams();
 
   // Parse pre-fill params from Risk Profiler redirect
@@ -51,6 +54,20 @@ export default function PortfolioPage() {
 
   return (
     <div className="p-6 space-y-6">
+      {/* Compare toggle */}
+      <div className="flex justify-end">
+        <Button
+          variant={compareMode ? "default" : "outline"}
+          size="sm"
+          onClick={() => setCompareMode(!compareMode)}
+        >
+          {compareMode ? "Quitter la comparaison" : "Mode Comparaison"}
+        </Button>
+      </div>
+
+      {compareMode ? (
+        <PortfolioComparison />
+      ) : (
       <div className="grid gap-8 lg:grid-cols-[1fr_380px]">
         {/* Main content area */}
         <div className="space-y-6">
@@ -99,6 +116,7 @@ export default function PortfolioPage() {
           />
         </div>
       </div>
+      )}
     </div>
   );
 }
