@@ -28,7 +28,7 @@ interface WhyCardProps {
 }
 
 export function WhyCard({
-  title = "Why does this matter?",
+  title = "Pourquoi c'est important ?",
   beginnerContent,
   expertContent,
   children,

@@ -28,6 +28,7 @@ const PROTECTED_ROUTES = new Set([
   "/markowitz",
   "/stress",
   "/report",
+  "/profile",
 ]);
 
 export function proxy(request: NextRequest): NextResponse {
@@ -67,6 +68,7 @@ export const config = {
     "/markowitz",
     "/stress",
     "/report",
+    "/profile",
     "/login",
     "/register",
     "/welcome",

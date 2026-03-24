@@ -28,7 +28,7 @@ export function WhyExpandableCard({
   const { mode } = useMode();
 
   return (
-    <ExpandableCard title="Why does this matter?" defaultOpen={false}>
+    <ExpandableCard title="Pourquoi c'est important ?" defaultOpen={false}>
       {mode === "beginner" ? beginnerContent : expertContent}
     </ExpandableCard>
   );
