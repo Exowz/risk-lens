@@ -18,6 +18,7 @@ import { AvatarZone } from "@/components/layout/avatar-zone";
 import { CanvasHeader } from "@/components/layout/canvas-header";
 import { SidebarRail } from "@/components/layout/sidebar-rail";
 import { TopBar } from "@/components/layout/top-bar";
+import { CommandPalette } from "@/components/shared/command-palette";
 import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/lib/api/alerts";
@@ -43,17 +44,22 @@ export default function DashboardLayout({
   const { data: notifications } = useNotifications();
   const [showProfiler, setShowProfiler] = useState(false);
   const [profilerDismissed, setProfilerDismissed] = useState(false);
+  const [paletteOpen, setPaletteOpen] = useState(false);
 
   const { state: sidebarState, toggle: toggleSidebar, setPeeking } = useSidebarStore();
   const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
-  // Cmd+B keyboard shortcut
+  // Cmd+B (sidebar toggle) and Cmd+K (command palette) keyboard shortcuts
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if ((e.metaKey || e.ctrlKey) && e.key === "b") {
         e.preventDefault();
         toggleSidebar();
+      }
+      if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+        e.preventDefault();
+        setPaletteOpen((prev) => !prev);
       }
     }
     window.addEventListener("keydown", handleKeyDown);
@@ -149,6 +155,9 @@ export default function DashboardLayout({
 
   return (
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      {/* Command Palette */}
+      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+
       {/* Risk Profiler Onboarding */}
       <RiskProfilerModal
         open={showProfiler}

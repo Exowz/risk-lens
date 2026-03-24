@@ -79,16 +79,28 @@ export function CanvasHeader() {
         {clock}
       </span>
 
-      {/* Center — Page title */}
-      <span
-        style={{
-          fontSize: 14,
-          fontWeight: 500,
-          color: "var(--layout-text)",
-        }}
-      >
-        {title}
-      </span>
+      {/* Center — Page title + ⌘K hint */}
+      <div className="flex items-center gap-3">
+        <span
+          style={{
+            fontSize: 14,
+            fontWeight: 500,
+            color: "var(--layout-text)",
+          }}
+        >
+          {title}
+        </span>
+        <button
+          onClick={() => {
+            window.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "k", metaKey: true }),
+            );
+          }}
+          className="text-xs text-white/15 hover:text-white/30 transition-colors px-1.5 py-0.5 rounded border border-white/[0.06] hover:border-white/10"
+        >
+          ⌘K
+        </button>
+      </div>
 
       {/* Right — B/E Segmented Control */}
       <SegmentedControl
