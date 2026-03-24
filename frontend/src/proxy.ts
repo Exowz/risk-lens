@@ -15,7 +15,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 /** Auth pages that should redirect to / when already logged in */
-const AUTH_PAGES = new Set(["/login", "/register"]);
+const AUTH_PAGES = new Set(["/login", "/register", "/welcome"]);
 
 /**
  * Routes served by the (dashboard) route group that require authentication.
@@ -42,6 +42,10 @@ export function proxy(request: NextRequest): NextResponse {
 
   // Protect dashboard routes
   if (PROTECTED_ROUTES.has(pathname) && !isAuthenticated) {
+    // Root goes to landing page, other protected routes go to login
+    if (pathname === "/") {
+      return NextResponse.redirect(new URL("/welcome", request.url));
+    }
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("callbackUrl", pathname);
     return NextResponse.redirect(loginUrl);
@@ -65,5 +69,6 @@ export const config = {
     "/report",
     "/login",
     "/register",
+    "/welcome",
   ],
 };

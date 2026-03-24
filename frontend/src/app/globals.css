@@ -157,7 +157,7 @@
   body {
     background-color: var(--layout-body);
     min-height: 100vh;
-    overflow: hidden;
+    overflow-x: hidden;
     @apply text-foreground;
   }
   html {
@@ -178,4 +178,20 @@
 }
 ::-webkit-scrollbar-thumb:hover {
   background: var(--layout-active);
+}
+
+/* Spotlight Aceternity keyframe */
+@keyframes spotlight {
+  0% {
+    opacity: 0;
+    transform: translate(-72%, -62%) scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, -40%) scale(1);
+  }
+}
+
+@utility animate-spotlight {
+  animation: spotlight 2s ease 0.75s 1 forwards;
 }
