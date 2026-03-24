@@ -1,11 +1,13 @@
 "use client";
 
 /**
- * Sidebar rail — Arc Browser style with 3 states.
+ * Sidebar rail — icons-only, 52px fixed width, 3-state visibility.
  *
- * Pinned: 220px, icons + labels, always visible.
+ * Pinned: 52px, icons visible, always on screen.
  * Hidden: 0px, off-screen. Canvas takes full width.
- * Peek: when hidden, mouse near left edge triggers overlay.
+ * Peek: when hidden, mouse near left edge triggers overlay at 52px.
+ *
+ * NEVER shows text labels. Tooltips on every icon (side="right").
  *
  * Depends on: @phosphor-icons/react, ui/tooltip, lib/store/sidebar-store
  * Used by: app/(dashboard)/layout.tsx
@@ -13,7 +15,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 import {
   ChartLineUp,
   ChartPie,
@@ -52,26 +54,27 @@ export function SidebarRail() {
   const pathname = usePathname();
   const { state, isPeeking, toggle } = useSidebarStore();
 
-  const isExpanded = state === "pinned" || isPeeking;
+  const isVisible = state === "pinned" || isPeeking;
   const isOverlay = isPeeking && state === "hidden";
 
   return (
     <motion.nav
       initial={false}
       animate={{
-        width: isExpanded ? 220 : 52,
-        opacity: state === "hidden" && !isPeeking ? 0 : 1,
-        x: state === "hidden" && !isPeeking ? -60 : 0,
+        opacity: isVisible ? 1 : 0,
+        x: isVisible ? 0 : -60,
       }}
       transition={{ type: "spring", stiffness: 300, damping: 30 }}
       style={{
+        width: 52,
         flexShrink: 0,
         background: "var(--layout-surface)",
         border: "1px solid var(--layout-surface-border)",
         borderRadius: "1rem",
-        padding: "0.75rem",
+        padding: "0.75rem 0.5rem",
         display: "flex",
         flexDirection: "column",
+        alignItems: "center",
         gap: 2,
         overflow: "hidden",
         ...(isOverlay
@@ -86,45 +89,17 @@ export function SidebarRail() {
           : {}),
       }}
     >
-      {/* Logo */}
-      <AnimatePresence>
-        {isExpanded && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.15 }}
-            className="flex items-center gap-2 px-2 pb-3 mb-1 border-b border-white/[0.06]"
-          >
-            <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center shrink-0">
-              <span className="text-lg font-bold text-white">R</span>
-            </div>
-            <span className="text-sm font-semibold text-white whitespace-nowrap">
-              RiskLens
-            </span>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      {/* Logo — icon only */}
+      <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center shrink-0 mb-2">
+        <span className="text-lg font-bold text-white">R</span>
+      </div>
 
-      {/* Nav items */}
+      {/* Nav items — icons only with tooltips */}
       <div className="flex-1 flex flex-col gap-0.5">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = pathname === item.href;
-          return isExpanded ? (
-            <Link key={item.href} href={item.href}>
-              <div
-                className={`flex items-center gap-3 px-2.5 py-2 rounded-lg transition-all duration-150 cursor-pointer ${
-                  isActive
-                    ? "bg-white/[0.08] text-white"
-                    : "text-white/40 hover:text-white/60 hover:bg-white/[0.04]"
-                }`}
-              >
-                <Icon size={18} weight={isActive ? "fill" : "regular"} />
-                <span className="text-sm whitespace-nowrap">{item.label}</span>
-              </div>
-            </Link>
-          ) : (
+          return (
             <Tooltip key={item.href}>
               <TooltipTrigger asChild>
                 <Link href={item.href}>
@@ -152,28 +127,19 @@ export function SidebarRail() {
         <TooltipTrigger asChild>
           <button
             onClick={toggle}
-            className={`flex items-center ${
-              isExpanded ? "gap-2 px-2.5" : "justify-center"
-            } py-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all duration-150 w-full`}
+            className="flex items-center justify-center py-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all duration-150 w-full"
           >
             <PushPin
               size={16}
               weight={state === "pinned" ? "fill" : "regular"}
               className={state === "pinned" ? "rotate-45" : ""}
             />
-            {isExpanded && (
-              <span className="text-xs whitespace-nowrap">
-                {state === "pinned" ? "Masquer la barre" : "Épingler la barre"}
-              </span>
-            )}
           </button>
         </TooltipTrigger>
-        {!isExpanded && (
-          <TooltipContent side="right" sideOffset={8}>
-            Épingler la barre
-            <span className="ml-2 text-white/20">⌘B</span>
-          </TooltipContent>
-        )}
+        <TooltipContent side="right" sideOffset={8}>
+          {state === "pinned" ? "Masquer la barre" : "Épingler la barre"}
+          <span className="ml-2 text-white/20">⌘B</span>
+        </TooltipContent>
       </Tooltip>
     </motion.nav>
   );

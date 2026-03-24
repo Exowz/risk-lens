@@ -83,7 +83,7 @@ export default function DashboardLayout({
           peekTimerRef.current = null;
         }
         setPeeking(true);
-      } else if (!isOverSidebar && e.clientX > 240) {
+      } else if (!isOverSidebar && e.clientX > 80) {
         if (!peekTimerRef.current) {
           peekTimerRef.current = setTimeout(() => {
             setPeeking(false);
@@ -138,7 +138,7 @@ export default function DashboardLayout({
       <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <div style={{ height: 56, flexShrink: 0 }} />
         <div style={{ display: "flex", flex: 1, padding: "0 1.25rem 1.25rem 1.25rem", gap: "1rem" }}>
-          <div style={{ width: sidebarState === "pinned" ? 220 : 52, flexShrink: 0, transition: "width 250ms ease-out" }} />
+          <div style={{ width: 52, flexShrink: 0 }} />
           <div
             style={{
               flex: 1,
@@ -194,7 +194,7 @@ export default function DashboardLayout({
             flexDirection: "column",
             alignItems: "center",
             flexShrink: 0,
-            width: isFocused ? 0 : sidebarState === "pinned" ? 220 : 52,
+            width: isFocused ? 0 : 52,
             transition: "width 250ms ease-out, opacity 200ms ease-out",
             gap: "0.75rem",
             position: "relative",
