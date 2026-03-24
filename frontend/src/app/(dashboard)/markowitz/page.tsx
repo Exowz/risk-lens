@@ -29,15 +29,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { AnimatePresence, motion } from "motion/react";
 import { Progress } from "@/components/ui/progress";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -435,103 +428,122 @@ export default function MarkowitzPage() {
         </>
       )}
 
-      {/* Portefeuille Bavard — Sheet */}
-      <Sheet
-        open={!!selectedPoint}
-        onOpenChange={(open) => {
-          if (!open) setSelectedPoint(null);
-        }}
-      >
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-          {selectedPoint && (
-            <>
-              <SheetHeader>
-                <SheetTitle>
+      {/* Portefeuille Bavard — Floating Panel */}
+      <AnimatePresence>
+        {selectedPoint && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
+              onClick={() => setSelectedPoint(null)}
+            />
+            <motion.div
+              initial={{ x: "100%", opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              exit={{ x: "100%", opacity: 0 }}
+              transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
+              className="fixed right-0 top-0 bottom-0 z-50 w-full sm:max-w-lg overflow-y-auto border-l"
+              style={{
+                background: "#1a1d24",
+                borderColor: "rgba(255,255,255,0.1)",
+              }}
+            >
+              <div className="p-6">
+                {/* Close button */}
+                <button
+                  onClick={() => setSelectedPoint(null)}
+                  className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors"
+                >
+                  ✕
+                </button>
+
+                {/* Header */}
+                <h2 className="text-lg font-semibold text-white mb-1">
                   {selectedPoint.point_type === "min_variance" && "Portefeuille Minimum Variance"}
                   {selectedPoint.point_type === "max_sharpe" && "Portefeuille Maximum Sharpe"}
                   {selectedPoint.point_type === "current" && "Votre Portefeuille Actuel"}
                   {selectedPoint.point_type === "frontier" && "Portefeuille sur la Frontière"}
-                </SheetTitle>
-                <SheetDescription className="space-y-1">
-                  <span className="flex gap-4 font-mono text-sm">
-                    <span>
-                      Vol: <span className="text-foreground">{(selectedPoint.volatility * 100).toFixed(2)}%</span>
-                    </span>
-                    <span>
-                      Return: <span className={selectedPoint.expected_return >= 0 ? "text-emerald-500" : "text-red-500"}>
-                        {selectedPoint.expected_return >= 0 ? "+" : ""}{(selectedPoint.expected_return * 100).toFixed(2)}%
-                      </span>
-                    </span>
-                    <span>
-                      Sharpe: <span className="text-blue-400">{selectedPoint.sharpe.toFixed(2)}</span>
+                </h2>
+                <div className="flex gap-4 font-mono text-sm text-muted-foreground mb-6">
+                  <span>
+                    Vol: <span className="text-foreground">{(selectedPoint.volatility * 100).toFixed(2)}%</span>
+                  </span>
+                  <span>
+                    Return: <span className={selectedPoint.expected_return >= 0 ? "text-emerald-500" : "text-red-500"}>
+                      {selectedPoint.expected_return >= 0 ? "+" : ""}{(selectedPoint.expected_return * 100).toFixed(2)}%
                     </span>
                   </span>
-                </SheetDescription>
-              </SheetHeader>
+                  <span>
+                    Sharpe: <span className="text-blue-400">{selectedPoint.sharpe.toFixed(2)}</span>
+                  </span>
+                </div>
 
-              <div className="mt-6 space-y-6">
-                {/* AI Explanation */}
-                <div className="space-y-3">
-                  {isExplainingPoint && (
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-full" />
-                      <Skeleton className="h-4 w-5/6" />
-                      <Skeleton className="h-4 w-3/4" />
-                      <Skeleton className="h-4 w-1/2" />
+                <div className="space-y-6">
+                  {/* AI Explanation */}
+                  <div className="space-y-3">
+                    {isExplainingPoint && (
+                      <div className="space-y-2">
+                        <Skeleton className="h-4 w-full" />
+                        <Skeleton className="h-4 w-5/6" />
+                        <Skeleton className="h-4 w-3/4" />
+                        <Skeleton className="h-4 w-1/2" />
+                      </div>
+                    )}
+                    {pointExplanation && !isExplainingPoint && (
+                      <>
+                        <p className="text-sm text-muted-foreground italic leading-relaxed">
+                          {pointExplanation.explanation}
+                        </p>
+                        <span className="text-[10px] text-white/20">Analysé par IA</span>
+                      </>
+                    )}
+                  </div>
+
+                  {/* Allocation weights */}
+                  {Object.keys(selectedPoint.weights).length > 0 && (
+                    <div className="space-y-3">
+                      <h4 className="text-sm font-medium text-foreground">Allocation</h4>
+                      <div className="space-y-2">
+                        {Object.entries(selectedPoint.weights)
+                          .sort(([, a], [, b]) => b - a)
+                          .map(([ticker, weight]) => (
+                            <div key={ticker} className="space-y-1">
+                              <div className="flex items-center justify-between text-sm">
+                                <span className="font-medium">{ticker}</span>
+                                <span className="font-mono text-muted-foreground">
+                                  {(weight * 100).toFixed(1)}%
+                                </span>
+                              </div>
+                              <Progress value={weight * 100} className="h-1.5" />
+                            </div>
+                          ))}
+                      </div>
                     </div>
                   )}
-                  {pointExplanation && !isExplainingPoint && (
-                    <>
-                      <p className="text-sm text-muted-foreground italic leading-relaxed">
-                        {pointExplanation.explanation}
+
+                  {/* Suggested action */}
+                  {pointExplanation?.suggested_action && (
+                    <div className="rounded-md border-l-2 border-blue-400 bg-blue-400/5 p-3">
+                      <p className="text-xs font-medium text-blue-400 mb-1">Action suggérée</p>
+                      <p className="text-sm text-muted-foreground">
+                        {pointExplanation.suggested_action}
                       </p>
-                      <span className="text-[10px] text-white/20">Analysé par IA</span>
-                    </>
+                    </div>
                   )}
                 </div>
 
-                {/* Allocation weights */}
-                {Object.keys(selectedPoint.weights).length > 0 && (
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-medium text-foreground">Allocation</h4>
-                    <div className="space-y-2">
-                      {Object.entries(selectedPoint.weights)
-                        .sort(([, a], [, b]) => b - a)
-                        .map(([ticker, weight]) => (
-                          <div key={ticker} className="space-y-1">
-                            <div className="flex items-center justify-between text-sm">
-                              <span className="font-medium">{ticker}</span>
-                              <span className="font-mono text-muted-foreground">
-                                {(weight * 100).toFixed(1)}%
-                              </span>
-                            </div>
-                            <Progress value={weight * 100} className="h-1.5" />
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Suggested action */}
-                {pointExplanation?.suggested_action && (
-                  <div className="rounded-md border-l-2 border-blue-400 bg-blue-400/5 p-3">
-                    <p className="text-xs font-medium text-blue-400 mb-1">Action suggérée</p>
-                    <p className="text-sm text-muted-foreground">
-                      {pointExplanation.suggested_action}
-                    </p>
-                  </div>
-                )}
+                <div className="mt-6">
+                  <Button disabled className="w-full opacity-50">
+                    Appliquer cette allocation
+                  </Button>
+                </div>
               </div>
-
-              <SheetFooter className="mt-6">
-                <Button disabled className="w-full opacity-50">
-                  Appliquer cette allocation
-                </Button>
-              </SheetFooter>
-            </>
-          )}
-        </SheetContent>
-      </Sheet>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

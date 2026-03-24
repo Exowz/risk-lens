@@ -25,6 +25,7 @@ import {
 
 import { ChartDescription } from "@/components/shared/chart-description";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
+import { MagicCard } from "@/components/ui/magic-card";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { MetricTooltip } from "@/components/shared/metric-tooltip";
 import { Button } from "@/components/ui/button";
@@ -104,9 +105,8 @@ export default function DashboardPage() {
       {/* KPI Bento Grid */}
       <BentoGrid className="md:auto-rows-[10rem] md:grid-cols-4">
         {/* VaR 95% — large card spanning 2 cols */}
-        <BentoGridItem
-          className="md:col-span-2 border-red-500/20"
-          title={
+        <div className="md:col-span-2 rounded-xl">
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
             <MetricTooltip metricKey="var_95" label="VaR 95% (1-day)">
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -118,20 +118,18 @@ export default function DashboardPage() {
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
               )}
             </MetricTooltip>
-          }
-          description={
-            summary && mode === "expert" ? (
+            {summary && mode === "expert" && (
               <span className="text-xs text-muted-foreground">
                 Parametric:{" "}
                 <NumberTicker value={summary.var_95_parametric * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
-            ) : null
-          }
-        />
+            )}
+          </MagicCard>
+        </div>
 
         {/* Sharpe Ratio */}
-        <BentoGridItem
-          title={
+        <div className="rounded-xl">
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
             <MetricTooltip metricKey="sharpe" label="Sharpe Ratio">
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -151,9 +149,7 @@ export default function DashboardPage() {
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
               )}
             </MetricTooltip>
-          }
-          description={
-            summary && mode === "beginner" ? (
+            {summary && mode === "beginner" && (
               <span className="text-xs text-muted-foreground">
                 {summary.sharpe_ratio >= 1
                   ? "Bon rendement ajusté au risque"
@@ -161,13 +157,13 @@ export default function DashboardPage() {
                     ? "Acceptable"
                     : "En dessous de la moyenne"}
               </span>
-            ) : null
-          }
-        />
+            )}
+          </MagicCard>
+        </div>
 
         {/* Annualized Return */}
-        <BentoGridItem
-          title={
+        <div className="rounded-xl">
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
             <MetricTooltip metricKey="return" label="Annualized Return">
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -186,19 +182,17 @@ export default function DashboardPage() {
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
               )}
             </MetricTooltip>
-          }
-          description={
-            summary ? (
+            {summary && (
               <span className="text-xs text-muted-foreground">
                 {summary.n_observations} observations
               </span>
-            ) : null
-          }
-        />
+            )}
+          </MagicCard>
+        </div>
 
         {/* Volatility */}
-        <BentoGridItem
-          title={
+        <div className="rounded-xl">
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
             <MetricTooltip metricKey="volatility" label="Annualized Volatility">
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -210,16 +204,14 @@ export default function DashboardPage() {
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
               )}
             </MetricTooltip>
-          }
-          description={
-            summary && mode === "expert" ? (
+            {summary && mode === "expert" && (
               <span className="text-xs text-muted-foreground">
                 CVaR 95%:{" "}
                 <NumberTicker value={summary.cvar_95 * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
-            ) : null
-          }
-        />
+            )}
+          </MagicCard>
+        </div>
 
         {/* Live prices — spans 2 cols */}
         {livePrices && livePrices.length > 0 && (
