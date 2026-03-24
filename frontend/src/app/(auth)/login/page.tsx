@@ -1,10 +1,11 @@
 "use client";
 
 /**
- * Login page with React Hook Form + Zod validation.
+ * Login page with Particles background and redesigned card.
  *
- * Depends on: lib/auth/client.ts, lib/validators/auth.schema.ts, shadcn/ui
- * Used by: user navigation, proxy.ts redirect
+ * Depends on: lib/auth/client.ts, lib/validators/auth.schema.ts,
+ *             ui/particles, react-hook-form, zod
+ * Used by: /login route
  */
 
 import { Suspense, useState } from "react";
@@ -13,10 +14,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import Particles from "@/components/ui/particles";
 import { signIn } from "@/lib/auth/client";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth.schema";
 
@@ -42,7 +40,7 @@ function LoginForm() {
     });
 
     if (result.error) {
-      setServerError(result.error.message ?? "Invalid email or password");
+      setServerError(result.error.message ?? "Email ou mot de passe incorrect");
       return;
     }
 
@@ -50,68 +48,95 @@ function LoginForm() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4">
-      <Card className="w-full max-w-md">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-bold">Welcome back</CardTitle>
-          <CardDescription>
-            Sign in to your RiskLens account
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            {serverError && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
-                {serverError}
-              </div>
+    <div className="relative flex min-h-screen items-center justify-center">
+      {/* Particles background */}
+      <div className="fixed inset-0 z-0">
+        <Particles
+          particleCount={80}
+          particleColors={["#ffffff"]}
+          speed={0.3}
+        />
+      </div>
+
+      {/* Login card */}
+      <div
+        className="relative z-10 w-[380px] p-8"
+        style={{
+          background: "#111318",
+          border: "1px solid rgba(255,255,255,0.08)",
+          borderRadius: "1.25rem",
+          boxShadow: "0 20px 60px rgba(0,0,0,0.5)",
+        }}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="w-12 h-12 bg-white/[0.08] rounded-xl flex items-center justify-center">
+            <span className="text-3xl font-bold text-white">R</span>
+          </div>
+        </div>
+
+        <h1 className="text-xl font-semibold text-white text-center">
+          Bon retour
+        </h1>
+        <p className="text-sm text-white/40 mt-1 text-center">
+          Connectez-vous à votre espace RiskLens
+        </p>
+
+        <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
+          {serverError && (
+            <div className="rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
+              {serverError}
+            </div>
+          )}
+
+          <div>
+            <label className="text-xs text-white/50 mb-1.5 block">Email</label>
+            <input
+              type="email"
+              placeholder="vous@exemple.com"
+              autoComplete="email"
+              className="w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:border-white/30 focus:outline-none px-3 py-2.5 text-sm transition-colors"
+              {...register("email")}
+            />
+            {errors.email && (
+              <p className="text-xs text-red-400 mt-1">{errors.email.message}</p>
             )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                autoComplete="email"
-                {...register("email")}
-              />
-              {errors.email && (
-                <p className="text-sm text-destructive">{errors.email.message}</p>
-              )}
-            </div>
+          <div>
+            <label className="text-xs text-white/50 mb-1.5 block">
+              Mot de passe
+            </label>
+            <input
+              type="password"
+              placeholder="Entrez votre mot de passe"
+              autoComplete="current-password"
+              className="w-full bg-white/5 border border-white/10 rounded-lg text-white placeholder:text-white/20 focus:border-white/30 focus:outline-none px-3 py-2.5 text-sm transition-colors"
+              {...register("password")}
+            />
+            {errors.password && (
+              <p className="text-xs text-red-400 mt-1">
+                {errors.password.message}
+              </p>
+            )}
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="Enter your password"
-                autoComplete="current-password"
-                {...register("password")}
-              />
-              {errors.password && (
-                <p className="text-sm text-destructive">
-                  {errors.password.message}
-                </p>
-              )}
-            </div>
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full bg-white text-black font-medium rounded-lg py-2.5 text-sm hover:bg-white/90 transition-colors disabled:opacity-50"
+          >
+            {isSubmitting ? "Connexion..." : "Se connecter"}
+          </button>
+        </form>
 
-            <Button type="submit" className="w-full" disabled={isSubmitting}>
-              {isSubmitting ? "Signing in..." : "Sign in"}
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Don&apos;t have an account?{" "}
-              <Link
-                href="/register"
-                className="font-medium text-primary hover:underline"
-              >
-                Sign up
-              </Link>
-            </p>
-          </form>
-        </CardContent>
-      </Card>
+        <p className="text-center text-xs text-white/40 mt-6">
+          Pas encore de compte ?{" "}
+          <Link href="/register" className="text-white/70 hover:text-white transition-colors">
+            Créer un compte
+          </Link>
+        </p>
+      </div>
     </div>
   );
 }
