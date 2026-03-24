@@ -50,6 +50,7 @@ app.add_middleware(
 register_exception_handlers(app)
 
 # Register routers
+from app.api.v1.alerts import router as alerts_router
 from app.api.v1.markowitz import router as markowitz_router
 from app.api.v1.portfolios import router as portfolios_router
 from app.api.v1.profile import router as profile_router
@@ -63,6 +64,7 @@ app.include_router(markowitz_router, prefix="/api/v1")
 app.include_router(stress_router, prefix="/api/v1")
 app.include_router(report_router, prefix="/api/v1")
 app.include_router(profile_router, prefix="/api/v1")
+app.include_router(alerts_router, prefix="/api/v1")
 
 
 # Health check

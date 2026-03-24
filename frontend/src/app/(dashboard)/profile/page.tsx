@@ -14,6 +14,13 @@
 import { useEffect, useState } from "react";
 
 import { useSession } from "@/lib/auth/client";
+import {
+  useAlerts,
+  useCreateAlert,
+  useDeleteAlert,
+  useReportHistory,
+  type AlertCreateRequest,
+} from "@/lib/api/alerts";
 import { usePortfolios } from "@/lib/api/portfolios";
 import {
   usePreferences,
@@ -21,6 +28,7 @@ import {
   useUpdatePreferences,
 } from "@/lib/api/profile";
 import { useMode } from "@/lib/store/mode-context";
+import { usePortfolioStore } from "@/lib/store/portfolio-store";
 import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -31,7 +39,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
 
@@ -61,16 +77,32 @@ const LABEL_MAP: Record<string, string> = {
 
 const MC_OPTIONS = [1000, 5000, 10000] as const;
 
+const METRIC_LABELS: Record<string, string> = {
+  var_95: "VaR 95%",
+  sharpe: "Sharpe",
+  volatility: "Volatilité",
+};
+
 export default function ProfilePage() {
   const { data: session } = useSession();
   const { data: portfolios } = usePortfolios();
   const { data: riskProfile } = useRiskProfile();
   const { data: dbPreferences } = usePreferences();
+  const { data: alerts } = useAlerts();
+  const { data: reportHistory } = useReportHistory();
+  const { activePortfolioId } = usePortfolioStore();
   const updatePrefs = useUpdatePreferences();
+  const createAlertMutation = useCreateAlert();
+  const deleteAlertMutation = useDeleteAlert();
   const { mode, setMode } = useMode();
   const [showProfiler, setShowProfiler] = useState(false);
   const [mcSims, setMcSims] = useState(10000);
   const [saved, setSaved] = useState(false);
+
+  // Alert form state
+  const [alertMetric, setAlertMetric] = useState<"var_95" | "sharpe" | "volatility">("var_95");
+  const [alertDirection, setAlertDirection] = useState<"above" | "below">("above");
+  const [alertThreshold, setAlertThreshold] = useState("");
 
   // Hydrate MC sims from DB
   useEffect(() => {
@@ -299,6 +331,170 @@ export default function ProfilePage() {
               <span className="text-xs text-emerald-500">
                 Préférences sauvegardées
               </span>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Report History Timeline */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-medium">
+            Historique des rapports
+          </CardTitle>
+          <CardDescription>
+            Rapports IA générés pour vos portefeuilles
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {reportHistory && reportHistory.length > 0 ? (
+            <div className="relative space-y-0">
+              {/* Timeline line */}
+              <div className="absolute left-3 top-2 bottom-2 w-px bg-border" />
+
+              {reportHistory.map((report) => (
+                <div key={report.report_id} className="relative pl-8 pb-4">
+                  {/* Dot */}
+                  <div className="absolute left-1.5 top-1.5 size-3 rounded-full border-2 border-blue-500 bg-background" />
+
+                  <div className="rounded-lg border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">
+                        {report.portfolio_name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {new Date(report.generated_at).toLocaleDateString(
+                          "fr-FR",
+                          { dateStyle: "medium" },
+                        )}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground text-center py-4">
+              Aucun rapport généré pour le moment.
+            </p>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Alerts */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base font-medium">Alertes</CardTitle>
+          <CardDescription>
+            Recevez une notification quand un seuil est dépassé
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          {/* Active alerts */}
+          {alerts && alerts.length > 0 && (
+            <div className="space-y-2">
+              {alerts.map((alert) => (
+                <div
+                  key={alert.id}
+                  className="flex items-center justify-between rounded-lg border border-border p-3"
+                >
+                  <div>
+                    <span className="text-sm font-medium">
+                      {METRIC_LABELS[alert.metric] ?? alert.metric}
+                    </span>
+                    <span className="text-xs text-muted-foreground ml-2">
+                      {alert.direction === "above" ? "au-dessus de" : "en-dessous de"}{" "}
+                      <span className="font-mono">{alert.threshold}</span>
+                    </span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="text-red-500 hover:text-red-400"
+                    onClick={() => deleteAlertMutation.mutate(alert.id)}
+                    disabled={deleteAlertMutation.isPending}
+                  >
+                    Supprimer
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+
+          <Separator />
+
+          {/* Create alert form */}
+          <div className="space-y-3">
+            <p className="text-sm font-medium">Nouvelle alerte</p>
+            <div className="grid gap-3 sm:grid-cols-3">
+              <Select
+                value={alertMetric}
+                onValueChange={(v) =>
+                  setAlertMetric(v as "var_95" | "sharpe" | "volatility")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="var_95">VaR 95%</SelectItem>
+                  <SelectItem value="sharpe">Sharpe</SelectItem>
+                  <SelectItem value="volatility">Volatilité</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select
+                value={alertDirection}
+                onValueChange={(v) =>
+                  setAlertDirection(v as "above" | "below")
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="above">Au-dessus de</SelectItem>
+                  <SelectItem value="below">En-dessous de</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Input
+                type="number"
+                step="0.01"
+                placeholder="Seuil"
+                value={alertThreshold}
+                onChange={(e) => setAlertThreshold(e.target.value)}
+              />
+            </div>
+
+            <Button
+              size="sm"
+              disabled={
+                !alertThreshold ||
+                !activePortfolioId ||
+                createAlertMutation.isPending
+              }
+              onClick={() => {
+                if (!activePortfolioId || !alertThreshold) return;
+                const req: AlertCreateRequest = {
+                  portfolio_id: activePortfolioId,
+                  metric: alertMetric,
+                  threshold: parseFloat(alertThreshold),
+                  direction: alertDirection,
+                };
+                createAlertMutation.mutate(req, {
+                  onSuccess: () => setAlertThreshold(""),
+                });
+              }}
+            >
+              {createAlertMutation.isPending
+                ? "Création..."
+                : "Créer l'alerte"}
+            </Button>
+            {!activePortfolioId && (
+              <p className="text-xs text-muted-foreground">
+                Sélectionnez un portefeuille pour créer une alerte.
+              </p>
             )}
           </div>
         </CardContent>

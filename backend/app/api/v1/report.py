@@ -27,7 +27,7 @@ from app.core.security import get_current_user
 from app.models.portfolio import Portfolio
 from app.models.report import Report
 from app.models.user import User
-from app.schemas.report import ReportRequest, ReportResponse
+from app.schemas.report import ReportHistoryItem, ReportRequest, ReportResponse
 from app.services.market_data import get_historical_prices, get_portfolio_returns
 from app.services.markowitz_engine import compute_efficient_frontier
 from app.services.mistral_service import generate_report
@@ -142,3 +142,26 @@ async def generate_narrative_report(
     )
 
 
+@router.get("/history", response_model=list[ReportHistoryItem])
+async def get_report_history(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> list[ReportHistoryItem]:
+    """Get all generated reports for the current user."""
+    result = await db.execute(
+        select(Report)
+        .where(Report.user_id == current_user.id)
+        .options(selectinload(Report.portfolio))
+        .order_by(Report.generated_at.desc())
+        .limit(50)
+    )
+    reports = result.scalars().all()
+    return [
+        ReportHistoryItem(
+            report_id=r.id,
+            portfolio_id=r.portfolio_id,
+            portfolio_name=r.portfolio.name if r.portfolio else "—",
+            generated_at=r.generated_at,
+        )
+        for r in reports
+    ]

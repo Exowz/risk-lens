@@ -23,3 +23,12 @@ class ReportResponse(BaseModel):
     content: str = Field(description="Narrative report text (markdown)")
     generated_at: datetime = Field(description="Generation timestamp")
     from_cache: bool = False
+
+
+class ReportHistoryItem(BaseModel):
+    """Summary of a previously generated report."""
+
+    report_id: str
+    portfolio_id: str
+    portfolio_name: str
+    generated_at: datetime

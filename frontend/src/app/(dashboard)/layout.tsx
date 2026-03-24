@@ -20,6 +20,7 @@ import { SidebarRail } from "@/components/layout/sidebar-rail";
 import { TopBar } from "@/components/layout/top-bar";
 import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useNotifications } from "@/lib/api/alerts";
 import { usePortfolios } from "@/lib/api/portfolios";
 import { usePreferences, useRiskProfile } from "@/lib/api/profile";
 import { useSession } from "@/lib/auth/client";
@@ -38,6 +39,7 @@ export default function DashboardLayout({
   const { data: dbPreferences, isSuccess: prefsLoaded } = usePreferences();
   const { activePortfolioId, setActivePortfolio } = usePortfolioStore();
   const { setMode } = useMode();
+  const { data: notifications } = useNotifications();
   const [showProfiler, setShowProfiler] = useState(false);
   const [profilerDismissed, setProfilerDismissed] = useState(false);
 
@@ -153,6 +155,21 @@ export default function DashboardLayout({
         >
           {/* Sub-header inside canvas */}
           <CanvasHeader />
+
+          {/* Alert banner */}
+          {notifications && notifications.length > 0 && (
+            <div className="mx-4 mt-2 rounded-lg bg-red-500/10 border border-red-500/30 px-4 py-2 flex items-center justify-between">
+              <span className="text-sm text-red-400">
+                {notifications[0].message}
+              </span>
+              <a
+                href="/risk"
+                className="text-xs text-red-400 hover:text-red-300 underline ml-4 shrink-0"
+              >
+                Voir l&apos;analyse
+              </a>
+            </div>
+          )}
 
           {/* Page content */}
           <main style={{ flex: 1, overflowY: "auto" }}>
