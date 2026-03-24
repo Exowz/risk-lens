@@ -94,27 +94,9 @@ export function Simulator({ portfolioId }: SimulatorProps) {
 
   const handleSliderChange = useCallback(
     (ticker: string, newValue: number) => {
-      setWeights((prev) => {
-        const oldValue = prev[ticker] ?? 0;
-        const diff = newValue - oldValue;
-        const others = tickers.filter((t) => t !== ticker);
-        const othersTotal = others.reduce((s, t) => s + (prev[t] ?? 0), 0);
-
-        const updated = { ...prev, [ticker]: newValue };
-
-        // Proportionally adjust other weights
-        if (othersTotal > 0 && others.length > 0) {
-          for (const t of others) {
-            const proportion = (prev[t] ?? 0) / othersTotal;
-            const adjusted = Math.max(0, (prev[t] ?? 0) - diff * proportion);
-            updated[t] = Math.round(adjusted * 100) / 100;
-          }
-        }
-
-        return updated;
-      });
+      setWeights((prev) => ({ ...prev, [ticker]: newValue }));
     },
-    [tickers],
+    [],
   );
 
   const handleSimulate = useCallback(() => {
@@ -221,14 +203,34 @@ export function Simulator({ portfolioId }: SimulatorProps) {
 
         {/* Sum indicator */}
         <div className="flex items-center justify-between">
-          <span className="text-xs text-muted-foreground">
+          <span
+            className={`text-sm font-mono font-medium ${
+              isValid ? "text-emerald-500" : "text-red-500"
+            }`}
+          >
             Total : {(totalWeight * 100).toFixed(0)}%
           </span>
-          {!isValid && (
-            <span className="text-xs font-medium text-red-500">
-              La somme doit être 100%
-            </span>
-          )}
+          <div className="flex items-center gap-2">
+            {!isValid && (
+              <span className="text-xs font-medium text-red-500">
+                La somme doit être 100%
+              </span>
+            )}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs text-muted-foreground"
+              onClick={() => {
+                if (!portfolio?.assets) return;
+                const reset: Record<string, number> = {};
+                for (const a of portfolio.assets) reset[a.ticker] = a.weight;
+                setWeights(reset);
+                setSimulatedSummary(null);
+              }}
+            >
+              Réinitialiser
+            </Button>
+          </div>
         </div>
 
         {/* Simulate button */}
