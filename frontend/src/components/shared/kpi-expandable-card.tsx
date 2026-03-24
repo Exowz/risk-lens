@@ -17,8 +17,9 @@
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { MetricTooltip } from "@/components/shared/metric-tooltip";
-import { CountUp } from "@/components/ui/count-up";
 import { ExpandableCard } from "@/components/ui/expandable-card";
+import { NumberTicker } from "@/components/ui/number-ticker";
+import { ShineBorder } from "@/components/ui/shine-border";
 import { Skeleton } from "@/components/ui/skeleton";
 
 const VALUE_COLORS = {
@@ -116,7 +117,8 @@ export function KpiExpandableCard({
   const valueElement = (
     <p className={`text-2xl font-bold font-mono ${VALUE_COLORS[valueColor]}`}>
       {valuePrefix}
-      <CountUp to={value} duration={1200} decimals={decimals} suffix={valueSuffix} />
+      <NumberTicker value={value} decimalPlaces={decimals} className={VALUE_COLORS[valueColor]} />
+      {valueSuffix}
     </p>
   );
 
@@ -147,8 +149,14 @@ export function KpiExpandableCard({
       onOpenChange={(v) => {
         if (v !== isOpen) onToggle();
       }}
-      className="border-solid"
+      className="border-solid relative overflow-hidden"
     >
+      {isOpen && (
+        <ShineBorder
+          shineColor={["#3b82f6", "#10b981"]}
+          borderWidth={1}
+        />
+      )}
       {/* Expanded overlay: AI explanation first, then value below */}
       <div className="space-y-4">
         {/* AI explanation */}

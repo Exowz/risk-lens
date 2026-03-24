@@ -25,7 +25,7 @@ import {
 
 import { ChartDescription } from "@/components/shared/chart-description";
 import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
-import { CountUp } from "@/components/ui/count-up";
+import { NumberTicker } from "@/components/ui/number-ticker";
 import { MetricTooltip } from "@/components/shared/metric-tooltip";
 import { Button } from "@/components/ui/button";
 import {
@@ -112,11 +112,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (
                 <p className="text-2xl font-mono text-red-500">
-                  <CountUp
-                    to={summary.var_95_historical * 100}
-                    duration={1200}
-                    suffix="%"
-                  />
+                  <NumberTicker value={summary.var_95_historical * 100} decimalPlaces={2} className="text-red-500" />%
                 </p>
               ) : (
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
@@ -127,11 +123,7 @@ export default function DashboardPage() {
             summary && mode === "expert" ? (
               <span className="text-xs text-muted-foreground">
                 Parametric:{" "}
-                <CountUp
-                  to={summary.var_95_parametric * 100}
-                  duration={1200}
-                  suffix="%"
-                />
+                <NumberTicker value={summary.var_95_parametric * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
             ) : null
           }
@@ -153,11 +145,7 @@ export default function DashboardPage() {
                         : "text-red-500"
                   }`}
                 >
-                  <CountUp
-                    to={summary.sharpe_ratio}
-                    duration={1200}
-                    decimals={3}
-                  />
+                  <NumberTicker value={summary.sharpe_ratio} decimalPlaces={3} />
                 </p>
               ) : (
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
@@ -192,11 +180,7 @@ export default function DashboardPage() {
                   }`}
                 >
                   {summary.annualized_return >= 0 ? "+" : ""}
-                  <CountUp
-                    to={summary.annualized_return * 100}
-                    duration={1200}
-                    suffix="%"
-                  />
+                  <NumberTicker value={summary.annualized_return * 100} decimalPlaces={2} />%
                 </p>
               ) : (
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
@@ -220,11 +204,7 @@ export default function DashboardPage() {
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (
                 <p className="text-2xl font-mono text-foreground">
-                  <CountUp
-                    to={summary.annualized_volatility * 100}
-                    duration={1200}
-                    suffix="%"
-                  />
+                  <NumberTicker value={summary.annualized_volatility * 100} decimalPlaces={2} />%
                 </p>
               ) : (
                 <p className="text-2xl font-mono text-muted-foreground">--</p>
@@ -235,11 +215,7 @@ export default function DashboardPage() {
             summary && mode === "expert" ? (
               <span className="text-xs text-muted-foreground">
                 CVaR 95%:{" "}
-                <CountUp
-                  to={summary.cvar_95 * 100}
-                  duration={1200}
-                  suffix="%"
-                />
+                <NumberTicker value={summary.cvar_95 * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
             ) : null
           }

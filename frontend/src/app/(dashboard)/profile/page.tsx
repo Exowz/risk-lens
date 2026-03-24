@@ -40,7 +40,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
+import { AnimatedCircularProgressBar } from "@/components/ui/animated-circular-progress-bar";
 import {
   Select,
   SelectContent,
@@ -164,17 +164,17 @@ export default function ProfilePage() {
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Risk score */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-xs text-muted-foreground">
-                  Score de risque
-                </span>
-                <span className="font-mono text-sm text-foreground">
-                  {riskProfile.risk_score}/10
-                </span>
-              </div>
-              <Progress value={riskProfile.risk_score * 10} className="h-2" />
-              <div className="flex justify-between mt-1">
+            <div className="flex flex-col items-center gap-2">
+              <span className="text-xs text-muted-foreground">
+                Score de risque
+              </span>
+              <AnimatedCircularProgressBar
+                value={riskProfile.risk_score * 10}
+                gaugePrimaryColor="#3b82f6"
+                gaugeSecondaryColor="rgba(255,255,255,0.06)"
+                className="size-28 text-xl"
+              />
+              <div className="flex justify-between w-full mt-1">
                 <span className="text-[10px] text-muted-foreground">
                   Conservateur
                 </span>

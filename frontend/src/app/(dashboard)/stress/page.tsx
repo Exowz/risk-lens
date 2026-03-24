@@ -36,7 +36,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { CountUp } from "@/components/ui/count-up";
+import { NumberTicker } from "@/components/ui/number-ticker";
 import { fetchMetricExplanation, fetchStressExplanation } from "@/lib/api/explain";
 import { useStressTest } from "@/lib/api/stress";
 import { useMode } from "@/lib/store/mode-context";
@@ -434,12 +434,7 @@ export default function StressPage() {
                   >
                     {selectedScenario.recovery_days !== null ? (
                       <p className="text-4xl font-mono text-white/60">
-                        <CountUp
-                          to={selectedScenario.recovery_days}
-                          duration={1500}
-                          decimals={0}
-                          suffix=" jours"
-                        />
+                        <NumberTicker value={selectedScenario.recovery_days} decimalPlaces={0} /> jours
                       </p>
                     ) : (
                       <p className="text-xl font-mono text-white/60">
