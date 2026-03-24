@@ -30,7 +30,7 @@ export function PortfolioSelector() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Your Portfolios</CardTitle>
+          <CardTitle>Vos portefeuilles</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -45,11 +45,11 @@ export function PortfolioSelector() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Your Portfolios</CardTitle>
+          <CardTitle>Vos portefeuilles</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">
-            Failed to load portfolios.
+            Échec du chargement des portefeuilles.
           </p>
         </CardContent>
       </Card>
@@ -60,11 +60,11 @@ export function PortfolioSelector() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Your Portfolios</CardTitle>
+          <CardTitle>Vos portefeuilles</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            No portfolios yet. Create one to get started.
+            Aucun portefeuille. Créez-en un pour commencer.
           </p>
         </CardContent>
       </Card>
@@ -81,7 +81,7 @@ export function PortfolioSelector() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Your Portfolios</CardTitle>
+        <CardTitle>Vos portefeuilles</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {portfolios.map((portfolio) => {

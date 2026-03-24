@@ -212,7 +212,7 @@ export default function MarkowitzPage() {
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Computation failed"}
+              {error instanceof Error ? error.message : "Échec du calcul"}
             </p>
           </CardContent>
         </Card>
@@ -350,9 +350,9 @@ export default function MarkowitzPage() {
           {mode === "expert" && (
             <Card>
               <CardHeader>
-                <CardTitle>Optimal Weights Comparison</CardTitle>
+                <CardTitle>Comparaison des pondérations optimales</CardTitle>
                 <CardDescription>
-                  Suggested allocations vs your current portfolio
+                  Allocations suggérées vs votre portefeuille actuel
                 </CardDescription>
               </CardHeader>
               <CardContent>

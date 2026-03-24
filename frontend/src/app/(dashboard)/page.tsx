@@ -168,10 +168,10 @@ export default function DashboardPage() {
             summary && mode === "beginner" ? (
               <span className="text-xs text-muted-foreground">
                 {summary.sharpe_ratio >= 1
-                  ? "Good risk-adjusted return"
+                  ? "Bon rendement ajusté au risque"
                   : summary.sharpe_ratio >= 0.5
                     ? "Acceptable"
-                    : "Below average"}
+                    : "En dessous de la moyenne"}
               </span>
             ) : null
           }
@@ -251,13 +251,13 @@ export default function DashboardPage() {
             className="md:col-span-2"
             title={
               <span className="text-base font-medium flex items-center gap-2">
-                Live Prices
+                Prix en direct
                 <span className="flex items-center gap-1 text-xs text-emerald-500 font-normal">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
-                  Live
+                  En direct
                 </span>
               </span>
             }

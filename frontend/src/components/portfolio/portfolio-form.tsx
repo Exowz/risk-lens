@@ -85,16 +85,16 @@ export function PortfolioForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Create Portfolio</CardTitle>
+        <CardTitle>Créer un portefeuille</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Portfolio name */}
           <div className="space-y-2">
-            <Label htmlFor="name">Portfolio Name</Label>
+            <Label htmlFor="name">Nom du portefeuille</Label>
             <Input
               id="name"
-              placeholder="e.g., Tech Growth Portfolio"
+              placeholder="ex. Portefeuille Tech"
               {...register("name")}
             />
             {errors.name && (
@@ -105,7 +105,7 @@ export function PortfolioForm({
           {/* Assets */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Assets</Label>
+              <Label>Actifs</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -114,14 +114,14 @@ export function PortfolioForm({
                 disabled={fields.length >= 20}
               >
                 <Plus className="mr-1 size-3" />
-                Add Asset
+                Ajouter
               </Button>
             </div>
 
             {/* Column headers */}
             <div className="grid grid-cols-[1fr_120px_40px] gap-2 text-xs font-medium text-muted-foreground">
               <span>Ticker</span>
-              <span>Weight (%)</span>
+              <span>Poids (%)</span>
               <span />
             </div>
 
@@ -176,7 +176,7 @@ export function PortfolioForm({
 
             {/* Weight total indicator */}
             <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-sm">
-              <span className="text-muted-foreground">Total Weight</span>
+              <span className="text-muted-foreground">Poids total</span>
               <span
                 className={
                   Math.abs((totalWeight ?? 0) - 1.0) <= 0.001
@@ -205,7 +205,7 @@ export function PortfolioForm({
           {createMutation.isError && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {(createMutation.error as { detail?: string })?.detail ??
-                "Failed to create portfolio"}
+                "Échec de la création du portefeuille"}
             </div>
           )}
 
@@ -215,8 +215,8 @@ export function PortfolioForm({
             disabled={isSubmitting || createMutation.isPending}
           >
             {createMutation.isPending
-              ? "Creating..."
-              : "Create Portfolio"}
+              ? "Création..."
+              : "Créer le portefeuille"}
           </Button>
         </form>
       </CardContent>

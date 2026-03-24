@@ -588,7 +588,7 @@ export default function StressPage() {
                   <div className="grid gap-4 sm:grid-cols-3">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
                       <KpiExpandableCard
-                        label={mode === "beginner" ? "Rendement total" : "Total Return"}
+                        label={mode === "beginner" ? "Rendement total" : "Rendement total"}
                         value={selectedScenario.total_return * 100}
                         valuePrefix={selectedScenario.total_return >= 0 ? "+" : ""}
                         valueSuffix="%"
@@ -605,7 +605,7 @@ export default function StressPage() {
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
                       <KpiExpandableCard
-                        label={mode === "beginner" ? "Pire chute" : "Max Drawdown"}
+                        label={mode === "beginner" ? "Pire chute" : "Drawdown max"}
                         value={selectedScenario.max_drawdown * 100}
                         valueSuffix="%"
                         valueColor="red"
@@ -621,7 +621,7 @@ export default function StressPage() {
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
                       <KpiExpandableCard
-                        label={mode === "beginner" ? "Temps de récupération" : "Recovery Days"}
+                        label={mode === "beginner" ? "Temps de récupération" : "Jours de récupération"}
                         value={selectedScenario.recovery_days ?? 0}
                         decimals={0}
                         valueSuffix={
@@ -653,7 +653,7 @@ export default function StressPage() {
                     <div className="grid gap-4 sm:grid-cols-3">
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }}>
                         <KpiExpandableCard
-                          label={mode === "beginner" ? "Rendement total" : "Total Return"}
+                          label={mode === "beginner" ? "Rendement total" : "Rendement total"}
                           value={selectedComparison.optimized_return * 100}
                           valuePrefix={selectedComparison.optimized_return >= 0 ? "+" : ""}
                           valueSuffix="%"
@@ -671,7 +671,7 @@ export default function StressPage() {
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
                         <KpiExpandableCard
-                          label={mode === "beginner" ? "Pire chute" : "Max Drawdown"}
+                          label={mode === "beginner" ? "Pire chute" : "Drawdown max"}
                           value={selectedComparison.optimized_drawdown * 100}
                           valueSuffix="%"
                           valueColor="red"
@@ -688,7 +688,7 @@ export default function StressPage() {
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                         <KpiExpandableCard
-                          label={mode === "beginner" ? "Temps de récupération" : "Recovery Days"}
+                          label={mode === "beginner" ? "Temps de récupération" : "Jours de récupération"}
                           value={selectedComparison.optimized_recovery_days ?? 0}
                           decimals={0}
                           valueSuffix={

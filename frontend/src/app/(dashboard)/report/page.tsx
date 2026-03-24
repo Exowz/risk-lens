@@ -322,7 +322,7 @@ export default function ReportPage() {
                     generateError !== null &&
                     "detail" in generateError
                   ? String((generateError as { detail: string }).detail)
-                  : "Report generation failed"}
+                  : "Échec de la génération du rapport"}
             </p>
           </CardContent>
         </Card>

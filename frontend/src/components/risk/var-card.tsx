@@ -87,7 +87,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
     <div className="space-y-4">
       {/* Method toggle */}
       <div className="flex items-center gap-2">
-        <span className="text-sm font-medium">Method:</span>
+        <span className="text-sm font-medium">Méthode :</span>
         <div className="flex rounded-md border">
           <button
             type="button"
@@ -98,7 +98,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
             }`}
             onClick={() => setMethod("historical")}
           >
-            Historical
+            Historique
           </button>
           <button
             type="button"
@@ -109,11 +109,11 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
             }`}
             onClick={() => setMethod("parametric")}
           >
-            Parametric
+            Paramétrique
           </button>
         </div>
         {data.from_cache && (
-          <span className="text-xs text-muted-foreground">(cached)</span>
+          <span className="text-xs text-muted-foreground">(cache)</span>
         )}
       </div>
 
