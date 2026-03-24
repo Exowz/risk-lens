@@ -11,7 +11,7 @@
  * Used by: all (dashboard)/* pages
  */
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { AvatarZone } from "@/components/layout/avatar-zone";
@@ -26,6 +26,7 @@ import { usePreferences, useRiskProfile } from "@/lib/api/profile";
 import { useSession } from "@/lib/auth/client";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
+import { useSidebarStore } from "@/lib/store/sidebar-store";
 
 export default function DashboardLayout({
   children,
@@ -42,6 +43,53 @@ export default function DashboardLayout({
   const { data: notifications } = useNotifications();
   const [showProfiler, setShowProfiler] = useState(false);
   const [profilerDismissed, setProfilerDismissed] = useState(false);
+
+  const { state: sidebarState, toggle: toggleSidebar, setPeeking } = useSidebarStore();
+  const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
+
+  // Cmd+B keyboard shortcut
+  useEffect(() => {
+    function handleKeyDown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key === "b") {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [toggleSidebar]);
+
+  // Mouse edge detection for peek mode
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => {
+      if (sidebarState !== "hidden") return;
+
+      const sidebarEl = sidebarRef.current;
+      const isOverSidebar = sidebarEl && sidebarEl.contains(e.target as Node);
+
+      if (e.clientX < 8) {
+        if (peekTimerRef.current) {
+          clearTimeout(peekTimerRef.current);
+          peekTimerRef.current = null;
+        }
+        setPeeking(true);
+      } else if (!isOverSidebar && e.clientX > 240) {
+        if (!peekTimerRef.current) {
+          peekTimerRef.current = setTimeout(() => {
+            setPeeking(false);
+            peekTimerRef.current = null;
+          }, 300);
+        }
+      }
+    },
+    [sidebarState, setPeeking],
+  );
+
+  useEffect(() => {
+    window.addEventListener("mousemove", handleMouseMove);
+    return () => window.removeEventListener("mousemove", handleMouseMove);
+  }, [handleMouseMove]);
 
   useEffect(() => {
     if (!isPending && !session) {
@@ -81,7 +129,7 @@ export default function DashboardLayout({
       <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <div style={{ height: 56, flexShrink: 0 }} />
         <div style={{ display: "flex", flex: 1, padding: "0 1.25rem 1.25rem 1.25rem", gap: "1rem" }}>
-          <div style={{ width: 52, flexShrink: 0 }} />
+          <div style={{ width: sidebarState === "pinned" ? 220 : 52, flexShrink: 0, transition: "width 250ms ease-out" }} />
           <div
             style={{
               flex: 1,
@@ -123,15 +171,18 @@ export default function DashboardLayout({
           minHeight: 0,
         }}
       >
-        {/* Left column — Sidebar (centered) + Avatar (bottom) */}
+        {/* Left column — Sidebar + Avatar (bottom) */}
         <div
+          ref={sidebarRef}
           style={{
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
             flexShrink: 0,
-            width: 52,
+            width: sidebarState === "pinned" ? 220 : 52,
+            transition: "width 250ms ease-out",
             gap: "0.75rem",
+            position: "relative",
           }}
         >
           <div style={{ flex: 1 }} />
