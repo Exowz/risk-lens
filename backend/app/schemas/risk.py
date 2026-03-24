@@ -65,6 +65,14 @@ class RiskSummaryRequest(BaseModel):
     period: str = Field(default="2y", description="Historical data period")
 
 
+class SimulateRequest(BaseModel):
+    """Request body for risk simulation with custom weights (no portfolio required)."""
+
+    tickers: list[str] = Field(min_length=1, description="Asset ticker symbols")
+    weights: list[float] = Field(min_length=1, description="Asset weights (must sum to ~1.0)")
+    period: str = Field(default="2y", description="Historical data period")
+
+
 # ── Responses ──
 
 

@@ -75,6 +75,23 @@ async function fetchRiskSummary(
   });
 }
 
+// ── Simulate (custom weights, no portfolio) ──
+
+interface SimulateRequest {
+  tickers: string[];
+  weights: number[];
+  period?: string;
+}
+
+async function fetchSimulateRisk(
+  params: SimulateRequest,
+): Promise<RiskSummary> {
+  return apiClient<RiskSummary>("/api/v1/risk/simulate", {
+    method: "POST",
+    body: params,
+  });
+}
+
 // ── TanStack Query Hooks ──
 // Using useMutation since these are POST endpoints that trigger computation.
 // The staleTime hint is embedded in the mutation cache via gcTime.
@@ -104,5 +121,11 @@ export function useRiskSummary() {
   return useMutation({
     mutationFn: fetchRiskSummary,
     gcTime: STALE_TIME,
+  });
+}
+
+export function useSimulateRisk() {
+  return useMutation({
+    mutationFn: fetchSimulateRisk,
   });
 }

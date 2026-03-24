@@ -40,6 +40,7 @@ from app.schemas.risk import (
     MonteCarloResponse,
     RiskSummaryRequest,
     RiskSummaryResponse,
+    SimulateRequest,
     VaRRequest,
     VaRResponse,
 )
@@ -232,6 +233,33 @@ async def compute_risk_summary(
     await store_cached_result(db, cache_key, result.model_dump(exclude={"from_cache"}))
 
     logger.info("Risk summary computed: portfolio=%s", portfolio.id)
+    return result
+
+
+# ── Simulation endpoint (no portfolio required) ──
+
+
+@router.post("/simulate", response_model=RiskSummaryResponse)
+async def simulate_risk(
+    request: SimulateRequest,
+    current_user: User = Depends(get_current_user),
+) -> RiskSummaryResponse:
+    """Calculate risk summary for arbitrary tickers/weights (no cache)."""
+    if len(request.tickers) != len(request.weights):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="tickers and weights must have the same length",
+        )
+
+    returns = await get_portfolio_returns(
+        request.tickers, request.weights, request.period
+    )
+    result = get_risk_summary(returns, request.period)
+
+    logger.info(
+        "Risk simulation: tickers=%s",
+        ",".join(request.tickers),
+    )
     return result
 
 

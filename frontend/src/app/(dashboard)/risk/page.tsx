@@ -14,6 +14,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import { MonteCarloPanel } from "@/components/risk/monte-carlo-panel";
+import { Simulator } from "@/components/risk/simulator";
 import { VaRCards } from "@/components/risk/var-card";
 import { WhyExpandableCard } from "@/components/shared/why-expandable-card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +61,8 @@ export default function RiskPage() {
             openCard={openCard}
             onOpenCard={setOpenCard}
           />
+
+          <Simulator portfolioId={activePortfolioId} />
 
           <WhyExpandableCard
             beginnerContent={
