@@ -19,6 +19,7 @@ import { CanvasHeader } from "@/components/layout/canvas-header";
 import { SidebarRail } from "@/components/layout/sidebar-rail";
 import { TopBar } from "@/components/layout/top-bar";
 import { CommandPalette } from "@/components/shared/command-palette";
+import { NotificationIsland } from "@/components/shared/notification-island";
 import { RiskProfilerModal } from "@/components/shared/risk-profiler-modal";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useNotifications } from "@/lib/api/alerts";
@@ -157,6 +158,9 @@ export default function DashboardLayout({
     <div style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
       {/* Command Palette */}
       <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+
+      {/* Dynamic Island notifications */}
+      <NotificationIsland />
 
       {/* Risk Profiler Onboarding */}
       <RiskProfilerModal

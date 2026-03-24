@@ -30,6 +30,7 @@ import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 import { usePortfolios } from "@/lib/api/portfolios";
 import { useGenerateReport } from "@/lib/api/report";
+import { useNotificationIsland } from "@/lib/store/notification-island-store";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 // ── Loading steps ──
@@ -226,6 +227,7 @@ export default function ReportPage() {
     reset,
   } = useGenerateReport();
 
+  const showIsland = useNotificationIsland((s) => s.show);
   const [isExporting, setIsExporting] = useState(false);
 
   const activePortfolioName =
@@ -237,7 +239,20 @@ export default function ReportPage() {
 
   const handleGenerate = () => {
     if (!activePortfolioId) return;
-    generate({ portfolio_id: activePortfolioId });
+    generate(
+      { portfolio_id: activePortfolioId },
+      {
+        onSuccess: (result) => {
+          const sections = (result.content.match(/^## /gm) || []).length;
+          showIsland({
+            type: "report",
+            title: "Rapport généré",
+            subtitle: `${sections} sections générées`,
+            positive: true,
+          });
+        },
+      },
+    );
   };
 
   const handleDownloadPDF = useCallback(async () => {

@@ -28,6 +28,7 @@ import {
 } from "@/lib/api/explain";
 import { useMonteCarlo } from "@/lib/api/risk";
 import { useMode } from "@/lib/store/mode-context";
+import { useNotificationIsland } from "@/lib/store/notification-island-store";
 import type { MonteCarloResult } from "@/types/risk";
 
 interface MonteCarloProps {
@@ -41,6 +42,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
   const [nDays, setNDays] = useState(252);
   const [result, setResult] = useState<MonteCarloResult | null>(null);
   const { mode } = useMode();
+  const showIsland = useNotificationIsland((s) => s.show);
 
   const monteCarlo = useMonteCarlo();
 
@@ -88,7 +90,17 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
         n_simulations: nSimulations,
         n_days: nDays,
       },
-      { onSuccess: (data) => setResult(data) },
+      {
+        onSuccess: (data) => {
+          setResult(data);
+          showIsland({
+            type: "montecarlo",
+            title: "Simulation terminée",
+            subtitle: `VaR 95% : ${(data.var_95 * 100).toFixed(2)}% · P(perte) : ${(data.probability_of_loss * 100).toFixed(0)}%`,
+            positive: data.probability_of_loss < 0.5,
+          });
+        },
+      },
     );
   }
 

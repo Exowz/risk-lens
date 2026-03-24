@@ -40,6 +40,7 @@ import { NumberTicker } from "@/components/ui/number-ticker";
 import { fetchMetricExplanation, fetchStressExplanation } from "@/lib/api/explain";
 import { useStressTest } from "@/lib/api/stress";
 import { useMode } from "@/lib/store/mode-context";
+import { useNotificationIsland } from "@/lib/store/notification-island-store";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 import type { ScenarioResult } from "@/types/stress";
 
@@ -142,6 +143,7 @@ function buildDualCurveData(
 export default function StressPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mode } = useMode();
+  const showIsland = useNotificationIsland((s) => s.show);
   const { mutate, data, isPending, error, reset } = useStressTest();
 
   const [selectedCrisis, setSelectedCrisis] = useState<string | null>(null);
@@ -164,7 +166,25 @@ export default function StressPage() {
       setSelectedCrisis(null);
       setPhase("idle");
       setVisiblePoints(0);
-      mutate({ portfolio_id: activePortfolioId, period: "max" });
+      mutate(
+        { portfolio_id: activePortfolioId, period: "max" },
+        {
+          onSuccess: (result) => {
+            const worst = result.scenarios.reduce(
+              (w, s) => (s.max_drawdown < w.max_drawdown ? s : w),
+              result.scenarios[0],
+            );
+            showIsland({
+              type: "stress",
+              title: "Analyse terminée",
+              subtitle: `Drawdown max : ${(worst.max_drawdown * 100).toFixed(1)}% · ${
+                worst.recovery_days !== null ? `Récupéré en ${worst.recovery_days}j` : "Non récupéré"
+              }`,
+              positive: worst.recovery_days !== null,
+            });
+          },
+        },
+      );
       setChartExplanation(null);
     }
   }, [activePortfolioId, reset, mutate]);
