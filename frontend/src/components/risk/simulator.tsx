@@ -15,6 +15,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
+import { Magnet } from "@/components/ui/magnet";
 import {
   Card,
   CardContent,
@@ -231,13 +232,15 @@ export function Simulator({ portfolioId }: SimulatorProps) {
         </div>
 
         {/* Simulate button */}
-        <Button
-          onClick={handleSimulate}
-          disabled={!isValid || simulateMutation.isPending}
-          className="w-full"
-        >
-          {simulateMutation.isPending ? "Simulation..." : "Simuler"}
-        </Button>
+        <Magnet>
+          <Button
+            onClick={handleSimulate}
+            disabled={!isValid || simulateMutation.isPending}
+            className="w-full"
+          >
+            {simulateMutation.isPending ? "Simulation..." : "Simuler"}
+          </Button>
+        </Magnet>
 
         {/* Comparison results */}
         {metrics.length > 0 && (

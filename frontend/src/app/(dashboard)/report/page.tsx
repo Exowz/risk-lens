@@ -16,6 +16,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
 
+import AnimatedList from "@/components/ui/animated-list";
 import { BlurText } from "@/components/ui/blur-text";
 import { Button } from "@/components/ui/button";
 import {
@@ -25,6 +26,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { Magnet } from "@/components/ui/magnet";
 import { MultiStepLoader } from "@/components/ui/multi-step-loader";
 import { TracingBeam } from "@/components/ui/tracing-beam";
 import { usePortfolios } from "@/lib/api/portfolios";
@@ -260,6 +262,17 @@ export default function ReportPage() {
   // Parse sections for scrollytelling
   const sections = data?.content ? parseReportSections(data.content) : [];
 
+  // Extract bullet items for AnimatedList rendering
+  const extractBulletItems = (content: string[]): string[] =>
+    content
+      .filter((line) => /^[-*+]\s/.test(line))
+      .map((line) =>
+        line.replace(/^[-*+]\s+/, "").replace(/\*\*(.+?)\*\*/g, "$1").replace(/\*(.+?)\*/g, "$1"),
+      );
+
+  const hasSignificantBullets = (content: string[]): boolean =>
+    extractBulletItems(content).length >= 3;
+
   if (!activePortfolioId) {
     return (
       <div className="p-6">
@@ -285,9 +298,11 @@ export default function ReportPage() {
     <div className="p-6 space-y-6">
       {/* Actions */}
       <div className="flex justify-end gap-2">
-        <Button onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? "Génération..." : "Générer le rapport"}
-        </Button>
+        <Magnet>
+          <Button onClick={handleGenerate} disabled={isGenerating}>
+            {isGenerating ? "Génération..." : "Générer le rapport"}
+          </Button>
+        </Magnet>
         {data && (
           <Button
             variant="outline"
@@ -364,11 +379,33 @@ export default function ReportPage() {
                   className="text-base font-medium text-foreground mb-3"
                 />
               )}
-              <div className="space-y-2">
-                {section.content.map((line, lineIdx) => (
-                  <div key={lineIdx}>{renderLine(line)}</div>
-                ))}
-              </div>
+              {hasSignificantBullets(section.content) ? (
+                <>
+                  {/* Prose lines before bullets */}
+                  <div className="space-y-2 mb-2">
+                    {section.content
+                      .filter((line) => !/^[-*+]\s/.test(line))
+                      .map((line, lineIdx) => (
+                        <div key={lineIdx}>{renderLine(line)}</div>
+                      ))}
+                  </div>
+                  {/* Bullet recommendations with AnimatedList */}
+                  <AnimatedList
+                    items={extractBulletItems(section.content)}
+                    showGradients={false}
+                    enableArrowNavigation={false}
+                    displayScrollbar={false}
+                    className="w-full"
+                    itemClassName="border-border"
+                  />
+                </>
+              ) : (
+                <div className="space-y-2">
+                  {section.content.map((line, lineIdx) => (
+                    <div key={lineIdx}>{renderLine(line)}</div>
+                  ))}
+                </div>
+              )}
             </motion.div>
           ))}
         </TracingBeam>

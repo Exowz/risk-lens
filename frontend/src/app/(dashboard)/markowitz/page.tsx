@@ -22,6 +22,7 @@ import { ChartExpandableCard } from "@/components/shared/chart-expandable-card";
 import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { WhyExpandableCard } from "@/components/shared/why-expandable-card";
 import { Button } from "@/components/ui/button";
+import { Magnet } from "@/components/ui/magnet";
 import {
   Card,
   CardContent,
@@ -203,9 +204,11 @@ export default function MarkowitzPage() {
   return (
     <div className="p-6 space-y-6">
       <div className="flex justify-end">
-        <Button onClick={handleCompute} disabled={isPending}>
-          {isPending ? "Calcul..." : "Calculer la frontière"}
-        </Button>
+        <Magnet>
+          <Button onClick={handleCompute} disabled={isPending}>
+            {isPending ? "Calcul..." : "Calculer la frontière"}
+          </Button>
+        </Magnet>
       </div>
 
       {error && (
