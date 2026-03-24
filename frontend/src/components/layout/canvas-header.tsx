@@ -17,7 +17,7 @@ import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useMode } from "@/lib/store/mode-context";
 
 const PAGE_TITLES: Record<string, string> = {
-  "/": "Vue d'ensemble",
+  "/overview": "Vue d'ensemble",
   "/portfolio": "Portefeuille",
   "/risk": "Analyse des risques",
   "/markowitz": "Optimisation Markowitz",

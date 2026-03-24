@@ -36,7 +36,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
-  { href: "/", label: "Vue d'ensemble", icon: HouseLine },
+  { href: "/overview", label: "Vue d'ensemble", icon: HouseLine },
   { href: "/portfolio", label: "Portefeuille", icon: ChartPie },
   { href: "/risk", label: "Analyse des risques", icon: ShieldWarning },
   { href: "/markowitz", label: "Markowitz", icon: ChartLineUp },

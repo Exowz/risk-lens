@@ -14,6 +14,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
+import { useSession } from "@/lib/auth/client";
 import {
   ShieldWarning,
   Brain,
@@ -110,7 +111,10 @@ const EXPERT_ITEMS = [
 
 // ── Page ──
 
-export default function WelcomePage() {
+export default function LandingPage() {
+  const { data: session } = useSession();
+  const isLoggedIn = !!session;
+
   return (
     <div className="min-h-screen bg-[#0a0b0e] overflow-y-auto">
       {/* ───── Section 1: Hero ───── */}
@@ -170,16 +174,26 @@ export default function WelcomePage() {
             transition={{ delay: 1.2, duration: 0.5 }}
             className="flex items-center justify-center gap-4 mt-8"
           >
-            <Link href="/register">
-              <button className="bg-white text-black font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors text-sm">
-                Commencer
-              </button>
-            </Link>
-            <Link href="/login">
-              <button className="border border-white/20 text-white px-6 py-2.5 rounded-full hover:border-white/40 hover:bg-white/[0.04] transition-colors text-sm">
-                Se connecter
-              </button>
-            </Link>
+            {isLoggedIn ? (
+              <Link href="/overview">
+                <button className="bg-white text-black font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors text-sm">
+                  Retour au tableau de bord
+                </button>
+              </Link>
+            ) : (
+              <>
+                <Link href="/register">
+                  <button className="bg-white text-black font-medium px-6 py-2.5 rounded-full hover:bg-white/90 transition-colors text-sm">
+                    Commencer
+                  </button>
+                </Link>
+                <Link href="/login">
+                  <button className="border border-white/20 text-white px-6 py-2.5 rounded-full hover:border-white/40 hover:bg-white/[0.04] transition-colors text-sm">
+                    Se connecter
+                  </button>
+                </Link>
+              </>
+            )}
           </motion.div>
         </div>
       </section>
@@ -300,9 +314,9 @@ export default function WelcomePage() {
             Prêt à analyser votre portefeuille ?
           </h2>
           <div className="mt-8">
-            <Link href="/register">
+            <Link href={isLoggedIn ? "/overview" : "/register"}>
               <button className="bg-white text-black font-semibold px-8 py-3 rounded-full text-base hover:bg-white/90 transition-colors">
-                Commencer maintenant
+                {isLoggedIn ? "Retour au tableau de bord" : "Commencer maintenant"}
               </button>
             </Link>
           </div>

@@ -21,7 +21,7 @@ import { loginSchema, type LoginInput } from "@/lib/validators/auth.schema";
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+  const callbackUrl = searchParams.get("callbackUrl") ?? "/overview";
   const [serverError, setServerError] = useState<string | null>(null);
 
   const {
