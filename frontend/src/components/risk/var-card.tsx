@@ -10,10 +10,11 @@
  * Used by: app/(dashboard)/risk/page.tsx
  */
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { Card, CardContent } from "@/components/ui/card";
+import { DirectionAwareTabs } from "@/components/ui/direction-aware-tabs";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchMetricExplanation } from "@/lib/api/explain";
 import { useRiskSummary } from "@/lib/api/risk";
@@ -83,35 +84,26 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
   const toggle = (key: string) =>
     onOpenCard(openCard === key ? null : key);
 
+  const methodTabs = useMemo(
+    () => [
+      { id: 0, label: "Historique", content: null as React.ReactNode },
+      { id: 1, label: "Paramétrique", content: null as React.ReactNode },
+    ],
+    [],
+  );
+
   return (
     <div className="space-y-4">
-      {/* Method toggle */}
-      <div className="flex items-center gap-2">
+      {/* Method toggle — Direction Aware Tabs */}
+      <div className="flex items-center gap-3">
         <span className="text-sm font-medium">Méthode :</span>
-        <div className="flex rounded-md border">
-          <button
-            type="button"
-            className={`px-3 py-1 text-xs font-medium transition-colors ${
-              method === "historical"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            }`}
-            onClick={() => setMethod("historical")}
-          >
-            Historique
-          </button>
-          <button
-            type="button"
-            className={`px-3 py-1 text-xs font-medium transition-colors ${
-              method === "parametric"
-                ? "bg-primary text-primary-foreground"
-                : "hover:bg-muted"
-            }`}
-            onClick={() => setMethod("parametric")}
-          >
-            Paramétrique
-          </button>
-        </div>
+        <DirectionAwareTabs
+          tabs={methodTabs}
+          onChange={() =>
+            setMethod((m) => (m === "historical" ? "parametric" : "historical"))
+          }
+          className="bg-white/[0.06]"
+        />
         {data.from_cache && (
           <span className="text-xs text-muted-foreground">(cache)</span>
         )}
