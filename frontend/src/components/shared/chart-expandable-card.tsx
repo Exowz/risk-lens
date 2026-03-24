@@ -15,6 +15,8 @@ import { useCallback, useEffect, useRef, useState, type ReactNode } from "react"
 
 import { ExpandableCard } from "@/components/ui/expandable-card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useFocusStore } from "@/lib/store/focus-store";
+import { useSidebarStore } from "@/lib/store/sidebar-store";
 
 interface LegendItem {
   color: string;
@@ -50,6 +52,16 @@ export function ChartExpandableCard({
   const analyzeRef = useRef(onAnalyze);
   analyzeRef.current = onAnalyze;
 
+  const { isFocused, enter: enterFocus, exit: exitFocus } = useFocusStore();
+  const sidebarState = useSidebarStore((s) => s.state);
+  const setSidebarState = useSidebarStore((s) => s.setState);
+
+  const handleDoubleClick = useCallback(() => {
+    if (isFocused) return;
+    enterFocus(sidebarState);
+    setSidebarState("hidden");
+  }, [isFocused, sidebarState, enterFocus, setSidebarState]);
+
   // Auto-fetch explanation when overlay opens
   useEffect(() => {
     if (isOpen && !explanation && !isLoading) {
@@ -84,9 +96,44 @@ export function ChartExpandableCard({
       });
   }, []);
 
+  const handleExitFocus = useCallback(() => {
+    const prev = useFocusStore.getState().previousSidebarState;
+    exitFocus();
+    if (prev) setSidebarState(prev);
+  }, [exitFocus, setSidebarState]);
+
+  // Escape key exits focus mode
+  useEffect(() => {
+    if (!isFocused) return;
+    function handleKey(e: KeyboardEvent) {
+      if (e.key === "Escape") handleExitFocus();
+    }
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [isFocused, handleExitFocus]);
+
   const collapsedHeader = (
-    <div>
-      <h3 className="font-medium text-foreground mb-3">{title}</h3>
+    <div onDoubleClick={handleDoubleClick}>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="font-medium text-foreground">{title}</h3>
+        {isFocused && (
+          <div className="flex items-center gap-2">
+            <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-white/60">
+              Focus
+            </span>
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                handleExitFocus();
+              }}
+              className="text-xs text-white/40 hover:text-white/70 transition-colors"
+            >
+              ✕ Quitter
+            </button>
+          </div>
+        )}
+      </div>
       {children}
       {legend && legend.length > 0 && (
         <div className="flex flex-wrap gap-x-3 gap-y-1 mt-3">

@@ -31,6 +31,7 @@ import {
 } from "@phosphor-icons/react";
 
 import { usePortfolios } from "@/lib/api/portfolios";
+import { useFocusStore } from "@/lib/store/focus-store";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 import { useSidebarStore } from "@/lib/store/sidebar-store";
@@ -45,7 +46,8 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const { data: portfolios } = usePortfolios();
   const { setActivePortfolio } = usePortfolioStore();
   const { setMode } = useMode();
-  const { setState: setSidebarState } = useSidebarStore();
+  const { setState: setSidebarState, state: sidebarState } = useSidebarStore();
+  const { isFocused, enter: enterFocus, exit: exitFocus } = useFocusStore();
   const [search, setSearch] = useState("");
 
   const close = useCallback(() => {
@@ -196,6 +198,22 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
                 label="Masquer la sidebar"
                 hint="⌘B"
                 onSelect={() => runAction(() => setSidebarState("hidden"))}
+              />
+              <PaletteItem
+                icon={<ChartLineUp size={16} />}
+                label={isFocused ? "Quitter le mode focus" : "Mode focus"}
+                onSelect={() =>
+                  runAction(() => {
+                    if (isFocused) {
+                      const prev = useFocusStore.getState().previousSidebarState;
+                      exitFocus();
+                      if (prev) setSidebarState(prev);
+                    } else {
+                      enterFocus(sidebarState);
+                      setSidebarState("hidden");
+                    }
+                  })
+                }
               />
             </Command.Group>
 

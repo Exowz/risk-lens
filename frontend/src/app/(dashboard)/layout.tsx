@@ -28,6 +28,7 @@ import { usePreferences, useRiskProfile } from "@/lib/api/profile";
 import { useSession } from "@/lib/auth/client";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
+import { useFocusStore } from "@/lib/store/focus-store";
 import { useSidebarStore } from "@/lib/store/sidebar-store";
 
 export default function DashboardLayout({
@@ -48,6 +49,7 @@ export default function DashboardLayout({
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const { state: sidebarState, toggle: toggleSidebar, setPeeking } = useSidebarStore();
+  const isFocused = useFocusStore((s) => s.isFocused);
   const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -192,10 +194,13 @@ export default function DashboardLayout({
             flexDirection: "column",
             alignItems: "center",
             flexShrink: 0,
-            width: sidebarState === "pinned" ? 220 : 52,
-            transition: "width 250ms ease-out",
+            width: isFocused ? 0 : sidebarState === "pinned" ? 220 : 52,
+            transition: "width 250ms ease-out, opacity 200ms ease-out",
             gap: "0.75rem",
             position: "relative",
+            opacity: isFocused ? 0 : 1,
+            pointerEvents: isFocused ? "none" : "auto",
+            overflow: "hidden",
           }}
         >
           <div style={{ flex: 1 }} />
