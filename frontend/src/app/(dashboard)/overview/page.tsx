@@ -15,6 +15,7 @@
 
 import { useEffect } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 import {
   PieChart,
   Pie,
@@ -63,6 +64,7 @@ export default function DashboardPage() {
   const { data: portfolio } = usePortfolio(activePortfolioId);
   const { data: livePrices } = useLivePrices(activePortfolioId);
   const { mode } = useMode();
+  const t = useTranslations();
   const {
     mutate: fetchSummary,
     data: summary,
@@ -80,14 +82,14 @@ export default function DashboardPage() {
       <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Bienvenue sur RiskLens</CardTitle>
+            <CardTitle>{t('dashboard.welcome')}</CardTitle>
             <CardDescription>
-              Créez votre premier portefeuille pour accéder aux analyses de risque
+              {t('dashboard.welcome_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Créer un portefeuille</Button>
+              <Button>{t('dashboard.create_portfolio')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -184,7 +186,7 @@ export default function DashboardPage() {
             </MetricTooltip>
             {summary && (
               <span className="text-xs text-muted-foreground">
-                {summary.n_observations} observations
+                {summary.n_observations} {t('dashboard.observations')}
               </span>
             )}
           </MagicCard>
@@ -219,13 +221,13 @@ export default function DashboardPage() {
             className="md:col-span-2"
             title={
               <span className="text-base font-medium flex items-center gap-2">
-                Prix en direct
+                {t('dashboard.live_prices')}
                 <span className="flex items-center gap-1 text-xs text-emerald-500 font-normal">
                   <span className="relative flex h-2 w-2">
                     <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
                     <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
                   </span>
-                  En direct
+                  {t('dashboard.live')}
                 </span>
               </span>
             }
@@ -268,7 +270,7 @@ export default function DashboardPage() {
           <BentoGridItem
             className="md:col-span-1"
             title={
-              <span className="text-base font-medium">Composition</span>
+              <span className="text-base font-medium">{t('dashboard.composition')}</span>
             }
             header={
               <div>

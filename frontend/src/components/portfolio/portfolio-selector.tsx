@@ -11,6 +11,7 @@
  */
 
 import { useState } from "react";
+import { useTranslations } from "next-intl";
 import { Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,7 @@ import { useDeletePortfolio, usePortfolios } from "@/lib/api/portfolios";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 export function PortfolioSelector() {
+  const t = useTranslations();
   const { data: portfolios, isLoading, isError } = usePortfolios();
   const { activePortfolioId, setActivePortfolio } = usePortfolioStore();
   const deleteMutation = useDeletePortfolio();
@@ -30,7 +32,7 @@ export function PortfolioSelector() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vos portefeuilles</CardTitle>
+          <CardTitle>{t('portfolio.title')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -45,11 +47,11 @@ export function PortfolioSelector() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vos portefeuilles</CardTitle>
+          <CardTitle>{t('portfolio.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-destructive">
-            Échec du chargement des portefeuilles.
+            {t('common.error')}
           </p>
         </CardContent>
       </Card>
@@ -60,11 +62,11 @@ export function PortfolioSelector() {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Vos portefeuilles</CardTitle>
+          <CardTitle>{t('portfolio.title')}</CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-sm text-muted-foreground">
-            Aucun portefeuille. Créez-en un pour commencer.
+            {t('portfolio.empty_state_desc')}
           </p>
         </CardContent>
       </Card>
@@ -81,7 +83,7 @@ export function PortfolioSelector() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Vos portefeuilles</CardTitle>
+        <CardTitle>{t('portfolio.title')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2">
         {portfolios.map((portfolio) => {
@@ -105,7 +107,7 @@ export function PortfolioSelector() {
               <div>
                 <p className="text-sm font-medium">{portfolio.name}</p>
                 <p className="text-xs text-muted-foreground">
-                  {portfolio.asset_count} actif{portfolio.asset_count !== 1 ? "s" : ""}
+                  {t('portfolio.assets_count_other', { count: portfolio.asset_count })}
                 </p>
               </div>
               <Button

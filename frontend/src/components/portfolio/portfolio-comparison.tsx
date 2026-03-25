@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 import {
   CartesianGrid,
   Legend,
@@ -98,6 +99,7 @@ function buildOverlayData(
 }
 
 export function PortfolioComparison() {
+  const t = useTranslations();
   const { data: portfolios } = usePortfolios();
   const [idA, setIdA] = useState<string | null>(null);
   const [idB, setIdB] = useState<string | null>(null);
@@ -137,7 +139,7 @@ export function PortfolioComparison() {
       <Card>
         <CardContent className="py-8">
           <p className="text-sm text-muted-foreground text-center">
-            Créez au moins deux portefeuilles pour comparer.
+            {t('portfolio.empty_state_desc')}
           </p>
         </CardContent>
       </Card>
@@ -148,35 +150,35 @@ export function PortfolioComparison() {
     summaryA && summaryB
       ? [
           {
-            label: "VaR 95%",
+            label: t('metrics.expert.var_95'),
             a: summaryA.var_95_historical,
             b: summaryB.var_95_historical,
             format: formatPct,
             higherIsBetter: false,
           },
           {
-            label: "CVaR 95%",
+            label: t('metrics.expert.cvar_95'),
             a: summaryA.cvar_95,
             b: summaryB.cvar_95,
             format: formatPct,
             higherIsBetter: false,
           },
           {
-            label: "Sharpe",
+            label: t('metrics.expert.sharpe'),
             a: summaryA.sharpe_ratio,
             b: summaryB.sharpe_ratio,
             format: formatRatio,
             higherIsBetter: true,
           },
           {
-            label: "Rendement",
+            label: t('metrics.expert.annual_return'),
             a: summaryA.annualized_return,
             b: summaryB.annualized_return,
             format: formatPct,
             higherIsBetter: true,
           },
           {
-            label: "Volatilité",
+            label: t('metrics.expert.volatility'),
             a: summaryA.annualized_volatility,
             b: summaryB.annualized_volatility,
             format: formatPct,
@@ -185,8 +187,8 @@ export function PortfolioComparison() {
         ]
       : [];
 
-  const nameA = portfolioA?.name ?? "Portefeuille A";
-  const nameB = portfolioB?.name ?? "Portefeuille B";
+  const nameA = portfolioA?.name ?? t('portfolio.portfolio_a');
+  const nameB = portfolioB?.name ?? t('portfolio.portfolio_b');
   const chartData = buildOverlayData(pricesA, pricesB, nameA, nameB);
 
   return (
@@ -195,11 +197,11 @@ export function PortfolioComparison() {
       <div className="grid gap-4 sm:grid-cols-2">
         <div>
           <label className="text-xs text-muted-foreground mb-1.5 block">
-            Portefeuille A
+            {t('portfolio.portfolio_a')}
           </label>
           <Select value={idA ?? ""} onValueChange={setIdA}>
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner..." />
+              <SelectValue placeholder={t('portfolio.select_placeholder')} />
             </SelectTrigger>
             <SelectContent>
               {portfolios.map((p) => (
@@ -212,11 +214,11 @@ export function PortfolioComparison() {
         </div>
         <div>
           <label className="text-xs text-muted-foreground mb-1.5 block">
-            Portefeuille B
+            {t('portfolio.portfolio_b')}
           </label>
           <Select value={idB ?? ""} onValueChange={setIdB}>
             <SelectTrigger>
-              <SelectValue placeholder="Sélectionner..." />
+              <SelectValue placeholder={t('portfolio.select_placeholder')} />
             </SelectTrigger>
             <SelectContent>
               {portfolios.map((p) => (
@@ -242,13 +244,13 @@ export function PortfolioComparison() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-medium">
-              Métriques de risque
+              {t('nav.risk')}
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground pb-1 border-b border-border">
-                <span>Métrique</span>
+                <span>{t('portfolio.ticker')}</span>
                 <span className="text-center text-blue-400">{nameA}</span>
                 <span className="text-center text-amber-400">{nameB}</span>
               </div>
@@ -295,9 +297,9 @@ export function PortfolioComparison() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-medium">
-              Performance historique comparée
+              {t('portfolio.performance_chart')}
             </CardTitle>
-            <CardDescription>Base 100 normalisée</CardDescription>
+            <CardDescription>{t('portfolio.base_100')}</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>

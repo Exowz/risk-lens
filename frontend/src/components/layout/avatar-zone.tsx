@@ -7,13 +7,14 @@
  * Follows the same pinned/hidden/peek state as the sidebar.
  *
  * Depends on: ui/dropdown-menu, lib/auth/client, lib/api/client,
- *             lib/store/sidebar-store
+ *             lib/store/sidebar-store, next-intl
  * Used by: app/(dashboard)/layout.tsx
  */
 
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import {
   DropdownMenu,
@@ -47,6 +48,7 @@ interface AvatarZoneProps {
 
 export function AvatarZone({ session }: AvatarZoneProps) {
   const router = useRouter();
+  const t = useTranslations();
   const { state, isPeeking } = useSidebarStore();
   const email = session.user?.email ?? "";
   const name = session.user?.name ?? email.split("@")[0];
@@ -108,11 +110,11 @@ export function AvatarZone({ session }: AvatarZoneProps) {
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => router.push("/profile")}>
-            Profil
+            {t('nav.profile')}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={handleSignOut}>
-            Déconnexion
+            {t('nav.signout')}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

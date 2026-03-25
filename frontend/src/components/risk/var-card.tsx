@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +33,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
     "historical",
   );
   const { mode } = useMode();
+  const t = useTranslations();
   const riskSummary = useRiskSummary();
   const [data, setData] = useState<RiskSummary | null>(null);
 
@@ -56,6 +58,14 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
           context,
         }),
     [portfolioId, mode],
+  );
+
+  const methodTabs = useMemo(
+    () => [
+      { id: 0, label: t('risk.historical'), content: null as React.ReactNode },
+      { id: 1, label: t('risk.parametric'), content: null as React.ReactNode },
+    ],
+    [t],
   );
 
   if (isLoading) {
@@ -84,19 +94,11 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
   const toggle = (key: string) =>
     onOpenCard(openCard === key ? null : key);
 
-  const methodTabs = useMemo(
-    () => [
-      { id: 0, label: "Historique", content: null as React.ReactNode },
-      { id: 1, label: "Paramétrique", content: null as React.ReactNode },
-    ],
-    [],
-  );
-
   return (
     <div className="space-y-4">
       {/* Method toggle — Direction Aware Tabs */}
       <div className="flex items-center gap-3">
-        <span className="text-sm font-medium">Méthode :</span>
+        <span className="text-sm font-medium">{t('risk.method')} :</span>
         <DirectionAwareTabs
           tabs={methodTabs}
           onChange={() =>
@@ -110,9 +112,9 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
       </div>
 
       {/* Metric cards */}
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2 items-start">
         <KpiExpandableCard
-          label={mode === "beginner" ? "Perte max probable (VaR 95%)" : "VaR 95%"}
+          label={t(`metrics.${mode}.var_95`)}
           value={var95 * 100}
           valueSuffix="%"
           valueColor="amber"
@@ -136,7 +138,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
         )}
 
         <KpiExpandableCard
-          label={mode === "beginner" ? "Perte moyenne extrême (CVaR 95%)" : "CVaR 95%"}
+          label={t(`metrics.${mode}.cvar_95`)}
           value={data.cvar_95 * 100}
           valueSuffix="%"
           valueColor="orange"
@@ -160,7 +162,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
         )}
 
         <KpiExpandableCard
-          label={mode === "beginner" ? "Rendement annuel" : "Ann. Return"}
+          label={t(`metrics.${mode}.annual_return`)}
           value={data.annualized_return * 100}
           valuePrefix={data.annualized_return >= 0 ? "+" : ""}
           valueSuffix="%"
@@ -175,7 +177,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
         />
 
         <KpiExpandableCard
-          label={mode === "beginner" ? "Agitation du portefeuille" : "Ann. Volatility"}
+          label={t(`metrics.${mode}.volatility`)}
           value={data.annualized_volatility * 100}
           valueSuffix="%"
           valueColor="blue"
@@ -189,7 +191,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
         />
 
         <KpiExpandableCard
-          label={mode === "beginner" ? "Score rendement/risque" : "Sharpe Ratio"}
+          label={t(`metrics.${mode}.sharpe`)}
           value={data.sharpe_ratio}
           decimals={3}
           valueColor={data.sharpe_ratio >= 0 ? "emerald" : "red"}
@@ -218,7 +220,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
 
       {riskSummary.isError && (
         <p className="text-sm text-destructive">
-          Failed to compute risk metrics. Please try again.
+          {t('risk.risk_failed')}
         </p>
       )}
     </div>

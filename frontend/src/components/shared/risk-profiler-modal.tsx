@@ -7,13 +7,14 @@
  * Steps: Intro (TypewriterEffect) → 4 questions → Result (MultiStepLoader → profile).
  *
  * Depends on: shadcn Dialog, Aceternity TypewriterEffect, MultiStepLoader,
- *             Framer Motion, lib/api/profile.ts
+ *             Framer Motion, lib/api/profile.ts, next-intl
  * Used by: app/(dashboard)/layout.tsx
  */
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   Dialog,
@@ -40,76 +41,6 @@ interface OptionCard {
   label: string;
   description: string;
 }
-
-// ── Constants ──
-
-const HORIZON_OPTIONS: OptionCard[] = [
-  { value: "court", label: "Court terme", description: "Moins de 2 ans" },
-  { value: "moyen", label: "Moyen terme", description: "2 à 5 ans" },
-  { value: "long", label: "Long terme", description: "Plus de 5 ans" },
-];
-
-const LOSS_TOLERANCE_OPTIONS: OptionCard[] = [
-  { value: "faible", label: "Faible", description: "Moins de 10% de perte" },
-  { value: "modere", label: "Modérée", description: "10 à 25% de perte" },
-  { value: "eleve", label: "Élevée", description: "Plus de 25% de perte" },
-];
-
-const OBJECTIVE_OPTIONS: OptionCard[] = [
-  {
-    value: "preservation",
-    label: "Préserver mon capital",
-    description: "Sécurité avant tout",
-  },
-  {
-    value: "equilibre",
-    label: "Équilibre rendement/risque",
-    description: "Un compromis raisonnable",
-  },
-  {
-    value: "croissance",
-    label: "Maximiser la croissance",
-    description: "Rendement maximum",
-  },
-];
-
-const EXPERIENCE_OPTIONS: OptionCard[] = [
-  {
-    value: "debutant",
-    label: "Débutant",
-    description: "Je découvre l'investissement",
-  },
-  {
-    value: "intermediaire",
-    label: "Intermédiaire",
-    description: "Quelques années d'expérience",
-  },
-  {
-    value: "expert",
-    label: "Expert",
-    description: "Investisseur aguerri",
-  },
-];
-
-const LOADING_STATES = [
-  { text: "Analyse de votre profil..." },
-  { text: "Calcul des allocations optimales..." },
-  { text: "Génération de vos recommandations..." },
-];
-
-const TYPEWRITER_WORDS = [
-  { text: "Bienvenue" },
-  { text: "sur" },
-  { text: "RiskLens." },
-  { text: "Avant" },
-  { text: "de" },
-  { text: "commencer," },
-  { text: "laissez-nous" },
-  { text: "comprendre" },
-  { text: "votre" },
-  { text: "profil" },
-  { text: "d'investisseur." },
-];
 
 // ── Sub-components ──
 
@@ -157,10 +88,12 @@ function ResultDisplay({
   result,
   onCreatePortfolio,
   onSkip,
+  t,
 }: {
   result: RiskProfilerResponse;
   onCreatePortfolio: () => void;
   onSkip: () => void;
+  t: ReturnType<typeof useTranslations>;
 }) {
   return (
     <div className="flex flex-col items-center gap-6 w-full max-w-lg">
@@ -176,22 +109,22 @@ function ResultDisplay({
       {/* Risk score */}
       <div className="w-full">
         <div className="flex items-center justify-between mb-2">
-          <span className="text-xs text-muted-foreground">Score de risque</span>
+          <span className="text-xs text-muted-foreground">{t('risk_score_label')}</span>
           <span className="font-mono text-sm text-foreground">
             {result.risk_score}/10
           </span>
         </div>
         <Progress value={result.risk_score * 10} className="h-2" />
         <div className="flex justify-between mt-1">
-          <span className="text-[10px] text-muted-foreground">Conservateur</span>
-          <span className="text-[10px] text-muted-foreground">Agressif</span>
+          <span className="text-[10px] text-muted-foreground">{t('conservative')}</span>
+          <span className="text-[10px] text-muted-foreground">{t('aggressive')}</span>
         </div>
       </div>
 
       {/* Suggested tickers */}
       <div className="w-full space-y-3">
         <h3 className="text-sm font-medium text-foreground">
-          Allocation suggérée
+          {t('suggested_allocation')}
         </h3>
         {result.suggested_tickers.map((ticker) => (
           <div
@@ -215,13 +148,13 @@ function ResultDisplay({
       {/* Actions */}
       <div className="flex flex-col gap-2 w-full mt-2">
         <Button onClick={onCreatePortfolio} className="w-full">
-          Créer mon portefeuille avec cette allocation
+          {t('create_portfolio')}
         </Button>
         <button
           onClick={onSkip}
           className="text-xs text-muted-foreground hover:text-foreground transition-colors"
         >
-          Commencer sans profil
+          {t('skip')}
         </button>
       </div>
     </div>
@@ -238,6 +171,8 @@ export function RiskProfilerModal({
   onClose: () => void;
 }) {
   const router = useRouter();
+  const t = useTranslations('risk_profiler');
+  const tCommon = useTranslations('common');
   const [step, setStep] = useState<Step>(1);
   const [showButton, setShowButton] = useState(false);
   const [answers, setAnswers] = useState<Partial<RiskProfilerRequest>>({});
@@ -245,6 +180,58 @@ export function RiskProfilerModal({
   const [isAnalyzing, setIsAnalyzing] = useState(false);
 
   const submitMutation = useSubmitRiskProfiler();
+
+  // ── Translated constants (must be inside component for t() access) ──
+
+  const TYPEWRITER_WORDS = useMemo(
+    () => t('intro').split(' ').map((word) => ({ text: word })),
+    [t],
+  );
+
+  const HORIZON_OPTIONS: OptionCard[] = useMemo(
+    () => [
+      { value: "court", label: t('q1_short'), description: t('q1_short_desc') },
+      { value: "moyen", label: t('q1_medium'), description: t('q1_medium_desc') },
+      { value: "long", label: t('q1_long'), description: t('q1_long_desc') },
+    ],
+    [t],
+  );
+
+  const LOSS_TOLERANCE_OPTIONS: OptionCard[] = useMemo(
+    () => [
+      { value: "faible", label: t('q2_low'), description: t('q2_low_desc') },
+      { value: "modere", label: t('q2_medium'), description: t('q2_medium_desc') },
+      { value: "eleve", label: t('q2_high'), description: t('q2_high_desc') },
+    ],
+    [t],
+  );
+
+  const OBJECTIVE_OPTIONS: OptionCard[] = useMemo(
+    () => [
+      { value: "preservation", label: t('q3_preserve'), description: "" },
+      { value: "equilibre", label: t('q3_balance'), description: "" },
+      { value: "croissance", label: t('q3_growth'), description: "" },
+    ],
+    [t],
+  );
+
+  const EXPERIENCE_OPTIONS: OptionCard[] = useMemo(
+    () => [
+      { value: "debutant", label: t('q4_beginner'), description: "" },
+      { value: "intermediaire", label: t('q4_intermediate'), description: "" },
+      { value: "expert", label: t('q4_expert'), description: "" },
+    ],
+    [t],
+  );
+
+  const LOADING_STATES = useMemo(
+    () => [
+      { text: t('analyzing') },
+      { text: t('loading_allocations') },
+      { text: t('loading_recommendations') },
+    ],
+    [t],
+  );
 
   const handleAnswer = useCallback(
     (key: keyof RiskProfilerRequest, value: string) => {
@@ -280,7 +267,7 @@ export function RiskProfilerModal({
 
     // Build query params for portfolio pre-fill
     const assets = result.suggested_tickers
-      .map((t) => `${t.ticker}:${t.weight}`)
+      .map((tk) => `${tk.ticker}:${tk.weight}`)
       .join(",");
     const profileName = result.profile_name;
 
@@ -307,7 +294,7 @@ export function RiskProfilerModal({
 
       <Dialog open={open && !isAnalyzing} onOpenChange={() => onClose()}>
         <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
-          <DialogTitle className="sr-only">Profil de risque</DialogTitle>
+          <DialogTitle className="sr-only">{t('dialog_title')}</DialogTitle>
 
           {/* Progress bar */}
           <div className="mb-6">
@@ -352,7 +339,7 @@ export function RiskProfilerModal({
                     animate={{ opacity: 1, y: 0 }}
                   >
                     <Button onClick={() => setStep(2)} size="lg">
-                      Commencer
+                      {t('start')}
                     </Button>
                   </motion.div>
                 )}
@@ -381,7 +368,7 @@ export function RiskProfilerModal({
                 className="py-4"
               >
                 <QuestionStep
-                  question="Sur quelle durée souhaitez-vous investir ?"
+                  question={t('q1_question')}
                   options={HORIZON_OPTIONS}
                   selected={answers.horizon ?? null}
                   onSelect={(v) => handleAnswer("horizon", v)}
@@ -400,7 +387,7 @@ export function RiskProfilerModal({
                 className="py-4"
               >
                 <QuestionStep
-                  question="Quelle perte maximale pouvez-vous supporter ?"
+                  question={t('q2_question')}
                   options={LOSS_TOLERANCE_OPTIONS}
                   selected={answers.loss_tolerance ?? null}
                   onSelect={(v) => handleAnswer("loss_tolerance", v)}
@@ -419,7 +406,7 @@ export function RiskProfilerModal({
                 className="py-4"
               >
                 <QuestionStep
-                  question="Quel est votre objectif principal ?"
+                  question={t('q3_question')}
                   options={OBJECTIVE_OPTIONS}
                   selected={answers.objective ?? null}
                   onSelect={(v) => handleAnswer("objective", v)}
@@ -438,7 +425,7 @@ export function RiskProfilerModal({
                 className="py-4"
               >
                 <QuestionStep
-                  question="Quel est votre niveau d'expérience en investissement ?"
+                  question={t('q4_question')}
                   options={EXPERIENCE_OPTIONS}
                   selected={answers.experience ?? null}
                   onSelect={(v) => handleAnswer("experience", v)}
@@ -460,6 +447,7 @@ export function RiskProfilerModal({
                   result={result}
                   onCreatePortfolio={handleCreatePortfolio}
                   onSkip={handleSkip}
+                  t={t}
                 />
               </motion.div>
             )}
@@ -473,10 +461,10 @@ export function RiskProfilerModal({
                 className="flex flex-col items-center gap-4 py-8"
               >
                 <p className="text-sm text-muted-foreground">
-                  Analyse temporairement indisponible.
+                  {tCommon('unavailable')}
                 </p>
                 <Button variant="outline" onClick={handleSkip}>
-                  Continuer sans profil
+                  {t('skip')}
                 </Button>
               </motion.div>
             )}

@@ -7,18 +7,19 @@
  * On click: expands inline to reveal AI explanation below.
  *
  * Depends on: ui/expandable (Cult UI), shared/metric-tooltip,
- *             ui/number-ticker, ui/shine-border, ui/skeleton
+ *             ui/number-ticker, ui/shine-border, ui/skeleton, react-markdown
  * Used by: risk/page.tsx, markowitz/page.tsx, stress/page.tsx
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import { MetricTooltip } from "@/components/shared/metric-tooltip";
 import {
   Expandable,
   ExpandableCard,
-  ExpandableCardContent,
-  ExpandableCardHeader,
   ExpandableTrigger,
   ExpandableContent,
 } from "@/components/ui/expandable";
@@ -77,6 +78,7 @@ export function KpiExpandableCard({
   isOpen,
   onToggle,
 }: KpiExpandableCardProps) {
+  const t = useTranslations();
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
@@ -137,9 +139,15 @@ export function KpiExpandableCard({
       expandBehavior="push"
     >
       <ExpandableCard
-        className="relative overflow-hidden"
-        collapsedSize={{ width: undefined as unknown as number, height: undefined as unknown as number }}
-        expandedSize={{ width: undefined as unknown as number, height: undefined as unknown as number }}
+        className="relative rounded-xl transition-colors duration-200"
+        style={{
+          background: "#161920",
+          border: isOpen
+            ? "1px solid rgba(59,130,246,0.4)"
+            : "1px solid rgba(255,255,255,0.07)",
+        }}
+        collapsedSize={{}}
+        expandedSize={{}}
       >
         {isOpen && (
           <ShineBorder
@@ -149,7 +157,7 @@ export function KpiExpandableCard({
         )}
 
         <ExpandableTrigger>
-          <ExpandableCardHeader className="p-4 cursor-pointer">
+          <div className="p-4 cursor-pointer">
             <div className="w-full">
               {tooltipKey ? (
                 <MetricTooltip metricKey={tooltipKey} label={label}>
@@ -167,11 +175,11 @@ export function KpiExpandableCard({
                 </div>
               )}
             </div>
-          </ExpandableCardHeader>
+          </div>
         </ExpandableTrigger>
 
         <ExpandableContent>
-          <ExpandableCardContent className="px-4 pb-4 pt-0">
+          <div className="px-4 pb-4 pt-0">
             <div className="border-t border-border pt-3 space-y-3">
               {isLoading && (
                 <div className="space-y-2">
@@ -181,17 +189,19 @@ export function KpiExpandableCard({
               )}
               {hasError && !isLoading && (
                 <p className="text-sm text-muted-foreground italic">
-                  Analyse temporairement indisponible.
+                  {t('common.unavailable')}
                 </p>
               )}
               {explanation && !isLoading && (
                 <>
-                  <p className="text-sm text-muted-foreground italic leading-relaxed">
-                    {explanation}
-                  </p>
+                  <div className="overflow-y-auto max-h-[200px] text-sm text-muted-foreground italic leading-relaxed prose prose-invert prose-sm max-w-none break-words">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {explanation}
+                    </ReactMarkdown>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-white/20">
-                      Analysé par IA
+                      {t('common.analyzed')}
                     </span>
                     <button
                       type="button"
@@ -201,13 +211,13 @@ export function KpiExpandableCard({
                       }}
                       className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                     >
-                      Rafraîchir
+                      {t('common.refresh')}
                     </button>
                   </div>
                 </>
               )}
             </div>
-          </ExpandableCardContent>
+          </div>
         </ExpandableContent>
       </ExpandableCard>
     </Expandable>

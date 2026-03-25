@@ -9,7 +9,7 @@
  * Depends on: ui/resizable-navbar, ui/background-beams, ui/spotlight, ui/meteors,
  *             ui/blur-text, ui/word-rotate, ui/shimmer-button, ui/magic-card,
  *             ui/border-beam, ui/marquee, ui/blur-fade, ui/animated-shiny-text,
- *             ui/number-ticker, @phosphor-icons/react, lib/auth/client
+ *             ui/number-ticker, @phosphor-icons/react, lib/auth/client, next-intl
  * Used by: / route (public)
  */
 
@@ -21,6 +21,7 @@ import {
   Lightning,
   Check,
 } from "@phosphor-icons/react";
+import { useTranslations } from "next-intl";
 
 import { AnimatedShinyText } from "@/components/ui/animated-shiny-text";
 import { BackgroundBeams } from "@/components/ui/background-beams";
@@ -46,52 +47,7 @@ import {
 } from "@/components/ui/resizable-navbar";
 import { useSession } from "@/lib/auth/client";
 
-// ── Nav items ──
-
-const NAV_LINKS = [
-  { name: "Fonctionnalités", link: "#features" },
-  { name: "Démonstration", link: "#demo" },
-  { name: "À propos", link: "#about" },
-];
-
-// ── Feature cards data ──
-
-const FEATURES = [
-  {
-    icon: ShieldWarning,
-    iconColor: "text-blue-400",
-    title: "Analyse de risque quantitative",
-    description:
-      "VaR historique et paramétrique, CVaR, Monte Carlo GBM sur 10 000 scénarios. La même rigueur que les banques d'investissement.",
-    tags: ["VaR", "CVaR", "Monte Carlo"],
-  },
-  {
-    icon: Brain,
-    iconColor: "text-purple-400",
-    title: "Intelligence artificielle intégrée",
-    description:
-      "Mistral AI analyse vos résultats et les explique en langage naturel, adapté à votre niveau d'expertise.",
-    tags: ["Mistral AI", "Explications", "Mode Débutant/Expert"],
-  },
-  {
-    icon: ChartLineUp,
-    iconColor: "text-emerald-400",
-    title: "Optimisation Markowitz",
-    description:
-      "Visualisez la frontière efficiente en temps réel. Découvrez l'allocation optimale pour maximiser votre ratio de Sharpe.",
-    tags: ["Frontière efficiente", "Max Sharpe", "Min Variance"],
-  },
-  {
-    icon: Lightning,
-    iconColor: "text-amber-400",
-    title: "Stress testing historique",
-    description:
-      "Simulez l'impact des crises de 2008, COVID-19 et des hausses de taux 2022 sur votre portefeuille actuel.",
-    tags: ["2008", "COVID-19", "Taux 2022"],
-  },
-];
-
-// ── Tech stack items ──
+// ── Tech stack items (not translatable — brand names) ──
 
 const TECH_ITEMS = [
   "Next.js 16",
@@ -108,25 +64,67 @@ const TECH_ITEMS = [
   "TypeScript",
 ];
 
-// ── Mode showcase data ──
-
-const BEGINNER_ROWS = [
-  { label: "Perte max journalière (1 jour sur 20)", value: "-2.52%", color: "text-red-500" },
-  { label: "Score rendement/risque", value: "0.851", color: "text-blue-400" },
-  { label: "Variabilité du portefeuille", value: "26.53%", color: "text-amber-400" },
-];
-
-const EXPERT_ROWS = [
-  { label: "VaR 95% historique", value: "-2.52%", color: "text-red-500" },
-  { label: "Ratio de Sharpe annualisé", value: "0.851", color: "text-blue-400" },
-  { label: "Volatilité annualisée (σ×√252)", value: "26.53%", color: "text-amber-400" },
-];
-
 // ── Page ──
 
 export default function LandingPage() {
   const { data: session } = useSession();
   const isLoggedIn = !!session;
+  const t = useTranslations();
+
+  // ── Nav items (inside component to access t()) ──
+
+  const navLinks = [
+    { name: t("landing.features_badge"), link: "#features" },
+    { name: t("landing.nav_demo"), link: "#demo" },
+    { name: t("landing.nav_about"), link: "#about" },
+  ];
+
+  // ── Feature cards data ──
+
+  const features = [
+    {
+      icon: ShieldWarning,
+      iconColor: "text-blue-400",
+      title: t("landing.feature1_title"),
+      description: t("landing.feature1_desc"),
+      tags: ["VaR", "CVaR", "Monte Carlo"],
+    },
+    {
+      icon: Brain,
+      iconColor: "text-purple-400",
+      title: t("landing.feature2_title"),
+      description: t("landing.feature2_desc"),
+      tags: ["Mistral AI", "Explications", "Mode Débutant/Expert"],
+    },
+    {
+      icon: ChartLineUp,
+      iconColor: "text-emerald-400",
+      title: t("landing.feature3_title"),
+      description: t("landing.feature3_desc"),
+      tags: ["Frontière efficiente", "Max Sharpe", "Min Variance"],
+    },
+    {
+      icon: Lightning,
+      iconColor: "text-amber-400",
+      title: t("landing.feature4_title"),
+      description: t("landing.feature4_desc"),
+      tags: ["2008", "COVID-19", "Taux 2022"],
+    },
+  ];
+
+  // ── Mode showcase data ──
+
+  const beginnerRows = [
+    { label: t("metrics.beginner.var_95"), value: "-2.52%", color: "text-red-500" },
+    { label: t("metrics.beginner.sharpe"), value: "0.851", color: "text-blue-400" },
+    { label: t("metrics.beginner.volatility"), value: "26.53%", color: "text-amber-400" },
+  ];
+
+  const expertRows = [
+    { label: t("metrics.expert.var_95"), value: "-2.52%", color: "text-red-500" },
+    { label: t("metrics.expert.sharpe"), value: "0.851", color: "text-blue-400" },
+    { label: t("metrics.expert.volatility"), value: "26.53%", color: "text-amber-400" },
+  ];
 
   return (
     <div className="min-h-screen bg-[#0a0b0e] overflow-y-auto">
@@ -142,21 +140,21 @@ export default function LandingPage() {
           </Link>
 
           {/* Center nav */}
-          <NavItems items={NAV_LINKS} />
+          <NavItems items={navLinks} />
 
           {/* Right CTAs */}
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
               <Link href="/overview">
-                <NavbarButton variant="primary">Tableau de bord</NavbarButton>
+                <NavbarButton variant="primary">{t("landing.cta_dashboard")}</NavbarButton>
               </Link>
             ) : (
               <>
                 <Link href="/login">
-                  <NavbarButton variant="secondary">Se connecter</NavbarButton>
+                  <NavbarButton variant="secondary">{t("landing.cta_login")}</NavbarButton>
                 </Link>
                 <Link href="/register">
-                  <NavbarButton variant="primary">Commencer</NavbarButton>
+                  <NavbarButton variant="primary">{t("landing.cta_start")}</NavbarButton>
                 </Link>
               </>
             )}
@@ -175,7 +173,7 @@ export default function LandingPage() {
             <MobileNavToggle isOpen={false} onClick={() => {}} />
           </MobileNavHeader>
           <MobileNavMenu isOpen={false} onClose={() => {}}>
-            {NAV_LINKS.map((item) => (
+            {navLinks.map((item) => (
               <a
                 key={item.name}
                 href={item.link}
@@ -188,17 +186,17 @@ export default function LandingPage() {
               {isLoggedIn ? (
                 <Link href="/overview">
                   <ShimmerButton className="w-full" shimmerSize="0.05em">
-                    Tableau de bord
+                    {t("landing.cta_dashboard")}
                   </ShimmerButton>
                 </Link>
               ) : (
                 <>
                   <Link href="/login" className="text-sm text-white/60 text-center py-2">
-                    Se connecter
+                    {t("landing.cta_login")}
                   </Link>
                   <Link href="/register">
                     <ShimmerButton className="w-full" shimmerSize="0.05em">
-                      Commencer
+                      {t("landing.cta_start")}
                     </ShimmerButton>
                   </Link>
                 </>
@@ -222,7 +220,7 @@ export default function LandingPage() {
           <BlurFade delay={0.1} inView>
             <div className="flex justify-center mb-6">
               <AnimatedShinyText className="text-xs text-white/60">
-                ✨ Projet Bachelor Data &amp; AI · ECE Paris 2025-2026
+                {t("landing.badge")}
               </AnimatedShinyText>
             </div>
           </BlurFade>
@@ -230,7 +228,7 @@ export default function LandingPage() {
           {/* Title */}
           <BlurFade delay={0.2} inView>
             <BlurText
-              text="L'analyse de risque financier, démocratisée."
+              text={t("landing.title")}
               className="text-4xl sm:text-5xl font-bold tracking-tight text-white leading-tight"
             />
           </BlurFade>
@@ -238,20 +236,19 @@ export default function LandingPage() {
           {/* Cycling subtitle */}
           <BlurFade delay={0.4} inView>
             <div className="flex items-center justify-center gap-2 mt-6 text-2xl text-white/40">
-              <span>Analysez vos</span>
+              <span>{t("landing.subtitle_prefix")}</span>
               <WordRotate
-                words={["portefeuilles", "risques", "stratégies", "décisions", "opportunités"]}
+                words={t("landing.words").split(",")}
                 className="text-2xl text-blue-400"
               />
-              <span>avec l&apos;IA</span>
+              <span>{t("landing.subtitle_suffix")}</span>
             </div>
           </BlurFade>
 
           {/* Description */}
           <BlurFade delay={0.5} inView>
             <p className="text-base text-white/50 max-w-xl mx-auto mt-4">
-              RiskLens combine la rigueur de la finance quantitative institutionnelle
-              avec la puissance de l&apos;IA pour rendre l&apos;analyse de risque accessible à tous.
+              {t("landing.description")}
             </p>
           </BlurFade>
 
@@ -265,7 +262,7 @@ export default function LandingPage() {
                     background="rgba(255,255,255,0.05)"
                     className="px-8 py-3"
                   >
-                    Retour au tableau de bord
+                    {t("landing.cta_dashboard")}
                   </ShimmerButton>
                 </Link>
               ) : (
@@ -276,12 +273,12 @@ export default function LandingPage() {
                       background="rgba(255,255,255,0.05)"
                       className="px-8 py-3"
                     >
-                      Commencer gratuitement
+                      {t("landing.cta_start")}
                     </ShimmerButton>
                   </Link>
                   <a href="#demo">
                     <button className="border border-white/20 text-white px-6 py-3 rounded-full hover:border-white/40 hover:bg-white/[0.04] transition-colors text-sm">
-                      Voir la démo
+                      {t("landing.cta_demo")}
                     </button>
                   </a>
                 </>
@@ -292,7 +289,7 @@ export default function LandingPage() {
           {/* Social proof */}
           <BlurFade delay={0.7} inView>
             <p className="text-xs text-white/25 mt-4">
-              ✓ Gratuit · ✓ Aucune carte bancaire · ✓ Données Yahoo Finance
+              {t("landing.social_proof")}
             </p>
           </BlurFade>
 
@@ -304,7 +301,7 @@ export default function LandingPage() {
                   value={10000}
                   className="font-mono text-3xl text-white"
                 />
-                <p className="text-xs text-white/40 mt-1">simulations Monte Carlo</p>
+                <p className="text-xs text-white/40 mt-1">{t("landing.stat_simulations")}</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div className="flex-1 text-center">
@@ -312,7 +309,7 @@ export default function LandingPage() {
                   value={3}
                   className="font-mono text-3xl text-white"
                 />
-                <p className="text-xs text-white/40 mt-1">crises historiques testées</p>
+                <p className="text-xs text-white/40 mt-1">{t("landing.stat_crises")}</p>
               </div>
               <div className="w-px h-10 bg-white/10" />
               <div className="flex-1 text-center">
@@ -320,7 +317,7 @@ export default function LandingPage() {
                   value={6}
                   className="font-mono text-3xl text-white"
                 />
-                <p className="text-xs text-white/40 mt-1">métriques de risque analysées</p>
+                <p className="text-xs text-white/40 mt-1">{t("landing.stat_metrics")}</p>
               </div>
             </div>
           </BlurFade>
@@ -335,23 +332,23 @@ export default function LandingPage() {
             <div className="text-center mb-16">
               <div className="flex justify-center mb-4">
                 <AnimatedShinyText className="text-xs text-white/60">
-                  Fonctionnalités
+                  {t("landing.features_badge")}
                 </AnimatedShinyText>
               </div>
               <BlurText
-                text="Tout ce dont vous avez besoin"
+                text={t("landing.features_title")}
                 className="text-3xl font-bold text-white"
               />
               <p className="text-base text-white/40 mt-3">
-                Des outils de niveau institutionnel, accessibles à tous
+                {t("landing.features_subtitle")}
               </p>
             </div>
           </BlurFade>
 
           {/* 2x2 grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {FEATURES.map((feature, idx) => (
-              <BlurFade key={feature.title} delay={0.1 + idx * 0.1} inView>
+            {features.map((feature, idx) => (
+              <BlurFade key={idx} delay={0.1 + idx * 0.1} inView>
                 <MagicCard
                   className="relative bg-[#161920] border border-white/[0.08] rounded-xl overflow-hidden"
                   gradientColor="#1a2744"
@@ -403,15 +400,15 @@ export default function LandingPage() {
             <div className="text-center mb-16">
               <div className="flex justify-center mb-4">
                 <AnimatedShinyText className="text-xs text-white/60">
-                  Mode Débutant / Expert
+                  {t("landing.demo_badge")}
                 </AnimatedShinyText>
               </div>
               <BlurText
-                text="Conçu pour tous les profils"
+                text={t("landing.demo_title")}
                 className="text-3xl font-bold text-white"
               />
               <p className="text-base text-white/40 mt-3">
-                Passez d&apos;un mode à l&apos;autre en un clic. L&apos;interface s&apos;adapte instantanément.
+                {t("landing.demo_subtitle")}
               </p>
             </div>
           </BlurFade>
@@ -426,11 +423,11 @@ export default function LandingPage() {
               >
                 <div className="p-6">
                   <span className="inline-block rounded-full bg-emerald-500/10 border border-emerald-500/30 px-3 py-0.5 text-xs font-medium text-emerald-400 mb-5">
-                    Débutant
+                    {t("landing.demo_beginner")}
                   </span>
 
                   <div className="space-y-3">
-                    {BEGINNER_ROWS.map((row) => (
+                    {beginnerRows.map((row) => (
                       <div
                         key={row.label}
                         className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2.5"
@@ -442,7 +439,7 @@ export default function LandingPage() {
                   </div>
 
                   <p className="text-xs text-white/30 mt-5">
-                    Labels en français courant · Explications IA à la demande
+                    {t("landing.demo_beginner_footer")}
                   </p>
                 </div>
               </MagicCard>
@@ -456,11 +453,11 @@ export default function LandingPage() {
               >
                 <div className="p-6">
                   <span className="inline-block rounded-full bg-blue-500/10 border border-blue-500/30 px-3 py-0.5 text-xs font-medium text-blue-400 mb-5">
-                    Expert
+                    {t("landing.demo_expert")}
                   </span>
 
                   <div className="space-y-3">
-                    {EXPERT_ROWS.map((row) => (
+                    {expertRows.map((row) => (
                       <div
                         key={row.label}
                         className="flex items-center justify-between rounded-lg bg-white/[0.03] px-3 py-2.5"
@@ -475,7 +472,7 @@ export default function LandingPage() {
                     Sharpe = (Rp - Rf) / σp
                   </p>
                   <p className="text-xs text-white/30 mt-2">
-                    Métriques techniques · Formules · Données brutes
+                    {t("landing.demo_expert_footer")}
                   </p>
                 </div>
               </MagicCard>
@@ -491,11 +488,11 @@ export default function LandingPage() {
             <div className="text-center mb-12">
               <div className="flex justify-center mb-4">
                 <AnimatedShinyText className="text-xs text-white/60">
-                  Stack technique
+                  {t("landing.tech_badge")}
                 </AnimatedShinyText>
               </div>
               <BlurText
-                text="Construit avec les meilleurs outils"
+                text={t("landing.tech_title")}
                 className="text-3xl font-bold text-white"
               />
             </div>
@@ -521,11 +518,11 @@ export default function LandingPage() {
         <BlurFade delay={0.1} inView>
           <div className="text-center">
             <BlurText
-              text="Prêt à analyser votre portefeuille ?"
+              text={t("landing.cta_final")}
               className="text-4xl font-bold text-white"
             />
             <p className="text-base text-white/40 mt-2 mb-8">
-              Gratuit · Aucune configuration requise · Données en temps réel
+              {t("landing.cta_final_subtitle")}
             </p>
             <Link href={isLoggedIn ? "/overview" : "/register"}>
               <ShimmerButton
@@ -533,7 +530,7 @@ export default function LandingPage() {
                 background="rgba(255,255,255,0.05)"
                 className="px-8 py-4 text-base"
               >
-                {isLoggedIn ? "Retour au tableau de bord" : "Commencer maintenant"}
+                {isLoggedIn ? t("landing.cta_dashboard") : t("landing.cta_now")}
               </ShimmerButton>
             </Link>
           </div>
@@ -546,11 +543,11 @@ export default function LandingPage() {
           <div className="flex items-center gap-2">
             <span className="font-semibold text-white text-sm">RiskLens</span>
             <span className="text-xs text-white/30">
-              Projet Bachelor Data &amp; AI — ECE Paris 2025-2026
+              {t("landing.footer_project")}
             </span>
           </div>
           <span className="text-xs text-white/30 text-center sm:text-right">
-            Données fournies par Yahoo Finance. Ne constitue pas un conseil en investissement.
+            {t("landing.footer_disclaimer")}
           </span>
         </div>
       </footer>

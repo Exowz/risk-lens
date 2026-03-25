@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import {
   EfficientFrontier,
@@ -60,6 +61,7 @@ export default function MarkowitzPage() {
   const { data: portfolio } = usePortfolio(activePortfolioId);
   const { mode } = useMode();
   const [openCard, setOpenCard] = useState<string | null>(null);
+  const t = useTranslations();
 
   // Build current weights map from portfolio assets
   const currentWeights: Record<string, number> = {};
@@ -113,13 +115,13 @@ export default function MarkowitzPage() {
         })
         .catch(() => {
           setPointExplanation({
-            explanation: "Analyse temporairement indisponible.",
+            explanation: t("common.unavailable"),
             suggested_action: "",
           });
         })
         .finally(() => setIsExplainingPoint(false));
     },
-    [activePortfolioId, mode, explanationCache],
+    [activePortfolioId, mode, explanationCache, t],
   );
 
   const mkAnalyze = useCallback(
@@ -136,7 +138,7 @@ export default function MarkowitzPage() {
   );
 
   const mkFrontierAnalyze = useCallback(() => {
-    if (!data) return Promise.resolve("Analyse temporairement indisponible.");
+    if (!data) return Promise.resolve(t("common.unavailable"));
     return fetchMarkowitzExplanation({
       mode,
       current_sharpe: data.current_portfolio.sharpe_ratio,
@@ -147,7 +149,7 @@ export default function MarkowitzPage() {
       max_sharpe_return: data.max_sharpe.expected_return,
       min_variance_volatility: data.min_variance.volatility,
     }).then((res) => res.explanation);
-  }, [data, mode]);
+  }, [data, mode, t]);
 
   useEffect(() => {
     if (activePortfolioId) {
@@ -165,15 +167,14 @@ export default function MarkowitzPage() {
       <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
+            <CardTitle>{t("common.no_portfolio")}</CardTitle>
             <CardDescription>
-              Créez ou sélectionnez un portefeuille pour calculer la frontière
-              efficiente et trouver les allocations optimales.
+              {t("common.no_portfolio_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Voir les portefeuilles</Button>
+              <Button>{t("common.go_to_portfolio")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -197,7 +198,7 @@ export default function MarkowitzPage() {
     <div className="p-6 space-y-6">
       <div className="flex justify-end">
         <Button onClick={handleCompute} disabled={isPending}>
-          {isPending ? "Calcul..." : "Calculer la frontière"}
+          {isPending ? t("common.loading") : t("markowitz.compute")}
         </Button>
       </div>
 
@@ -205,7 +206,7 @@ export default function MarkowitzPage() {
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Échec du calcul"}
+              {error instanceof Error ? error.message : t("common.error")}
             </p>
           </CardContent>
         </Card>
@@ -215,11 +216,11 @@ export default function MarkowitzPage() {
         <>
           {/* Efficient Frontier Chart */}
           <ChartExpandableCard
-            title={mode === "beginner" ? "Carte des portefeuilles possibles" : "Efficient Frontier"}
+            title={t("markowitz.frontier_title")}
             legend={[
-              { color: "#10b981", label: "Min Variance" },
-              { color: "#3b82f6", label: "Max Sharpe" },
-              { color: "#ef4444", label: mode === "beginner" ? "Votre portefeuille" : "Current" },
+              { color: "#10b981", label: t("metrics.expert.min_variance") },
+              { color: "#3b82f6", label: t("metrics.expert.max_sharpe") },
+              { color: "#ef4444", label: t("stress.current_portfolio") },
             ]}
             onAnalyze={mkFrontierAnalyze}
             isOpen={openCard === "frontier-chart"}
@@ -236,9 +237,9 @@ export default function MarkowitzPage() {
           </ChartExpandableCard>
 
           {/* Summary KPI cards */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 items-start">
             <KpiExpandableCard
-              label={mode === "beginner" ? "Votre score rendement/risque" : "Current Sharpe"}
+              label={t(`metrics.${mode}.sharpe`)}
               value={data.current_portfolio.sharpe_ratio}
               decimals={2}
               valueColor="red"
@@ -252,7 +253,7 @@ export default function MarkowitzPage() {
             />
 
             <KpiExpandableCard
-              label={mode === "beginner" ? "Meilleur score possible" : "Max Sharpe"}
+              label={t(`metrics.${mode}.max_sharpe`)}
               value={data.max_sharpe.sharpe_ratio}
               decimals={2}
               valueColor="blue"
@@ -266,7 +267,7 @@ export default function MarkowitzPage() {
             />
 
             <KpiExpandableCard
-              label={mode === "beginner" ? "Risque minimum possible" : "Min Variance Vol"}
+              label={t(`metrics.${mode}.min_variance`)}
               value={data.min_variance.volatility * 100}
               valueSuffix="%"
               valueColor="emerald"
@@ -279,7 +280,7 @@ export default function MarkowitzPage() {
             />
 
             <KpiExpandableCard
-              label={mode === "beginner" ? "Votre volatilité actuelle" : "Current Vol"}
+              label={t(`metrics.${mode}.volatility`)}
               value={data.current_portfolio.volatility * 100}
               valueSuffix="%"
               valueColor="foreground"
@@ -293,7 +294,7 @@ export default function MarkowitzPage() {
             />
 
             <KpiExpandableCard
-              label={mode === "beginner" ? "Rendement attendu actuel" : "Current Return"}
+              label={t(`metrics.${mode}.annual_return`)}
               value={data.current_portfolio.expected_return * 100}
               valuePrefix={data.current_portfolio.expected_return >= 0 ? "+" : ""}
               valueSuffix="%"
@@ -313,10 +314,10 @@ export default function MarkowitzPage() {
             <Card className="border-blue-500/20">
               <CardHeader>
                 <CardTitle className="text-blue-400">
-                  Allocation recommandée
+                  {t("markowitz.recommended_allocation")}
                 </CardTitle>
                 <CardDescription>
-                  Répartition optimale selon le ratio de Sharpe maximum
+                  {t("markowitz.recommended_allocation_desc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -343,9 +344,9 @@ export default function MarkowitzPage() {
           {mode === "expert" && (
             <Card>
               <CardHeader>
-                <CardTitle>Comparaison des pondérations optimales</CardTitle>
+                <CardTitle>{t("markowitz.weights_comparison")}</CardTitle>
                 <CardDescription>
-                  Allocations suggérées vs votre portefeuille actuel
+                  {t("markowitz.weights_comparison_desc")}
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -383,9 +384,7 @@ export default function MarkowitzPage() {
           <div className="flex justify-end">
             <Link href="/stress">
               <Button variant="outline" size="sm">
-                {mode === "beginner"
-                  ? "Tester cette allocation en période de crise →"
-                  : "Stress tester cette allocation →"}
+                {t("markowitz.stress_test_link")}
               </Button>
             </Link>
           </div>
@@ -461,10 +460,10 @@ export default function MarkowitzPage() {
 
                 {/* Header */}
                 <h2 className="text-lg font-semibold text-white mb-1">
-                  {selectedPoint.point_type === "min_variance" && "Portefeuille Minimum Variance"}
-                  {selectedPoint.point_type === "max_sharpe" && "Portefeuille Maximum Sharpe"}
-                  {selectedPoint.point_type === "current" && "Votre Portefeuille Actuel"}
-                  {selectedPoint.point_type === "frontier" && "Portefeuille sur la Frontière"}
+                  {selectedPoint.point_type === "min_variance" && t("markowitz.bavard.min_variance_title")}
+                  {selectedPoint.point_type === "max_sharpe" && t("markowitz.bavard.max_sharpe_title")}
+                  {selectedPoint.point_type === "current" && t("markowitz.bavard.current_title")}
+                  {selectedPoint.point_type === "frontier" && t("markowitz.bavard.frontier_title")}
                 </h2>
                 <div className="flex gap-4 font-mono text-sm text-muted-foreground mb-6">
                   <span>
@@ -496,7 +495,7 @@ export default function MarkowitzPage() {
                         <p className="text-sm text-muted-foreground italic leading-relaxed">
                           {pointExplanation.explanation}
                         </p>
-                        <span className="text-[10px] text-white/20">Analysé par IA</span>
+                        <span className="text-[10px] text-white/20">{t("common.analyzed")}</span>
                       </>
                     )}
                   </div>
@@ -504,7 +503,7 @@ export default function MarkowitzPage() {
                   {/* Allocation weights */}
                   {Object.keys(selectedPoint.weights).length > 0 && (
                     <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-foreground">Allocation</h4>
+                      <h4 className="text-sm font-medium text-foreground">{t("markowitz.bavard.allocation")}</h4>
                       <div className="space-y-2">
                         {Object.entries(selectedPoint.weights)
                           .sort(([, a], [, b]) => b - a)
@@ -526,7 +525,7 @@ export default function MarkowitzPage() {
                   {/* Suggested action */}
                   {pointExplanation?.suggested_action && (
                     <div className="rounded-md border-l-2 border-blue-400 bg-blue-400/5 p-3">
-                      <p className="text-xs font-medium text-blue-400 mb-1">Action suggérée</p>
+                      <p className="text-xs font-medium text-blue-400 mb-1">{t("markowitz.bavard.suggested_action")}</p>
                       <p className="text-sm text-muted-foreground">
                         {pointExplanation.suggested_action}
                       </p>
@@ -536,7 +535,7 @@ export default function MarkowitzPage() {
 
                 <div className="mt-6">
                   <Button disabled className="w-full opacity-50">
-                    Appliquer cette allocation
+                    {t("markowitz.bavard.apply")}
                   </Button>
                 </div>
               </div>

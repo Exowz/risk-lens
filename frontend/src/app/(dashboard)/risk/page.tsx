@@ -12,6 +12,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import { MonteCarloPanel } from "@/components/risk/monte-carlo-panel";
 import { Simulator } from "@/components/risk/simulator";
@@ -30,21 +31,21 @@ import { usePortfolioStore } from "@/lib/store/portfolio-store";
 export default function RiskPage() {
   const { activePortfolioId } = usePortfolioStore();
   const [openCard, setOpenCard] = useState<string | null>(null);
+  const t = useTranslations();
 
   return (
     <div className="p-6 space-y-6">
       {!activePortfolioId ? (
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
+            <CardTitle>{t('common.no_portfolio')}</CardTitle>
             <CardDescription>
-              Créez ou sélectionnez un portefeuille pour calculer la VaR, la CVaR
-              et lancer des simulations Monte Carlo.
+              {t('common.no_portfolio_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Voir les portefeuilles</Button>
+              <Button>{t('common.go_to_portfolio')}</Button>
             </Link>
           </CardContent>
         </Card>

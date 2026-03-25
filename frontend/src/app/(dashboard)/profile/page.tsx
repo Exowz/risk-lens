@@ -12,6 +12,7 @@
  */
 
 import { useEffect, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { useSession } from "@/lib/auth/client";
 import {
@@ -98,6 +99,7 @@ export default function ProfilePage() {
   const [showProfiler, setShowProfiler] = useState(false);
   const [mcSims, setMcSims] = useState(10000);
   const [saved, setSaved] = useState(false);
+  const t = useTranslations();
 
   // Alert form state
   const [alertMetric, setAlertMetric] = useState<"var_95" | "sharpe" | "volatility">("var_95");
@@ -139,14 +141,13 @@ export default function ProfilePage() {
         <CardContent>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <p className="text-xs text-muted-foreground">Membre depuis</p>
+              <p className="text-xs text-muted-foreground">{t("profile.member_since")}</p>
               <p className="text-sm font-medium">{createdAt}</p>
             </div>
             <div>
-              <p className="text-xs text-muted-foreground">Portefeuilles</p>
+              <p className="text-xs text-muted-foreground">{t("nav.portfolio")}</p>
               <p className="text-sm font-medium">
-                {portfolios?.length ?? 0} portefeuille
-                {(portfolios?.length ?? 0) !== 1 ? "s" : ""}
+                {portfolios?.length ?? 0} {t("profile.portfolios_count")}
               </p>
             </div>
           </div>
@@ -160,13 +161,13 @@ export default function ProfilePage() {
             <CardTitle className="text-xl font-semibold">
               {riskProfile.profile_name}
             </CardTitle>
-            <CardDescription>Profil de risque personnalisé</CardDescription>
+            <CardDescription>{t("profile.risk_profile_desc")}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-5">
             {/* Risk score */}
             <div className="flex flex-col items-center gap-2">
               <span className="text-xs text-muted-foreground">
-                Score de risque
+                {t("profile.risk_score")}
               </span>
               <AnimatedCircularProgressBar
                 value={riskProfile.risk_score * 10}
@@ -176,10 +177,10 @@ export default function ProfilePage() {
               />
               <div className="flex justify-between w-full mt-1">
                 <span className="text-[10px] text-muted-foreground">
-                  Conservateur
+                  {t("profile.conservative")}
                 </span>
                 <span className="text-[10px] text-muted-foreground">
-                  Agressif
+                  {t("profile.aggressive")}
                 </span>
               </div>
             </div>
@@ -188,7 +189,7 @@ export default function ProfilePage() {
             <div className="grid gap-3 sm:grid-cols-2">
               <div className="rounded-lg border border-border p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Horizon
+                  {t("profile.horizon")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
                   {LABEL_MAP[riskProfile.horizon] ?? riskProfile.horizon}
@@ -196,7 +197,7 @@ export default function ProfilePage() {
               </div>
               <div className="rounded-lg border border-border p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Tolérance aux pertes
+                  {t("profile.loss_tolerance")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
                   {LABEL_MAP[riskProfile.loss_tolerance] ??
@@ -205,7 +206,7 @@ export default function ProfilePage() {
               </div>
               <div className="rounded-lg border border-border p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Objectif
+                  {t("profile.objective")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
                   {LABEL_MAP[riskProfile.objective] ?? riskProfile.objective}
@@ -213,7 +214,7 @@ export default function ProfilePage() {
               </div>
               <div className="rounded-lg border border-border p-3">
                 <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
-                  Expérience
+                  {t("profile.experience")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
                   {LABEL_MAP[riskProfile.experience] ?? riskProfile.experience}
@@ -226,7 +227,7 @@ export default function ProfilePage() {
               size="sm"
               onClick={() => setShowProfiler(true)}
             >
-              Refaire le profil
+              {t("profile.redo_profiler")}
             </Button>
           </CardContent>
         </Card>
@@ -234,15 +235,15 @@ export default function ProfilePage() {
         <Card>
           <CardHeader>
             <CardTitle className="text-base font-medium">
-              Profil de risque
+              {t("profile.risk_profile")}
             </CardTitle>
             <CardDescription>
-              Découvrez votre profil d&apos;investisseur en quelques questions
+              {t("profile.risk_profile_empty_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Button onClick={() => setShowProfiler(true)}>
-              Créer mon profil de risque
+              {t("profile.create_profile")}
             </Button>
           </CardContent>
         </Card>
@@ -257,19 +258,19 @@ export default function ProfilePage() {
       {/* Preferences */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-medium">Préférences</CardTitle>
+          <CardTitle className="text-base font-medium">{t("profile.preferences")}</CardTitle>
           <CardDescription>
-            Personnalisez l&apos;affichage de RiskLens
+            {t("profile.preferences_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium">Mode Expert</p>
+              <p className="text-sm font-medium">{t("mode.expert")}</p>
               <p className="text-xs text-muted-foreground">
                 {mode === "expert"
-                  ? "Toutes les métriques techniques et données brutes visibles"
-                  : "Labels simplifiés et explications pédagogiques"}
+                  ? t("profile.expert_mode_desc")
+                  : t("profile.beginner_mode_desc")}
               </p>
             </div>
             <Switch
@@ -283,9 +284,9 @@ export default function ProfilePage() {
           <Separator />
 
           <div>
-            <p className="text-sm font-medium">Simulations Monte Carlo</p>
+            <p className="text-sm font-medium">{t("profile.mc_simulations")}</p>
             <p className="text-xs text-muted-foreground mb-3">
-              Nombre de trajectoires simulées · 252 jours de trading
+              {t("profile.mc_simulations_desc")}
             </p>
             <div className="flex gap-2">
               {MC_OPTIONS.map((opt) => (
@@ -325,11 +326,11 @@ export default function ProfilePage() {
                 );
               }}
             >
-              {updatePrefs.isPending ? "Sauvegarde..." : "Sauvegarder"}
+              {updatePrefs.isPending ? t("profile.saving") : t("profile.save")}
             </Button>
             {saved && (
               <span className="text-xs text-emerald-500">
-                Préférences sauvegardées
+                {t("toasts.preferences_saved")}
               </span>
             )}
           </div>
@@ -340,10 +341,10 @@ export default function ProfilePage() {
       <Card>
         <CardHeader>
           <CardTitle className="text-base font-medium">
-            Historique des rapports
+            {t("profile.report_history")}
           </CardTitle>
           <CardDescription>
-            Rapports IA générés pour vos portefeuilles
+            {t("profile.report_history_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -375,7 +376,7 @@ export default function ProfilePage() {
             </div>
           ) : (
             <p className="text-sm text-muted-foreground text-center py-4">
-              Aucun rapport généré pour le moment.
+              {t("profile.no_reports")}
             </p>
           )}
         </CardContent>
@@ -384,9 +385,9 @@ export default function ProfilePage() {
       {/* Alerts */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base font-medium">Alertes</CardTitle>
+          <CardTitle className="text-base font-medium">{t("profile.alerts")}</CardTitle>
           <CardDescription>
-            Recevez une notification quand un seuil est dépassé
+            {t("profile.alerts_desc")}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -403,7 +404,7 @@ export default function ProfilePage() {
                       {METRIC_LABELS[alert.metric] ?? alert.metric}
                     </span>
                     <span className="text-xs text-muted-foreground ml-2">
-                      {alert.direction === "above" ? "au-dessus de" : "en-dessous de"}{" "}
+                      {alert.direction === "above" ? t("profile.above") : t("profile.below")}{" "}
                       <span className="font-mono">{alert.threshold}</span>
                     </span>
                   </div>
@@ -414,7 +415,7 @@ export default function ProfilePage() {
                     onClick={() => deleteAlertMutation.mutate(alert.id)}
                     disabled={deleteAlertMutation.isPending}
                   >
-                    Supprimer
+                    {t("portfolio.delete")}
                   </Button>
                 </div>
               ))}
@@ -425,7 +426,7 @@ export default function ProfilePage() {
 
           {/* Create alert form */}
           <div className="space-y-3">
-            <p className="text-sm font-medium">Nouvelle alerte</p>
+            <p className="text-sm font-medium">{t("profile.new_alert")}</p>
             <div className="grid gap-3 sm:grid-cols-3">
               <Select
                 value={alertMetric}
@@ -439,7 +440,7 @@ export default function ProfilePage() {
                 <SelectContent>
                   <SelectItem value="var_95">VaR 95%</SelectItem>
                   <SelectItem value="sharpe">Sharpe</SelectItem>
-                  <SelectItem value="volatility">Volatilité</SelectItem>
+                  <SelectItem value="volatility">{t("profile.volatility_label")}</SelectItem>
                 </SelectContent>
               </Select>
 
@@ -453,15 +454,15 @@ export default function ProfilePage() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="above">Au-dessus de</SelectItem>
-                  <SelectItem value="below">En-dessous de</SelectItem>
+                  <SelectItem value="above">{t("profile.above")}</SelectItem>
+                  <SelectItem value="below">{t("profile.below")}</SelectItem>
                 </SelectContent>
               </Select>
 
               <Input
                 type="number"
                 step="0.01"
-                placeholder="Seuil"
+                placeholder={t("profile.threshold")}
                 value={alertThreshold}
                 onChange={(e) => setAlertThreshold(e.target.value)}
               />
@@ -488,12 +489,12 @@ export default function ProfilePage() {
               }}
             >
               {createAlertMutation.isPending
-                ? "Création..."
-                : "Créer l'alerte"}
+                ? t("profile.creating_alert")
+                : t("profile.add_alert")}
             </Button>
             {!activePortfolioId && (
               <p className="text-xs text-muted-foreground">
-                Sélectionnez un portefeuille pour créer une alerte.
+                {t("profile.select_portfolio_for_alert")}
               </p>
             )}
           </div>

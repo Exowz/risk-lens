@@ -351,6 +351,7 @@ const ExpandableContent = React.forwardRef<
 interface ExpandableCardProps {
   children: ReactNode
   className?: string
+  style?: React.CSSProperties
   collapsedSize?: { width?: number; height?: number } // Size when collapsed
   expandedSize?: { width?: number; height?: number } // Size when expanded
   hoverToExpand?: boolean // Whether to expand on hover
@@ -419,17 +420,22 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
       }
     }
 
+    // Allow auto width/height when collapsedSize values are undefined
+    const hasFixedWidth = collapsedSize.width != null && expandedSize.width != null
+    const hasFixedHeight = collapsedSize.height != null && expandedSize.height != null
+
     return (
       <motion.div
         ref={ref}
         className={cn("cursor-pointer", className)}
         style={{
-          // Set width and height based on expansion direction
           width:
-            expandDirection === "vertical" ? collapsedSize.width : smoothWidth,
+            expandDirection === "vertical" || !hasFixedWidth
+              ? undefined
+              : smoothWidth,
           height:
-            expandDirection === "horizontal"
-              ? collapsedSize.height
+            expandDirection === "horizontal" || !hasFixedHeight
+              ? undefined
               : smoothHeight,
         }}
         transition={springConfig}
@@ -437,28 +443,9 @@ const ExpandableCard = React.forwardRef<HTMLDivElement, ExpandableCardProps>(
         onHoverEnd={handleHoverEnd}
         {...props}
       >
-        <div
-          className={cn(
-            "grid grid-cols-1 rounded-lg sm:rounded-xl md:rounded-[2rem]",
-            "shadow-[inset_0_0_1px_1px_hsl(var(--border)/0.3)] dark:shadow-[inset_0_0_1px_1px_hsl(var(--border)/0.5)]",
-            "sm:shadow-[inset_0_0_2px_1px_hsl(var(--border)/0.3)] dark:sm:shadow-[inset_0_0_2px_1px_hsl(var(--border)/0.5)]",
-            "ring-1 ring-border/50",
-            "max-w-[calc(100%-1rem)] sm:max-w-[calc(100%-2rem)] md:max-w-[calc(100%-4rem)]",
-            "mx-auto w-full",
-            "transition-all duration-300 ease-in-out"
-          )}
-        >
-          {/* Nested divs purely for styling and layout (the shadow ring around the card) */}
-          <div className="grid grid-cols-1 rounded-lg sm:rounded-xl md:rounded-[2rem] p-1 sm:p-1.5 md:p-2 shadow-md">
-            <div className="rounded-md sm:rounded-lg md:rounded-3xl bg-white dark:bg-muted p-2 sm:p-3 md:p-4 shadow-xl ring-1 ring-border/50">
-              <div className="w-full h-full overflow-hidden">
-                {/* Ref for measuring content dimensions (so we can let framer know to animate into the dimensions) */}
-                <div ref={measureRef} className="flex flex-col h-full">
-                  {children}
-                </div>
-              </div>
-            </div>
-          </div>
+        {/* measureRef for content dimensions — no decorative wrappers */}
+        <div ref={measureRef} className="flex flex-col">
+          {children}
         </div>
       </motion.div>
     )

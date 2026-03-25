@@ -4,26 +4,23 @@
  * Chart card with inline expansion for AI explanation.
  *
  * Chart is ALWAYS visible. Click expands to show AI explanation below.
- * Double-click triggers focus mode (fullscreen chart).
  *
- * Depends on: ui/expandable (Cult UI), ui/skeleton,
- *             lib/store/focus-store, lib/store/sidebar-store
+ * Depends on: ui/expandable (Cult UI), ui/skeleton, react-markdown
  * Used by: risk/page.tsx, markowitz/page.tsx, stress/page.tsx
  */
 
 import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useTranslations } from "next-intl";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 import {
   Expandable,
   ExpandableCard,
-  ExpandableCardContent,
-  ExpandableCardHeader,
   ExpandableTrigger,
   ExpandableContent,
 } from "@/components/ui/expandable";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useFocusStore } from "@/lib/store/focus-store";
-import { useSidebarStore } from "@/lib/store/sidebar-store";
 
 interface LegendItem {
   color: string;
@@ -53,37 +50,12 @@ export function ChartExpandableCard({
   isOpen,
   onToggle,
 }: ChartExpandableCardProps) {
+  const t = useTranslations();
   const [explanation, setExplanation] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasError, setHasError] = useState(false);
   const analyzeRef = useRef(onAnalyze);
   analyzeRef.current = onAnalyze;
-
-  const { isFocused, enter: enterFocus, exit: exitFocus } = useFocusStore();
-  const sidebarState = useSidebarStore((s) => s.state);
-  const setSidebarState = useSidebarStore((s) => s.setState);
-
-  const handleDoubleClick = useCallback(() => {
-    if (isFocused) return;
-    enterFocus(sidebarState);
-    setSidebarState("hidden");
-  }, [isFocused, sidebarState, enterFocus, setSidebarState]);
-
-  const handleExitFocus = useCallback(() => {
-    const prev = useFocusStore.getState().previousSidebarState;
-    exitFocus();
-    if (prev) setSidebarState(prev);
-  }, [exitFocus, setSidebarState]);
-
-  // Escape key exits focus mode
-  useEffect(() => {
-    if (!isFocused) return;
-    function handleKey(e: KeyboardEvent) {
-      if (e.key === "Escape") handleExitFocus();
-    }
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [isFocused, handleExitFocus]);
 
   // Auto-fetch explanation when expanded
   useEffect(() => {
@@ -127,35 +99,21 @@ export function ChartExpandableCard({
       expandBehavior="push"
     >
       <ExpandableCard
-        className="relative overflow-hidden"
-        collapsedSize={{ width: undefined as unknown as number, height: undefined as unknown as number }}
-        expandedSize={{ width: undefined as unknown as number, height: undefined as unknown as number }}
+        className="relative rounded-xl transition-colors duration-200"
+        style={{
+          background: "#161920",
+          border: isOpen
+            ? "1px solid rgba(59,130,246,0.4)"
+            : "1px solid rgba(255,255,255,0.07)",
+        }}
+        collapsedSize={{}}
+        expandedSize={{}}
       >
         <ExpandableTrigger>
-          <ExpandableCardHeader
-            className="p-4 cursor-pointer"
-            onDoubleClick={handleDoubleClick}
-          >
+          <div className="p-4 cursor-pointer">
             <div className="w-full">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-medium text-foreground">{title}</h3>
-                {isFocused && (
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs bg-white/10 px-2 py-1 rounded-full text-white/60">
-                      Focus
-                    </span>
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleExitFocus();
-                      }}
-                      className="text-xs text-white/40 hover:text-white/70 transition-colors"
-                    >
-                      ✕ Quitter
-                    </button>
-                  </div>
-                )}
               </div>
               {children}
               {legend && legend.length > 0 && (
@@ -174,11 +132,11 @@ export function ChartExpandableCard({
                 </div>
               )}
             </div>
-          </ExpandableCardHeader>
+          </div>
         </ExpandableTrigger>
 
         <ExpandableContent>
-          <ExpandableCardContent className="px-4 pb-4 pt-0">
+          <div className="px-4 pb-4 pt-0">
             <div className="border-t border-border pt-3 space-y-3">
               {isLoading && (
                 <div className="space-y-2">
@@ -189,17 +147,19 @@ export function ChartExpandableCard({
               )}
               {hasError && !isLoading && (
                 <p className="text-sm text-muted-foreground italic">
-                  Analyse temporairement indisponible.
+                  {t('common.unavailable')}
                 </p>
               )}
               {explanation && !isLoading && (
                 <>
-                  <p className="text-sm text-muted-foreground italic leading-relaxed">
-                    {explanation}
-                  </p>
+                  <div className="overflow-y-auto max-h-[200px] text-sm text-muted-foreground italic leading-relaxed prose prose-invert prose-sm max-w-none break-words">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {explanation}
+                    </ReactMarkdown>
+                  </div>
                   <div className="flex items-center justify-between">
                     <span className="text-[10px] text-white/20">
-                      Analysé par IA
+                      {t('common.analyzed')}
                     </span>
                     <button
                       type="button"
@@ -209,13 +169,13 @@ export function ChartExpandableCard({
                       }}
                       className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                     >
-                      Rafraîchir l&apos;analyse
+                      {t('common.refresh')}
                     </button>
                   </div>
                 </>
               )}
             </div>
-          </ExpandableCardContent>
+          </div>
         </ExpandableContent>
       </ExpandableCard>
     </Expandable>

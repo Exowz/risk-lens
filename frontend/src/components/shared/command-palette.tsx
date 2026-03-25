@@ -5,13 +5,14 @@
  *
  * Depends on: cmdk, @phosphor-icons/react, lib/api/portfolios,
  *             lib/store/portfolio-store, lib/store/mode-context,
- *             lib/store/sidebar-store
+ *             lib/store/sidebar-store, next-intl
  * Used by: app/(dashboard)/layout.tsx
  */
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Command } from "cmdk";
+import { useTranslations } from "next-intl";
 import {
   Atom,
   Briefcase,
@@ -31,7 +32,6 @@ import {
 } from "@phosphor-icons/react";
 
 import { usePortfolios } from "@/lib/api/portfolios";
-import { useFocusStore } from "@/lib/store/focus-store";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 import { useSidebarStore } from "@/lib/store/sidebar-store";
@@ -44,11 +44,11 @@ interface CommandPaletteProps {
 export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
   const router = useRouter();
   const { data: portfolios } = usePortfolios();
-  const { setActivePortfolio } = usePortfolioStore();
   const { setMode } = useMode();
-  const { setState: setSidebarState, state: sidebarState } = useSidebarStore();
-  const { isFocused, enter: enterFocus, exit: exitFocus } = useFocusStore();
+  const { setActivePortfolio } = usePortfolioStore();
+  const { setState: setSidebarState } = useSidebarStore();
   const [search, setSearch] = useState("");
+  const t = useTranslations();
 
   const close = useCallback(() => {
     onOpenChange(false);
@@ -103,7 +103,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             <Command.Input
               value={search}
               onValueChange={setSearch}
-              placeholder="Rechercher une commande..."
+              placeholder={t('command_palette.placeholder')}
               className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
             />
           </div>
@@ -111,116 +111,100 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
           {/* Results */}
           <Command.List className="overflow-y-auto max-h-72 py-2">
             <Command.Empty className="px-4 py-6 text-sm text-white/30 text-center">
-              Aucun résultat trouvé.
+              {t('command_palette.no_results')}
             </Command.Empty>
 
             {/* Navigation */}
             <Command.Group
-              heading="Navigation"
+              heading={t('command_palette.nav_group')}
               className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
             >
               <PaletteItem
                 icon={<HouseLine size={16} />}
-                label="Vue d'ensemble"
+                label={t('nav.overview')}
                 hint="⌘1"
                 onSelect={() => runAction(() => router.push("/overview"))}
               />
               <PaletteItem
                 icon={<ChartPie size={16} />}
-                label="Portefeuille"
+                label={t('nav.portfolio')}
                 hint="⌘2"
                 onSelect={() => runAction(() => router.push("/portfolio"))}
               />
               <PaletteItem
                 icon={<ShieldWarning size={16} />}
-                label="Analyse des risques"
+                label={t('nav.risk')}
                 hint="⌘3"
                 onSelect={() => runAction(() => router.push("/risk"))}
               />
               <PaletteItem
                 icon={<ChartLineUp size={16} />}
-                label="Optimisation Markowitz"
+                label={t('nav.markowitz')}
                 hint="⌘4"
                 onSelect={() => runAction(() => router.push("/markowitz"))}
               />
               <PaletteItem
                 icon={<Lightning size={16} />}
-                label="Stress Test"
+                label={t('nav.stress')}
                 hint="⌘5"
                 onSelect={() => runAction(() => router.push("/stress"))}
               />
               <PaletteItem
                 icon={<FileText size={16} />}
-                label="Rapport IA"
+                label={t('nav.report')}
                 hint="⌘6"
                 onSelect={() => runAction(() => router.push("/report"))}
               />
               <PaletteItem
                 icon={<UserCircle size={16} />}
-                label="Profil"
+                label={t('nav.profile')}
                 onSelect={() => runAction(() => router.push("/profile"))}
               />
             </Command.Group>
 
             {/* Actions */}
             <Command.Group
-              heading="Actions"
+              heading={t('command_palette.actions_group')}
               className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
             >
               <PaletteItem
                 icon={<Sparkle size={16} />}
-                label="Générer un rapport"
+                label={t('command_palette.generate_report')}
                 onSelect={() => runAction(() => router.push("/report"))}
               />
               <PaletteItem
                 icon={<ChartBar size={16} />}
-                label="Lancer Monte Carlo"
+                label={t('command_palette.run_montecarlo')}
                 onSelect={() => runAction(() => router.push("/risk"))}
               />
               <PaletteItem
                 icon={<Student size={16} />}
-                label="Mode Débutant"
+                label={t('command_palette.beginner_mode')}
                 onSelect={() => runAction(() => setMode("beginner"))}
               />
               <PaletteItem
                 icon={<Atom size={16} />}
-                label="Mode Expert"
+                label={t('command_palette.expert_mode')}
                 onSelect={() => runAction(() => setMode("expert"))}
               />
               <PaletteItem
                 icon={<PushPin size={16} />}
-                label="Épingler la sidebar"
+                label={t('command_palette.pin_sidebar')}
                 hint="⌘B"
                 onSelect={() => runAction(() => setSidebarState("pinned"))}
               />
               <PaletteItem
                 icon={<X size={16} />}
-                label="Masquer la sidebar"
+                label={t('command_palette.hide_sidebar')}
                 hint="⌘B"
                 onSelect={() => runAction(() => setSidebarState("hidden"))}
-              />
-              <PaletteItem
-                icon={<ChartLineUp size={16} />}
-                label={isFocused ? "Quitter le mode focus" : "Mode focus"}
-                onSelect={() =>
-                  runAction(() => {
-                    if (isFocused) {
-                      const prev = useFocusStore.getState().previousSidebarState;
-                      exitFocus();
-                      if (prev) setSidebarState(prev);
-                    } else {
-                      enterFocus(sidebarState);
-                      setSidebarState("hidden");
-                    }
-                  })
-                }
               />
             </Command.Group>
 
             {/* Portfolios */}
             {portfolios && portfolios.length > 0 && (
               <Command.Group
-                heading="Portefeuilles"
+                heading={t('command_palette.portfolios_group')}
                 className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
               >
                 {portfolios.map((p) => (

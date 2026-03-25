@@ -16,6 +16,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "motion/react";
+import { useTranslations } from "next-intl";
 import {
   LineChart,
   Line,
@@ -43,44 +44,6 @@ import { useMode } from "@/lib/store/mode-context";
 import { useNotificationIsland } from "@/lib/store/notification-island-store";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 import type { ScenarioResult } from "@/types/stress";
-
-// ── Crisis card definitions ──
-
-interface CrisisCard {
-  key: string;
-  title: string;
-  period: string;
-  phrase: string;
-  narrative: string;
-  icon: typeof Lightning;
-}
-
-const CRISES: CrisisCard[] = [
-  {
-    key: "Financial Crisis 2008",
-    title: "Crise Financière 2008",
-    period: "Sep 2008 → Mar 2009",
-    phrase: "L'effondrement de Lehman Brothers",
-    narrative: "Septembre 2008. Lehman Brothers s'effondre.",
-    icon: Lightning,
-  },
-  {
-    key: "COVID-19 2020",
-    title: "Pandémie COVID-19",
-    period: "Fév 2020 → Avr 2020",
-    phrase: "Les marchés s'effondrent en 33 jours",
-    narrative: "Février 2020. Le monde s'arrête.",
-    icon: Warning,
-  },
-  {
-    key: "Rate Hikes 2022",
-    title: "Hausse des taux Fed",
-    period: "Jan 2022 → Oct 2022",
-    phrase: "La fin de l'argent gratuit",
-    narrative: "Janvier 2022. La Fed relève ses taux.",
-    icon: TrendDown,
-  },
-];
 
 // ── Animation phases ──
 
@@ -138,6 +101,17 @@ function buildDualCurveData(
   }));
 }
 
+// ── Crisis card definition type ──
+
+interface CrisisCard {
+  key: string;
+  title: string;
+  period: string;
+  phrase: string;
+  narrative: string;
+  icon: typeof Lightning;
+}
+
 // ── Main page ──
 
 export default function StressPage() {
@@ -145,6 +119,7 @@ export default function StressPage() {
   const { mode } = useMode();
   const showIsland = useNotificationIsland((s) => s.show);
   const { mutate, data, isPending, error, reset } = useStressTest();
+  const t = useTranslations();
 
   const [selectedCrisis, setSelectedCrisis] = useState<string | null>(null);
   const [phase, setPhase] = useState<AnimPhase>("idle");
@@ -153,6 +128,34 @@ export default function StressPage() {
   const [chartExplanation, setChartExplanation] = useState<string | null>(null);
   const [isExplaining, setIsExplaining] = useState(false);
   const animTimers = useRef<NodeJS.Timeout[]>([]);
+
+  // Crisis card definitions using translations
+  const crises: CrisisCard[] = useMemo(() => [
+    {
+      key: "Financial Crisis 2008",
+      title: t("stress.crisis_2008_title"),
+      period: t("stress.crisis_2008_period"),
+      phrase: t("stress.crisis_2008_desc"),
+      narrative: t("stress.narrative_2008"),
+      icon: Lightning,
+    },
+    {
+      key: "COVID-19 2020",
+      title: t("stress.crisis_2020_title"),
+      period: t("stress.crisis_2020_period"),
+      phrase: t("stress.crisis_2020_desc"),
+      narrative: t("stress.narrative_2020"),
+      icon: Warning,
+    },
+    {
+      key: "Rate Hikes 2022",
+      title: t("stress.crisis_2022_title"),
+      period: t("stress.crisis_2022_period"),
+      phrase: t("stress.crisis_2022_desc"),
+      narrative: t("stress.narrative_2022"),
+      icon: TrendDown,
+    },
+  ], [t]);
 
   // Cleanup timers
   useEffect(() => {
@@ -176,9 +179,9 @@ export default function StressPage() {
             );
             showIsland({
               type: "stress",
-              title: "Analyse terminée",
+              title: t("toasts.stress_done"),
               subtitle: `Drawdown max : ${(worst.max_drawdown * 100).toFixed(1)}% · ${
-                worst.recovery_days !== null ? `Récupéré en ${worst.recovery_days}j` : "Non récupéré"
+                worst.recovery_days !== null ? `${worst.recovery_days}j` : t("stress.not_recovered")
               }`,
               positive: worst.recovery_days !== null,
             });
@@ -239,8 +242,8 @@ export default function StressPage() {
       const stepTime = fallDuration / fallSteps;
 
       for (let i = 0; i <= minIdx; i++) {
-        const t = setTimeout(() => setVisiblePoints(i + 1), i * stepTime);
-        animTimers.current.push(t);
+        const timer = setTimeout(() => setVisiblePoints(i + 1), i * stepTime);
+        animTimers.current.push(timer);
       }
 
       // Phase 3: Counter (after fall finishes)
@@ -256,11 +259,11 @@ export default function StressPage() {
         const recoveryStepTime = recoveryDuration / recoverySteps;
 
         for (let i = minIdx + 1; i < totalPoints; i++) {
-          const t = setTimeout(
+          const timer = setTimeout(
             () => setVisiblePoints(i + 1),
             (i - minIdx) * recoveryStepTime,
           );
-          animTimers.current.push(t);
+          animTimers.current.push(timer);
         }
 
         // Done
@@ -306,9 +309,9 @@ export default function StressPage() {
       }),
     })
       .then((res) => setChartExplanation(res.explanation))
-      .catch(() => setChartExplanation("Analyse temporairement indisponible."))
+      .catch(() => setChartExplanation(t("common.unavailable")))
       .finally(() => setIsExplaining(false));
-  }, [data, mode, isExplaining]);
+  }, [data, mode, isExplaining, t]);
 
   // Auto-trigger AI explanation when animation finishes
   useEffect(() => {
@@ -327,15 +330,14 @@ export default function StressPage() {
       <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
+            <CardTitle>{t("common.no_portfolio")}</CardTitle>
             <CardDescription>
-              Créez ou sélectionnez un portefeuille pour simuler son comportement
-              lors des crises de 2008, 2020 et 2022.
+              {t("common.no_portfolio_desc")}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Voir les portefeuilles</Button>
+              <Button>{t("common.go_to_portfolio")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -359,7 +361,7 @@ export default function StressPage() {
       {isPending && (
         <div className="flex items-center gap-2 text-sm text-muted-foreground">
           <div className="size-3 rounded-full border-2 border-muted-foreground border-t-transparent animate-spin" />
-          Chargement des stress tests...
+          {t("common.loading")}
         </div>
       )}
 
@@ -367,7 +369,7 @@ export default function StressPage() {
         <Card className="border-destructive">
           <CardContent className="pt-6">
             <p className="text-sm text-destructive">
-              {error instanceof Error ? error.message : "Échec du stress test"}
+              {error instanceof Error ? error.message : t("common.error")}
             </p>
           </CardContent>
         </Card>
@@ -377,7 +379,7 @@ export default function StressPage() {
         <>
           {/* Zone 1 — Crisis selector */}
           <div className="grid gap-4 sm:grid-cols-3">
-            {CRISES.map((crisis) => {
+            {crises.map((crisis) => {
               const isActive = selectedCrisis === crisis.key;
               const Icon = crisis.icon;
               return (
@@ -436,7 +438,7 @@ export default function StressPage() {
                     transition={{ duration: 0.3 }}
                   >
                     <p className="text-lg font-medium text-white/80 bg-black/40 backdrop-blur rounded-xl p-4">
-                      {CRISES.find((c) => c.key === selectedCrisis)?.narrative}
+                      {crises.find((c) => c.key === selectedCrisis)?.narrative}
                     </p>
                   </motion.div>
                 )}
@@ -454,16 +456,16 @@ export default function StressPage() {
                   >
                     {selectedScenario.recovery_days !== null ? (
                       <p className="text-4xl font-mono text-white/60">
-                        <NumberTicker value={selectedScenario.recovery_days} decimalPlaces={0} /> jours
+                        <NumberTicker value={selectedScenario.recovery_days} decimalPlaces={0} /> {t("stress.days")}
                       </p>
                     ) : (
                       <p className="text-xl font-mono text-white/60">
-                        Non récupéré sur la période
+                        {t("stress.not_recovered")}
                       </p>
                     )}
                     <p className="text-sm text-muted-foreground mt-2">
                       {selectedScenario.recovery_days !== null
-                        ? "pour récupérer"
+                        ? t("stress.to_recover")
                         : ""}
                     </p>
                   </motion.div>
@@ -483,7 +485,7 @@ export default function StressPage() {
                       tick={{ fontSize: 11, fill: "rgba(255,255,255,0.3)" }}
                       axisLine={{ stroke: "rgba(255,255,255,0.1)" }}
                       label={{
-                        value: "Jours",
+                        value: t("stress.days"),
                         position: "insideBottomRight",
                         offset: -5,
                         style: { fontSize: 11, fill: "rgba(255,255,255,0.3)" },
@@ -502,7 +504,7 @@ export default function StressPage() {
                       strokeWidth={2}
                       dot={false}
                       isAnimationActive={false}
-                      name="Portefeuille actuel"
+                      name={t("stress.current_portfolio")}
                     />
                     {/* Optimized portfolio */}
                     {optimizedDrawdown != null && (
@@ -514,7 +516,7 @@ export default function StressPage() {
                         strokeDasharray="6 3"
                         dot={false}
                         isAnimationActive={false}
-                        name="Optimisé Max Sharpe"
+                        name={t("stress.optimized_portfolio")}
                       />
                     )}
                   </LineChart>
@@ -536,12 +538,12 @@ export default function StressPage() {
                       <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1.5">
                           <span className="size-2 rounded-full" style={{ backgroundColor: lineColor }} />
-                          Portefeuille actuel
+                          {t("stress.current_portfolio")}
                         </span>
                         {optimizedDrawdown != null && (
                           <span className="flex items-center gap-1.5">
                             <span className="size-2 rounded-full bg-blue-500" />
-                            Optimisé Max Sharpe
+                            {t("stress.optimized_portfolio")}
                           </span>
                         )}
                       </div>
@@ -566,13 +568,13 @@ export default function StressPage() {
                               {chartExplanation}
                             </p>
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-white/20">Analysé par IA</span>
+                              <span className="text-[10px] text-white/20">{t("common.analyzed")}</span>
                               <button
                                 type="button"
                                 onClick={handleAnalyzeChart}
                                 className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
                               >
-                                Rafraîchir
+                                {t("common.refresh")}
                               </button>
                             </div>
                           </motion.div>
@@ -598,12 +600,12 @@ export default function StressPage() {
                 <div>
                   <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
                     <span className="size-2 rounded-full" style={{ backgroundColor: lineColor }} />
-                    {mode === "beginner" ? "Votre portefeuille" : "Portefeuille actuel"}
+                    {t("stress.current_portfolio")}
                   </p>
-                  <div className="grid gap-4 sm:grid-cols-3">
+                  <div className="grid gap-4 sm:grid-cols-3 items-start">
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0 }}>
                       <KpiExpandableCard
-                        label={mode === "beginner" ? "Rendement total" : "Rendement total"}
+                        label={t(`metrics.${mode}.total_return`)}
                         value={selectedScenario.total_return * 100}
                         valuePrefix={selectedScenario.total_return >= 0 ? "+" : ""}
                         valueSuffix="%"
@@ -620,7 +622,7 @@ export default function StressPage() {
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.08 }}>
                       <KpiExpandableCard
-                        label={mode === "beginner" ? "Pire chute" : "Drawdown max"}
+                        label={t(`metrics.${mode}.max_drawdown`)}
                         value={selectedScenario.max_drawdown * 100}
                         valueSuffix="%"
                         valueColor="red"
@@ -636,12 +638,12 @@ export default function StressPage() {
                     </motion.div>
                     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
                       <KpiExpandableCard
-                        label={mode === "beginner" ? "Temps de récupération" : "Jours de récupération"}
+                        label={t(`metrics.${mode}.recovery_days`)}
                         value={selectedScenario.recovery_days ?? 0}
                         decimals={0}
                         valueSuffix={
                           selectedScenario.recovery_days !== null
-                            ? mode === "beginner" ? " jours" : " days"
+                            ? ` ${t("stress.days")}`
                             : undefined
                         }
                         valueColor="foreground"
@@ -663,12 +665,12 @@ export default function StressPage() {
                   <div>
                     <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1.5">
                       <span className="size-2 rounded-full bg-blue-500" />
-                      {mode === "beginner" ? "Portefeuille optimisé" : "Optimisé Max Sharpe"}
+                      {t("stress.optimized_portfolio")}
                     </p>
-                    <div className="grid gap-4 sm:grid-cols-3">
+                    <div className="grid gap-4 sm:grid-cols-3 items-start">
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.24 }}>
                         <KpiExpandableCard
-                          label={mode === "beginner" ? "Rendement total" : "Rendement total"}
+                          label={t(`metrics.${mode}.total_return`)}
                           value={selectedComparison.optimized_return * 100}
                           valuePrefix={selectedComparison.optimized_return >= 0 ? "+" : ""}
                           valueSuffix="%"
@@ -686,7 +688,7 @@ export default function StressPage() {
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.32 }}>
                         <KpiExpandableCard
-                          label={mode === "beginner" ? "Pire chute" : "Drawdown max"}
+                          label={t(`metrics.${mode}.max_drawdown`)}
                           value={selectedComparison.optimized_drawdown * 100}
                           valueSuffix="%"
                           valueColor="red"
@@ -703,12 +705,12 @@ export default function StressPage() {
                       </motion.div>
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}>
                         <KpiExpandableCard
-                          label={mode === "beginner" ? "Temps de récupération" : "Jours de récupération"}
+                          label={t(`metrics.${mode}.recovery_days`)}
                           value={selectedComparison.optimized_recovery_days ?? 0}
                           decimals={0}
                           valueSuffix={
                             selectedComparison.optimized_recovery_days !== null
-                              ? mode === "beginner" ? " jours" : " days"
+                              ? ` ${t("stress.days")}`
                               : undefined
                           }
                           valueColor="foreground"
@@ -768,7 +770,7 @@ export default function StressPage() {
 
           {data.from_cache && (
             <p className="text-xs text-muted-foreground text-center">
-              Résultats chargés depuis le cache
+              {t("common.cached")}
             </p>
           )}
         </>

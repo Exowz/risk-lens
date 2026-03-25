@@ -4,36 +4,47 @@
  * Canvas sub-header — live clock, page title, B/E segmented control.
  *
  * Sits inside the floating canvas at the top. Shows current time,
- * route-based French page title, and Beginner/Expert toggle.
+ * locale-aware page title, and Beginner/Expert toggle.
  *
- * Depends on: ui/segmented-control, lib/store/mode-context, next/navigation
+ * Depends on: ui/segmented-control, lib/store/mode-context, lib/store/locale-store,
+ *             next-intl, next/navigation
  * Used by: app/(dashboard)/layout.tsx
  */
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { useMode } from "@/lib/store/mode-context";
+import { useLocaleStore } from "@/lib/store/locale-store";
 
-const PAGE_TITLES: Record<string, string> = {
-  "/overview": "Vue d'ensemble",
-  "/portfolio": "Portefeuille",
-  "/risk": "Analyse des risques",
-  "/markowitz": "Optimisation Markowitz",
-  "/stress": "Stress Test",
-  "/report": "Rapport IA",
-  "/profile": "Profil",
+const LOCALE_MAP: Record<string, string> = {
+  fr: "fr-FR",
+  en: "en-US",
+  es: "es-ES",
+  zh: "zh-CN",
+};
+
+const PAGE_TITLE_KEYS: Record<string, string> = {
+  "/overview": "nav.overview",
+  "/portfolio": "nav.portfolio",
+  "/risk": "nav.risk",
+  "/markowitz": "nav.markowitz",
+  "/stress": "nav.stress",
+  "/report": "nav.report",
+  "/profile": "nav.profile",
 };
 
 function useClock() {
+  const { locale } = useLocaleStore();
   const [time, setTime] = useState("");
 
   useEffect(() => {
     function tick() {
       const now = new Date();
       setTime(
-        now.toLocaleTimeString("fr-FR", {
+        now.toLocaleTimeString(LOCALE_MAP[locale] ?? "fr-FR", {
           hour: "2-digit",
           minute: "2-digit",
           hour12: false,
@@ -43,7 +54,7 @@ function useClock() {
     tick();
     const id = setInterval(tick, 1000);
     return () => clearInterval(id);
-  }, []);
+  }, [locale]);
 
   return time;
 }
@@ -52,8 +63,10 @@ export function CanvasHeader() {
   const pathname = usePathname();
   const clock = useClock();
   const { mode, setMode } = useMode();
+  const t = useTranslations();
 
-  const title = PAGE_TITLES[pathname] ?? "";
+  const titleKey = PAGE_TITLE_KEYS[pathname];
+  const title = titleKey ? t(titleKey) : "";
 
   return (
     <div

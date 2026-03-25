@@ -28,7 +28,6 @@ import { usePreferences, useRiskProfile } from "@/lib/api/profile";
 import { useSession } from "@/lib/auth/client";
 import { useMode } from "@/lib/store/mode-context";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
-import { useFocusStore } from "@/lib/store/focus-store";
 import { useSidebarStore } from "@/lib/store/sidebar-store";
 
 export default function DashboardLayout({
@@ -49,7 +48,6 @@ export default function DashboardLayout({
   const [paletteOpen, setPaletteOpen] = useState(false);
 
   const { state: sidebarState, toggle: toggleSidebar, setPeeking } = useSidebarStore();
-  const isFocused = useFocusStore((s) => s.isFocused);
   const peekTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const sidebarRef = useRef<HTMLDivElement>(null);
 
@@ -182,32 +180,18 @@ export default function DashboardLayout({
           display: "flex",
           flex: 1,
           padding: "0 1.25rem 1.25rem 1.25rem",
-          gap: "1rem",
           minHeight: 0,
         }}
       >
-        {/* Left column — Sidebar + Avatar (bottom) */}
+        {/* Sidebar spacer — reserves space when pinned, collapses when hidden */}
         <div
-          ref={sidebarRef}
           style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
+            width: sidebarState === "pinned" ? 52 : 0,
+            marginRight: sidebarState === "pinned" ? "1rem" : 0,
             flexShrink: 0,
-            width: isFocused ? 0 : 52,
-            transition: "width 250ms ease-out, opacity 200ms ease-out",
-            gap: "0.75rem",
-            position: "relative",
-            opacity: isFocused ? 0 : 1,
-            pointerEvents: isFocused ? "none" : "auto",
-            overflow: "hidden",
+            transition: "width 250ms ease-out, margin-right 250ms ease-out",
           }}
-        >
-          <div style={{ flex: 1 }} />
-          <SidebarRail />
-          <div style={{ flex: 1 }} />
-          <AvatarZone session={session} />
-        </div>
+        />
 
         {/* Floating Canvas */}
         <div
@@ -245,6 +229,29 @@ export default function DashboardLayout({
             {children}
           </main>
         </div>
+      </div>
+
+      {/* Sidebar + Avatar — fixed position, z-50, above canvas */}
+      <div
+        ref={sidebarRef}
+        style={{
+          position: "fixed",
+          left: "1.25rem",
+          top: 56,
+          bottom: "1.25rem",
+          width: 52,
+          zIndex: 50,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          gap: "0.75rem",
+          pointerEvents: "none",
+        }}
+      >
+        <div style={{ flex: 1 }} />
+        <SidebarRail />
+        <div style={{ flex: 1 }} />
+        <AvatarZone session={session} />
       </div>
     </div>
   );

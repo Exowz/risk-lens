@@ -11,6 +11,7 @@
  */
 
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { MonteCarloChart } from "@/components/charts/monte-carlo-chart";
 import { VaRDistribution } from "@/components/charts/var-distribution";
@@ -42,6 +43,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
   const [nDays, setNDays] = useState(252);
   const [result, setResult] = useState<MonteCarloResult | null>(null);
   const { mode } = useMode();
+  const t = useTranslations();
   const showIsland = useNotificationIsland((s) => s.show);
 
   const monteCarlo = useMonteCarlo();
@@ -60,7 +62,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
   );
 
   const mkMcChartAnalyze = useCallback(() => {
-    if (!result) return Promise.resolve("Analyse temporairement indisponible.");
+    if (!result) return Promise.resolve(t('common.unavailable'));
     return fetchMonteCarloExplanation({
       mode,
       mean_final_value: result.mean_final_value,
@@ -72,7 +74,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
   }, [result, mode]);
 
   const mkDistChartAnalyze = useCallback(() => {
-    if (!result) return Promise.resolve("Analyse temporairement indisponible.");
+    if (!result) return Promise.resolve(t('common.unavailable'));
     return fetchDistributionExplanation({
       mode,
       var_95: result.var_95,
@@ -95,7 +97,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
           setResult(data);
           showIsland({
             type: "montecarlo",
-            title: "Simulation terminée",
+            title: t('toasts.montecarlo_done'),
             subtitle: `VaR 95% : ${(data.var_95 * 100).toFixed(2)}% · P(perte) : ${(data.probability_of_loss * 100).toFixed(0)}%`,
             positive: data.probability_of_loss < 0.5,
           });
@@ -114,8 +116,8 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
         <CardHeader>
           <CardTitle>
             {mode === "beginner"
-              ? "Simulation de scénarios futurs"
-              : "Monte Carlo Simulation (GBM)"}
+              ? t('risk.mc_beginner_title')
+              : t('risk.mc_expert_title')}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -124,7 +126,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
               <>
                 <div className="space-y-1">
                   <Label htmlFor="n_simulations" className="text-xs">
-                    Simulations
+                    {t('risk.simulations_label')}
                   </Label>
                   <Input
                     id="n_simulations"
@@ -139,7 +141,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
                 </div>
                 <div className="space-y-1">
                   <Label htmlFor="n_days" className="text-xs">
-                    Trading Days
+                    {t('risk.trading_days_label')}
                   </Label>
                   <Input
                     id="n_days"
@@ -155,12 +157,12 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
               </>
             )}
             <Button onClick={handleRun} disabled={monteCarlo.isPending}>
-              {monteCarlo.isPending ? "Simulating..." : "Run Simulation"}
+              {monteCarlo.isPending ? t('risk.simulating') : t('risk.run_simulation')}
             </Button>
           </div>
           {monteCarlo.isError && (
             <p className="mt-2 text-sm text-destructive">
-              Simulation failed. Please try again.
+              {t('risk.simulation_failed')}
             </p>
           )}
         </CardContent>
@@ -179,9 +181,9 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
       {result && (
         <>
           {/* Summary metric cards */}
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2 items-start">
             <KpiExpandableCard
-              label={mode === "beginner" ? "Valeur finale moyenne" : "Mean Final Value"}
+              label={t(`metrics.${mode}.mean_final_value`)}
               value={result.mean_final_value}
               decimals={4}
               valueColor="foreground"
@@ -195,7 +197,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
             />
 
             <KpiExpandableCard
-              label={mode === "beginner" ? "Perte max probable (VaR 95%)" : "VaR 95% (Sim)"}
+              label={t(`metrics.${mode}.var_95`)}
               value={result.var_95 * 100}
               valueSuffix="%"
               valueColor="red"
@@ -209,7 +211,7 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
             />
 
             <KpiExpandableCard
-              label={mode === "beginner" ? "Probabilité de perte" : "P(Loss)"}
+              label={t(`metrics.${mode}.p_loss`)}
               value={result.probability_of_loss * 100}
               valueSuffix="%"
               valueColor="amber"
@@ -243,10 +245,10 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
           {/* Charts */}
           <div className="grid gap-6 lg:grid-cols-2">
             <ChartExpandableCard
-              title={mode === "beginner" ? "Trajectoires simulées" : "Simulation Paths"}
+              title={t(`risk.charts.trajectories_${mode}`)}
               legend={[
-                { color: "hsl(221, 83%, 53%)", label: mode === "beginner" ? "Scénarios" : "Paths" },
-                { color: "hsl(0, 0%, 50%)", label: "Initial" },
+                { color: "hsl(221, 83%, 53%)", label: t(`risk.charts.paths_${mode}`) },
+                { color: "hsl(0, 0%, 50%)", label: t('risk.charts.initial') },
               ]}
               onAnalyze={mkMcChartAnalyze}
               isOpen={openCard === "mc-chart"}
@@ -260,9 +262,9 @@ export function MonteCarloPanel({ portfolioId, openCard, onOpenCard }: MonteCarl
             </ChartExpandableCard>
 
             <ChartExpandableCard
-              title={mode === "beginner" ? "Distribution des résultats" : "Final Value Distribution"}
+              title={t(`risk.charts.distribution_${mode}`)}
               legend={[
-                { color: "hsl(221, 83%, 53%)", label: mode === "beginner" ? "Résultats" : "Frequency" },
+                { color: "hsl(221, 83%, 53%)", label: t(`risk.charts.results_${mode}`) },
                 { color: "hsl(0, 84%, 60%)", label: "VaR 95%" },
               ]}
               onAnalyze={mkDistChartAnalyze}

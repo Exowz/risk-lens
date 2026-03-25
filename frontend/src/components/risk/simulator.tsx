@@ -13,6 +13,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -51,6 +52,7 @@ function formatRatio(v: number): string {
 
 export function Simulator({ portfolioId }: SimulatorProps) {
   const router = useRouter();
+  const t = useTranslations();
   const { data: portfolio } = usePortfolio(portfolioId);
   const riskSummaryMutation = useRiskSummary();
   const simulateMutation = useSimulateRisk();
@@ -119,7 +121,7 @@ export function Simulator({ portfolioId }: SimulatorProps) {
 
     const assets = tickers.map((t) => ({ ticker: t, weight: weights[t] }));
     createPortfolioMutation.mutate(
-      { name: `${portfolio.name} (Simulé)`, assets },
+      { name: `${portfolio.name} ${t('risk.simulated_suffix')}`, assets },
       { onSuccess: () => router.push("/portfolio") },
     );
   }, [portfolio, tickers, weights, createPortfolioMutation, router]);
@@ -128,28 +130,28 @@ export function Simulator({ portfolioId }: SimulatorProps) {
     currentSummary && simulatedSummary
       ? [
           {
-            label: "VaR 95%",
+            label: t('metrics.expert.var_95'),
             current: currentSummary.var_95_historical,
             simulated: simulatedSummary.var_95_historical,
             format: formatPct,
             higherIsBetter: false,
           },
           {
-            label: "Sharpe",
+            label: t('metrics.expert.sharpe'),
             current: currentSummary.sharpe_ratio,
             simulated: simulatedSummary.sharpe_ratio,
             format: formatRatio,
             higherIsBetter: true,
           },
           {
-            label: "Volatilité",
+            label: t('metrics.expert.volatility'),
             current: currentSummary.annualized_volatility,
             simulated: simulatedSummary.annualized_volatility,
             format: formatPct,
             higherIsBetter: false,
           },
           {
-            label: "Rendement",
+            label: t('metrics.expert.annual_return'),
             current: currentSummary.annualized_return,
             simulated: simulatedSummary.annualized_return,
             format: formatPct,
@@ -164,10 +166,10 @@ export function Simulator({ portfolioId }: SimulatorProps) {
     <Card>
       <CardHeader>
         <CardTitle className="text-base font-medium">
-          Et si vous rééquilibriez votre portefeuille ?
+          {t('risk.simulator_title')}
         </CardTitle>
         <CardDescription>
-          Ajustez les pondérations et comparez les métriques de risque
+          {t('risk.simulator_desc')}
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -207,12 +209,12 @@ export function Simulator({ portfolioId }: SimulatorProps) {
               isValid ? "text-emerald-500" : "text-red-500"
             }`}
           >
-            Total : {(totalWeight * 100).toFixed(0)}%
+            {t('risk.total')} : {(totalWeight * 100).toFixed(0)}%
           </span>
           <div className="flex items-center gap-2">
             {!isValid && (
               <span className="text-xs font-medium text-red-500">
-                La somme doit être 100%
+                {t('risk.weight_error')}
               </span>
             )}
             <Button
@@ -227,7 +229,7 @@ export function Simulator({ portfolioId }: SimulatorProps) {
                 setSimulatedSummary(null);
               }}
             >
-              Réinitialiser
+              {t('risk.reset')}
             </Button>
           </div>
         </div>
@@ -238,16 +240,16 @@ export function Simulator({ portfolioId }: SimulatorProps) {
           disabled={!isValid || simulateMutation.isPending}
           className="w-full"
         >
-          {simulateMutation.isPending ? "Simulation..." : "Simuler"}
+          {simulateMutation.isPending ? t('risk.simulating') : t('risk.simulate')}
         </Button>
 
         {/* Comparison results */}
         {metrics.length > 0 && (
           <div className="space-y-3 pt-2">
             <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground pb-1 border-b border-border">
-              <span>Métrique</span>
-              <span className="text-center">Actuel</span>
-              <span className="text-center">Simulé</span>
+              <span>{t('risk.metric_label')}</span>
+              <span className="text-center">{t('risk.current')}</span>
+              <span className="text-center">{t('risk.simulated')}</span>
             </div>
             {metrics.map((m) => {
               const diff = m.simulated - m.current;
@@ -298,8 +300,8 @@ export function Simulator({ portfolioId }: SimulatorProps) {
             className="w-full"
           >
             {createPortfolioMutation.isPending
-              ? "Création..."
-              : "Appliquer cette allocation"}
+              ? t('risk.creating')
+              : t('risk.apply_allocation')}
           </Button>
         )}
       </CardContent>

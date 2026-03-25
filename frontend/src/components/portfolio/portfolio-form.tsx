@@ -12,6 +12,7 @@
 
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useTranslations } from "next-intl";
 import { Plus, Trash2 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function PortfolioForm({
   initialName,
   initialAssets,
 }: PortfolioFormProps) {
+  const t = useTranslations();
   const createMutation = useCreatePortfolio();
 
   const {
@@ -85,13 +87,13 @@ export function PortfolioForm({
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Créer un portefeuille</CardTitle>
+        <CardTitle>{t('portfolio.create')}</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
           {/* Portfolio name */}
           <div className="space-y-2">
-            <Label htmlFor="name">Nom du portefeuille</Label>
+            <Label htmlFor="name">{t('portfolio.name')}</Label>
             <Input
               id="name"
               placeholder="ex. Portefeuille Tech"
@@ -105,7 +107,7 @@ export function PortfolioForm({
           {/* Assets */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label>Actifs</Label>
+              <Label>{t('portfolio.add_asset')}</Label>
               <Button
                 type="button"
                 variant="outline"
@@ -114,14 +116,14 @@ export function PortfolioForm({
                 disabled={fields.length >= 20}
               >
                 <Plus className="mr-1 size-3" />
-                Ajouter
+                {t('portfolio.add_asset')}
               </Button>
             </div>
 
             {/* Column headers */}
             <div className="grid grid-cols-[1fr_120px_40px] gap-2 text-xs font-medium text-muted-foreground">
-              <span>Ticker</span>
-              <span>Poids (%)</span>
+              <span>{t('portfolio.ticker')}</span>
+              <span>{t('portfolio.weight')} (%)</span>
               <span />
             </div>
 
@@ -176,7 +178,7 @@ export function PortfolioForm({
 
             {/* Weight total indicator */}
             <div className="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2 text-sm">
-              <span className="text-muted-foreground">Poids total</span>
+              <span className="text-muted-foreground">{t('portfolio.total_weight')}</span>
               <span
                 className={
                   Math.abs((totalWeight ?? 0) - 1.0) <= 0.001
@@ -205,7 +207,7 @@ export function PortfolioForm({
           {createMutation.isError && (
             <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
               {(createMutation.error as { detail?: string })?.detail ??
-                "Échec de la création du portefeuille"}
+                t('portfolio.create_error')}
             </div>
           )}
 
@@ -215,8 +217,8 @@ export function PortfolioForm({
             disabled={isSubmitting || createMutation.isPending}
           >
             {createMutation.isPending
-              ? "Création..."
-              : "Créer le portefeuille"}
+              ? t('common.loading')
+              : t('portfolio.create')}
           </Button>
         </form>
       </CardContent>

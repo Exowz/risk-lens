@@ -12,6 +12,7 @@
 
 import { useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import { PerformanceChart } from "@/components/charts/performance-chart";
 import { PortfolioComparison } from "@/components/portfolio/portfolio-comparison";
@@ -28,6 +29,7 @@ export default function PortfolioPage() {
   const { activePortfolioId } = usePortfolioStore();
   const [compareMode, setCompareMode] = useState(false);
   const searchParams = useSearchParams();
+  const t = useTranslations();
 
   // Parse pre-fill params from Risk Profiler redirect
   const prefillData = useMemo(() => {
@@ -61,7 +63,7 @@ export default function PortfolioPage() {
           size="sm"
           onClick={() => setCompareMode(!compareMode)}
         >
-          {compareMode ? "Quitter la comparaison" : "Mode Comparaison"}
+          {compareMode ? t('portfolio.exit_compare') : t('portfolio.compare')}
         </Button>
       </div>
 
@@ -94,11 +96,11 @@ export default function PortfolioPage() {
           ) : (
             <Card>
               <CardHeader>
-                <CardTitle>Aucun portefeuille sélectionné</CardTitle>
+                <CardTitle>{t('common.no_portfolio')}</CardTitle>
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-muted-foreground">
-                  Sélectionnez un portefeuille ou créez-en un nouveau.
+                  {t('common.no_portfolio_desc')}
                 </p>
               </CardContent>
             </Card>

@@ -15,6 +15,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 
 import AnimatedList from "@/components/ui/animated-list";
 import { BlurText } from "@/components/ui/blur-text";
@@ -32,16 +33,6 @@ import { usePortfolios } from "@/lib/api/portfolios";
 import { useGenerateReport } from "@/lib/api/report";
 import { useNotificationIsland } from "@/lib/store/notification-island-store";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
-
-// ── Loading steps ──
-
-const LOADING_STEPS = [
-  { text: "Collecte des données de marché..." },
-  { text: "Analyse des risques en cours..." },
-  { text: "Calcul des métriques de performance..." },
-  { text: "Génération du rapport par IA..." },
-  { text: "Finalisation..." },
-];
 
 // ── Highlight numbers in Mistral text ──
 
@@ -227,11 +218,21 @@ export default function ReportPage() {
     reset,
   } = useGenerateReport();
 
+  const t = useTranslations();
   const showIsland = useNotificationIsland((s) => s.show);
   const [isExporting, setIsExporting] = useState(false);
 
   const activePortfolioName =
     portfolios?.find((p) => p.id === activePortfolioId)?.name ?? "portfolio";
+
+  // Build loading steps inside the component so t() is available
+  const LOADING_STEPS = [
+    { text: t('report.loader_step1') },
+    { text: t('report.loader_step2') },
+    { text: t('report.loader_step3') },
+    { text: t('report.loader_step4') },
+    { text: t('report.loader_step5') },
+  ];
 
   useEffect(() => {
     if (activePortfolioId) reset();
@@ -246,8 +247,8 @@ export default function ReportPage() {
           const sections = (result.content.match(/^## /gm) || []).length;
           showIsland({
             type: "report",
-            title: "Rapport généré",
-            subtitle: `${sections} sections générées`,
+            title: t('report.report_generated'),
+            subtitle: `${sections} ${t('report.sections_generated')}`,
             positive: true,
           });
         },
@@ -292,15 +293,14 @@ export default function ReportPage() {
       <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>Aucun portefeuille sélectionné</CardTitle>
+            <CardTitle>{t('common.no_portfolio')}</CardTitle>
             <CardDescription>
-              Créez ou sélectionnez un portefeuille pour générer un rapport
-              d&apos;analyse de risque avec export PDF.
+              {t('common.no_portfolio_desc')}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>Voir les portefeuilles</Button>
+              <Button>{t('common.go_to_portfolio')}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -313,7 +313,7 @@ export default function ReportPage() {
       {/* Actions */}
       <div className="flex justify-end gap-2">
         <Button onClick={handleGenerate} disabled={isGenerating}>
-          {isGenerating ? "Génération..." : "Générer le rapport"}
+          {isGenerating ? t('report.generating') : t('report.generate')}
         </Button>
         {data && (
           <Button
@@ -321,7 +321,7 @@ export default function ReportPage() {
             onClick={handleDownloadPDF}
             disabled={isExporting}
           >
-            {isExporting ? "Export..." : "Télécharger PDF"}
+            {isExporting ? t('report.exporting') : t('report.download')}
           </Button>
         )}
       </div>
@@ -337,7 +337,7 @@ export default function ReportPage() {
                     generateError !== null &&
                     "detail" in generateError
                   ? String((generateError as { detail: string }).detail)
-                  : "Échec de la génération du rapport"}
+                  : t('common.error')}
             </p>
           </CardContent>
         </Card>
@@ -362,11 +362,11 @@ export default function ReportPage() {
             className="mb-8"
           >
             <BlurText
-              text="Rapport de Risque"
+              text={t('report.risk_report_title')}
               className="text-xl font-semibold tracking-tight text-foreground"
             />
             <p className="text-sm text-muted-foreground mt-2">
-              Généré le{" "}
+              {t('report.generated_at')}{" "}
               {new Date(data.generated_at).toLocaleString("fr-FR", {
                 dateStyle: "long",
                 timeStyle: "short",

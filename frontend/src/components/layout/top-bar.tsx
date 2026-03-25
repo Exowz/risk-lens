@@ -6,13 +6,14 @@
  * Left: language selector pill. Center: portfolio selector pill. Right: theme toggle.
  *
  * Depends on: @phosphor-icons/react, ui/select, lib/api/portfolios,
- *             lib/store/portfolio-store
+ *             lib/store/portfolio-store, lib/store/locale-store, next-intl
  * Used by: app/(dashboard)/layout.tsx
  */
 
-import { useState } from "react";
 import { Moon, Sun } from "@phosphor-icons/react";
 import { useTheme } from "next-themes";
+import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 
 import {
   Select,
@@ -24,12 +25,27 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { usePortfolios } from "@/lib/api/portfolios";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
+import { useLocaleStore, type Locale } from "@/lib/store/locale-store";
+
+const LANGUAGE_OPTIONS: { value: Locale; label: string }[] = [
+  { value: "fr", label: "🇫🇷 Français" },
+  { value: "en", label: "🇬🇧 English" },
+  { value: "es", label: "🇪🇸 Español" },
+  { value: "zh", label: "🇨🇳 中文" },
+];
 
 export function TopBar() {
-  const [lang, setLang] = useState("fr");
+  const router = useRouter();
+  const t = useTranslations();
+  const { locale, setLocale } = useLocaleStore();
   const { resolvedTheme, setTheme } = useTheme();
   const { data: portfolios, isLoading: portfoliosLoading } = usePortfolios();
   const { activePortfolioId, setActivePortfolio } = usePortfolioStore();
+
+  const handleLocaleChange = (newLocale: string) => {
+    setLocale(newLocale as Locale);
+    router.refresh();
+  };
 
   return (
     <div
@@ -43,7 +59,7 @@ export function TopBar() {
       }}
     >
       {/* Left — Language selector */}
-      <Select value={lang} onValueChange={setLang}>
+      <Select value={locale} onValueChange={handleLocaleChange}>
         <SelectTrigger
           style={{
             background: "var(--layout-surface)",
@@ -60,8 +76,11 @@ export function TopBar() {
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
-          <SelectItem value="fr">Français</SelectItem>
-          <SelectItem value="en">English</SelectItem>
+          {LANGUAGE_OPTIONS.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              {opt.label}
+            </SelectItem>
+          ))}
         </SelectContent>
       </Select>
 
@@ -88,7 +107,7 @@ export function TopBar() {
                 gap: 6,
               }}
             >
-              <SelectValue placeholder="Sélectionner un portefeuille" />
+              <SelectValue placeholder={t('topbar.portfolio_selector')} />
             </SelectTrigger>
             <SelectContent>
               {portfolios.map((p) => (
@@ -100,7 +119,7 @@ export function TopBar() {
           </Select>
         ) : (
           <span style={{ fontSize: 12, color: "var(--layout-text-faint)" }}>
-            Aucun portefeuille
+            {t('topbar.no_portfolio')}
           </span>
         )}
       </div>

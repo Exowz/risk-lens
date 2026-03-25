@@ -4,7 +4,7 @@
  * Register page with Particles background and redesigned card.
  *
  * Depends on: lib/auth/client.ts, lib/validators/auth.schema.ts,
- *             ui/particles, react-hook-form, zod
+ *             ui/particles, react-hook-form, zod, next-intl
  * Used by: /register route
  */
 
@@ -13,6 +13,7 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import Particles from "@/components/ui/particles";
 import { signUp } from "@/lib/auth/client";
@@ -21,6 +22,7 @@ import { registerSchema, type RegisterInput } from "@/lib/validators/auth.schema
 export default function RegisterPage() {
   const router = useRouter();
   const [serverError, setServerError] = useState<string | null>(null);
+  const t = useTranslations();
 
   const {
     register,
@@ -75,10 +77,10 @@ export default function RegisterPage() {
         </div>
 
         <h1 className="text-xl font-semibold text-white text-center">
-          Créer votre compte
+          {t('auth.register_title')}
         </h1>
         <p className="text-sm text-white/40 mt-1 text-center">
-          Rejoignez RiskLens et analysez vos risques
+          {t('auth.register_subtitle')}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
@@ -90,7 +92,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="text-xs text-white/50 mb-1.5 block">
-              Nom complet
+              {t('auth.name')}
             </label>
             <input
               type="text"
@@ -105,7 +107,7 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <label className="text-xs text-white/50 mb-1.5 block">Email</label>
+            <label className="text-xs text-white/50 mb-1.5 block">{t('auth.email')}</label>
             <input
               type="email"
               placeholder="vous@exemple.com"
@@ -120,7 +122,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="text-xs text-white/50 mb-1.5 block">
-              Mot de passe
+              {t('auth.password')}
             </label>
             <input
               type="password"
@@ -138,7 +140,7 @@ export default function RegisterPage() {
 
           <div>
             <label className="text-xs text-white/50 mb-1.5 block">
-              Confirmer le mot de passe
+              {t('auth.confirm_password')}
             </label>
             <input
               type="password"
@@ -159,14 +161,14 @@ export default function RegisterPage() {
             disabled={isSubmitting}
             className="w-full bg-white text-black font-medium rounded-lg py-2.5 text-sm hover:bg-white/90 transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? "Création..." : "Créer mon compte"}
+            {isSubmitting ? t('auth.register_button') + "..." : t('auth.register_button')}
           </button>
         </form>
 
         <p className="text-center text-xs text-white/40 mt-6">
-          Déjà un compte ?{" "}
+          {t('auth.already_account')}{" "}
           <Link href="/login" className="text-white/70 hover:text-white transition-colors">
-            Se connecter
+            {t('auth.sign_in')}
           </Link>
         </p>
       </div>

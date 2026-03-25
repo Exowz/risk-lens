@@ -3,19 +3,21 @@
 /**
  * Sidebar rail — icons-only, 52px fixed width, 3-state visibility.
  *
- * Pinned: 52px, icons visible, always on screen.
- * Hidden: 0px, off-screen. Canvas takes full width.
- * Peek: when hidden, mouse near left edge triggers overlay at 52px.
+ * Pinned: visible, sidebar takes space in layout via spacer.
+ * Hidden: animated out (opacity 0, x -60).
+ * Peek: same visual as pinned, overlays canvas (layout handles positioning).
  *
  * NEVER shows text labels. Tooltips on every icon (side="right").
+ * Positioning is handled by the fixed container in layout.tsx.
  *
- * Depends on: @phosphor-icons/react, ui/tooltip, lib/store/sidebar-store
+ * Depends on: @phosphor-icons/react, ui/tooltip, lib/store/sidebar-store, next-intl
  * Used by: app/(dashboard)/layout.tsx
  */
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { motion } from "motion/react";
+import { useTranslations } from "next-intl";
 import {
   ChartLineUp,
   ChartPie,
@@ -37,25 +39,25 @@ type PhosphorIcon = typeof HouseLine;
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: string;
   icon: PhosphorIcon;
 }
 
 const navItems: NavItem[] = [
-  { href: "/overview", label: "Vue d'ensemble", icon: HouseLine },
-  { href: "/portfolio", label: "Portefeuille", icon: ChartPie },
-  { href: "/risk", label: "Analyse des risques", icon: ShieldWarning },
-  { href: "/markowitz", label: "Markowitz", icon: ChartLineUp },
-  { href: "/stress", label: "Stress Test", icon: Lightning },
-  { href: "/report", label: "Rapport IA", icon: FileText },
+  { href: "/overview", labelKey: "nav.overview", icon: HouseLine },
+  { href: "/portfolio", labelKey: "nav.portfolio", icon: ChartPie },
+  { href: "/risk", labelKey: "nav.risk", icon: ShieldWarning },
+  { href: "/markowitz", labelKey: "nav.markowitz", icon: ChartLineUp },
+  { href: "/stress", labelKey: "nav.stress", icon: Lightning },
+  { href: "/report", labelKey: "nav.report", icon: FileText },
 ];
 
 export function SidebarRail() {
   const pathname = usePathname();
   const { state, isPeeking, toggle } = useSidebarStore();
+  const t = useTranslations();
 
   const isVisible = state === "pinned" || isPeeking;
-  const isOverlay = isPeeking && state === "hidden";
 
   return (
     <motion.nav
@@ -77,16 +79,7 @@ export function SidebarRail() {
         alignItems: "center",
         gap: 2,
         overflow: "hidden",
-        ...(isOverlay
-          ? {
-              position: "absolute" as const,
-              left: "1.25rem",
-              top: 0,
-              bottom: 0,
-              zIndex: 50,
-              boxShadow: "4px 0 24px rgba(0,0,0,0.4)",
-            }
-          : {}),
+        pointerEvents: isVisible ? "auto" : "none",
       }}
     >
       {/* Logo — icon only */}
@@ -115,7 +108,7 @@ export function SidebarRail() {
                 </Link>
               </TooltipTrigger>
               <TooltipContent side="right" sideOffset={8}>
-                {item.label}
+                {t(item.labelKey)}
               </TooltipContent>
             </Tooltip>
           );
@@ -137,7 +130,7 @@ export function SidebarRail() {
           </button>
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8}>
-          {state === "pinned" ? "Masquer la barre" : "Épingler la barre"}
+          {state === "pinned" ? t('command_palette.hide_sidebar') : t('command_palette.pin_sidebar')}
           <span className="ml-2 text-white/20">⌘B</span>
         </TooltipContent>
       </Tooltip>

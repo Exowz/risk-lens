@@ -11,6 +11,8 @@
  * Used by: risk/page.tsx, markowitz/page.tsx, stress/page.tsx
  */
 
+import { useTranslations } from "next-intl";
+
 import { ExpandableCard } from "@/components/ui/expandable-card";
 import { useMode } from "@/lib/store/mode-context";
 
@@ -26,9 +28,10 @@ export function WhyExpandableCard({
   expertContent,
 }: WhyExpandableCardProps) {
   const { mode } = useMode();
+  const t = useTranslations();
 
   return (
-    <ExpandableCard title="Pourquoi c'est important ?" defaultOpen={false}>
+    <ExpandableCard title={t('common.why_matters')} defaultOpen={false}>
       {mode === "beginner" ? beginnerContent : expertContent}
     </ExpandableCard>
   );

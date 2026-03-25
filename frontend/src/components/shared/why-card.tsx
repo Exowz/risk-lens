@@ -14,6 +14,8 @@
  * Used by: risk/page.tsx, markowitz/page.tsx, stress/page.tsx
  */
 
+import { useTranslations } from "next-intl";
+
 import { ExpandableCard } from "@/components/ui/expandable-card";
 import { useMode } from "@/lib/store/mode-context";
 
@@ -28,12 +30,14 @@ interface WhyCardProps {
 }
 
 export function WhyCard({
-  title = "Pourquoi c'est important ?",
+  title,
   beginnerContent,
   expertContent,
   children,
 }: WhyCardProps) {
   const { mode } = useMode();
+  const t = useTranslations();
+  const resolvedTitle = title ?? t('common.why_matters');
 
   const content =
     mode === "beginner"
@@ -42,7 +46,7 @@ export function WhyCard({
 
   return (
     <ExpandableCard
-      title={title}
+      title={resolvedTitle}
       defaultOpen={false}
     >
       {content}

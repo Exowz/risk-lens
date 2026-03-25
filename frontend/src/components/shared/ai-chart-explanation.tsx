@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMode } from "@/lib/store/mode-context";
@@ -37,6 +38,7 @@ export function AiChartExplanation({
   isError,
 }: AiChartExplanationProps) {
   const { mode } = useMode();
+  const t = useTranslations();
   const [cachedText, setCachedText] = useState<string | null>(null);
   const [hasRequested, setHasRequested] = useState(false);
   const prevModeRef = useRef(mode);
@@ -85,7 +87,7 @@ export function AiChartExplanation({
         </p>
         <div className="mt-2 flex items-center justify-between">
           <span className="text-xs text-muted-foreground/60">
-            ✨ Analysé par IA
+            {t('common.analyzed')}
           </span>
           <button
             type="button"
@@ -93,7 +95,7 @@ export function AiChartExplanation({
             disabled={isPending}
             className="text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
           >
-            {isPending ? "..." : "🔄 Rafraîchir"}
+            {isPending ? "..." : t('common.refresh')}
           </button>
         </div>
       </div>
@@ -110,7 +112,7 @@ export function AiChartExplanation({
         disabled={isPending}
         className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-white/20 rounded-lg px-3 py-1.5 hover:border-white/40 transition-all"
       >
-        {isError ? "✨ Réessayer l'analyse IA" : "✨ Analyser avec l'IA"}
+        {isError ? t('common.retry') : t('common.analyze')}
       </button>
     </div>
   );

@@ -4,7 +4,7 @@
  * Login page with Particles background and redesigned card.
  *
  * Depends on: lib/auth/client.ts, lib/validators/auth.schema.ts,
- *             ui/particles, react-hook-form, zod
+ *             ui/particles, react-hook-form, zod, next-intl
  * Used by: /login route
  */
 
@@ -13,6 +13,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
+import { useTranslations } from "next-intl";
 
 import Particles from "@/components/ui/particles";
 import { signIn } from "@/lib/auth/client";
@@ -23,6 +24,7 @@ function LoginForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/overview";
   const [serverError, setServerError] = useState<string | null>(null);
+  const t = useTranslations();
 
   const {
     register,
@@ -76,10 +78,10 @@ function LoginForm() {
         </div>
 
         <h1 className="text-xl font-semibold text-white text-center">
-          Bon retour
+          {t('auth.login_title')}
         </h1>
         <p className="text-sm text-white/40 mt-1 text-center">
-          Connectez-vous à votre espace RiskLens
+          {t('auth.login_subtitle')}
         </p>
 
         <form onSubmit={handleSubmit(onSubmit)} className="mt-6 space-y-4">
@@ -90,7 +92,7 @@ function LoginForm() {
           )}
 
           <div>
-            <label className="text-xs text-white/50 mb-1.5 block">Email</label>
+            <label className="text-xs text-white/50 mb-1.5 block">{t('auth.email')}</label>
             <input
               type="email"
               placeholder="vous@exemple.com"
@@ -105,7 +107,7 @@ function LoginForm() {
 
           <div>
             <label className="text-xs text-white/50 mb-1.5 block">
-              Mot de passe
+              {t('auth.password')}
             </label>
             <input
               type="password"
@@ -126,14 +128,14 @@ function LoginForm() {
             disabled={isSubmitting}
             className="w-full bg-white text-black font-medium rounded-lg py-2.5 text-sm hover:bg-white/90 transition-colors disabled:opacity-50"
           >
-            {isSubmitting ? "Connexion..." : "Se connecter"}
+            {isSubmitting ? t('auth.login_button') + "..." : t('auth.login_button')}
           </button>
         </form>
 
         <p className="text-center text-xs text-white/40 mt-6">
-          Pas encore de compte ?{" "}
+          {t('auth.no_account')}{" "}
           <Link href="/register" className="text-white/70 hover:text-white transition-colors">
-            Créer un compte
+            {t('auth.create_account')}
           </Link>
         </p>
       </div>
