@@ -11,6 +11,7 @@
  * Used by: app/(dashboard)/stress/page.tsx
  */
 
+import { useTranslations } from "next-intl";
 import {
   Bar,
   BarChart,
@@ -47,6 +48,7 @@ interface StressBarChartProps {
 }
 
 function ChartContent({ comparisons }: { comparisons: ScenarioComparison[] }) {
+  const t = useTranslations();
   const chartData = comparisons.map((c) => ({
     name: c.scenario_name,
     current: Math.abs(c.current_drawdown) * 100,
@@ -92,13 +94,13 @@ function ChartContent({ comparisons }: { comparisons: ScenarioComparison[] }) {
         <Legend />
         <Bar
           dataKey="current"
-          name="Current Portfolio"
+          name={t('stress.current_portfolio')}
           fill="hsl(0, 84%, 60%)"
           radius={[4, 4, 0, 0]}
         />
         <Bar
           dataKey="optimized"
-          name="Max Sharpe Optimised"
+          name={t('stress.optimized_portfolio')}
           fill="hsl(221, 83%, 53%)"
           radius={[4, 4, 0, 0]}
         />

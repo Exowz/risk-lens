@@ -28,7 +28,10 @@
     "welcome": "Bienvenue sur RiskLens",
     "welcome_desc": "Créez votre premier portefeuille pour accéder aux analyses de risque",
     "create_portfolio": "Créer un portefeuille",
-    "observations": "observations"
+    "observations": "observations",
+    "sharpe_good": "Bon rendement ajusté au risque",
+    "sharpe_acceptable": "Acceptable",
+    "sharpe_below_avg": "En dessous de la moyenne"
   },
   "metrics": {
     "beginner": {
@@ -67,7 +70,8 @@
       "mean_final_value": "Mean Final Value",
       "percentile_range": "Percentile Range (5th-95th)",
       "observations": "Observations",
-      "parametric": "Paramétrique"
+      "parametric": "Paramétrique",
+      "observations_label": "Observations"
     }
   },
   "risk": {
@@ -158,7 +162,8 @@
     "narrative_2022": "Janvier 2022. La Fed relève ses taux.",
     "chart_title": "Trajectoire du portefeuille",
     "comparison_title": "Comparaison avec l'optimisé",
-    "to_recover": "pour récupérer"
+    "to_recover": "pour récupérer",
+    "days_suffix": " jours"
   },
   "report": {
     "title": "Rapport IA",
@@ -219,7 +224,23 @@
     "volatility_label": "Volatilité",
     "threshold": "Seuil",
     "creating_alert": "Création...",
-    "select_portfolio_for_alert": "Sélectionnez un portefeuille pour créer une alerte."
+    "select_portfolio_for_alert": "Sélectionnez un portefeuille pour créer une alerte.",
+    "label_preservation": "Préserver le capital",
+    "label_balance": "Équilibre rendement/risque",
+    "label_growth": "Maximiser la croissance",
+    "label_beginner": "Débutant",
+    "label_intermediate": "Intermédiaire",
+    "label_expert": "Expert",
+    "metric_sharpe": "Sharpe",
+    "metric_volatility": "Volatilité",
+    "label_court": "Court terme (< 2 ans)",
+    "label_moyen": "Moyen terme (2-5 ans)",
+    "label_long": "Long terme (> 5 ans)",
+    "label_faible": "Faible (< 10%)",
+    "label_modere": "Modérée (10-25%)",
+    "label_eleve": "Élevée (> 25%)",
+    "label_equilibre": "Équilibre rendement/risque",
+    "metric_var_95": "VaR 95%"
   },
   "portfolio": {
     "title": "Portefeuille",
@@ -305,7 +326,19 @@
     "stat_crises": "crises historiques testées",
     "stat_metrics": "métriques de risque analysées",
     "nav_demo": "Démonstration",
-    "nav_about": "À propos"
+    "nav_about": "À propos",
+    "tag_var": "VaR",
+    "tag_cvar": "CVaR",
+    "tag_montecarlo": "Monte Carlo",
+    "tag_mistral": "Mistral AI",
+    "tag_explanations": "Explications",
+    "tag_mode": "Mode Débutant/Expert",
+    "tag_frontier": "Frontière efficiente",
+    "tag_max_sharpe": "Max Sharpe",
+    "tag_min_variance": "Min Variance",
+    "tag_stress": "Stress Testing",
+    "tag_crisis": "Crises historiques",
+    "tag_recovery": "Analyse de récupération"
   },
   "auth": {
     "login_title": "Bon retour",
@@ -321,7 +354,8 @@
     "already_account": "Déjà un compte ?",
     "create_account": "Créer un compte",
     "sign_in": "Se connecter",
-    "confirm_password": "Confirmer le mot de passe"
+    "confirm_password": "Confirmer le mot de passe",
+    "login_error": "Email ou mot de passe incorrect"
   },
   "risk_profiler": {
     "intro": "Bienvenue sur RiskLens. Avant de commencer, laissez-nous comprendre votre profil d'investisseur.",
@@ -405,5 +439,16 @@
     "return_expert": "Annualized Return — geometric mean of daily returns scaled to 252 trading days.",
     "recovery_beginner": "Nombre de jours pour retrouver le niveau d'avant la crise.",
     "recovery_expert": "Recovery period — trading days from the trough back to the pre-crisis peak."
+  },
+  "charts": {
+    "trading_days": "Jours de trading",
+    "portfolio_value": "Valeur du portefeuille",
+    "final_value": "Valeur finale du portefeuille",
+    "frequency": "Fréquence",
+    "count": "Nombre",
+    "annualized_volatility": "Volatilité annualisée",
+    "expected_return": "Rendement attendu",
+    "current_portfolio": "Actuel",
+    "max_sharpe_optimised": "Optimisé Max Sharpe"
   }
 }

@@ -87,28 +87,28 @@ export default function LandingPage() {
       iconColor: "text-blue-400",
       title: t("landing.feature1_title"),
       description: t("landing.feature1_desc"),
-      tags: ["VaR", "CVaR", "Monte Carlo"],
+      tags: [t("landing.tag_var"), t("landing.tag_cvar"), t("landing.tag_montecarlo")],
     },
     {
       icon: Brain,
       iconColor: "text-purple-400",
       title: t("landing.feature2_title"),
       description: t("landing.feature2_desc"),
-      tags: ["Mistral AI", "Explications", "Mode Débutant/Expert"],
+      tags: [t("landing.tag_mistral"), t("landing.tag_explanations"), t("landing.tag_mode")],
     },
     {
       icon: ChartLineUp,
       iconColor: "text-emerald-400",
       title: t("landing.feature3_title"),
       description: t("landing.feature3_desc"),
-      tags: ["Frontière efficiente", "Max Sharpe", "Min Variance"],
+      tags: [t("landing.tag_frontier"), t("landing.tag_max_sharpe"), t("landing.tag_min_variance")],
     },
     {
       icon: Lightning,
       iconColor: "text-amber-400",
       title: t("landing.feature4_title"),
       description: t("landing.feature4_desc"),
-      tags: ["2008", "COVID-19", "Taux 2022"],
+      tags: ["2008", "COVID-19", "2022"],
     },
   ];
 

@@ -61,28 +61,7 @@ function getInitials(email: string): string {
   return name.slice(0, 2).toUpperCase();
 }
 
-const LABEL_MAP: Record<string, string> = {
-  court: "Court terme (< 2 ans)",
-  moyen: "Moyen terme (2-5 ans)",
-  long: "Long terme (> 5 ans)",
-  faible: "Faible (< 10%)",
-  modere: "Modérée (10-25%)",
-  eleve: "Élevée (> 25%)",
-  preservation: "Préserver le capital",
-  equilibre: "Équilibre rendement/risque",
-  croissance: "Maximiser la croissance",
-  debutant: "Débutant",
-  intermediaire: "Intermédiaire",
-  expert: "Expert",
-};
-
 const MC_OPTIONS = [1000, 5000, 10000] as const;
-
-const METRIC_LABELS: Record<string, string> = {
-  var_95: "VaR 95%",
-  sharpe: "Sharpe",
-  volatility: "Volatilité",
-};
 
 export default function ProfilePage() {
   const { data: session } = useSession();
@@ -192,7 +171,7 @@ export default function ProfilePage() {
                   {t("profile.horizon")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
-                  {LABEL_MAP[riskProfile.horizon] ?? riskProfile.horizon}
+                  {t(`profile.label_${riskProfile.horizon}` as never) ?? riskProfile.horizon}
                 </p>
               </div>
               <div className="rounded-lg border border-border p-3">
@@ -200,7 +179,7 @@ export default function ProfilePage() {
                   {t("profile.loss_tolerance")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
-                  {LABEL_MAP[riskProfile.loss_tolerance] ??
+                  {t(`profile.label_${riskProfile.loss_tolerance}` as never) ??
                     riskProfile.loss_tolerance}
                 </p>
               </div>
@@ -209,7 +188,7 @@ export default function ProfilePage() {
                   {t("profile.objective")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
-                  {LABEL_MAP[riskProfile.objective] ?? riskProfile.objective}
+                  {t(`profile.label_${riskProfile.objective}` as never) ?? riskProfile.objective}
                 </p>
               </div>
               <div className="rounded-lg border border-border p-3">
@@ -217,7 +196,7 @@ export default function ProfilePage() {
                   {t("profile.experience")}
                 </p>
                 <p className="text-sm font-medium mt-0.5">
-                  {LABEL_MAP[riskProfile.experience] ?? riskProfile.experience}
+                  {t(`profile.label_${riskProfile.experience}` as never) ?? riskProfile.experience}
                 </p>
               </div>
             </div>
@@ -401,7 +380,7 @@ export default function ProfilePage() {
                 >
                   <div>
                     <span className="text-sm font-medium">
-                      {METRIC_LABELS[alert.metric] ?? alert.metric}
+                      {t(`profile.metric_${alert.metric}` as never) ?? alert.metric}
                     </span>
                     <span className="text-xs text-muted-foreground ml-2">
                       {alert.direction === "above" ? t("profile.above") : t("profile.below")}{" "}

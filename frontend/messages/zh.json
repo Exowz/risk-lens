@@ -28,7 +28,10 @@
     "welcome": "欢迎使用 RiskLens",
     "welcome_desc": "创建您的第一个投资组合以访问风险分析",
     "create_portfolio": "创建投资组合",
-    "observations": "个观察值"
+    "observations": "个观察值",
+    "sharpe_good": "良好的风险调整回报",
+    "sharpe_acceptable": "尚可",
+    "sharpe_below_avg": "低于平均水平"
   },
   "metrics": {
     "beginner": {
@@ -67,7 +70,8 @@
       "mean_final_value": "Mean Final Value",
       "percentile_range": "Percentile Range (5th-95th)",
       "observations": "Observations",
-      "parametric": "Parametric"
+      "parametric": "Parametric",
+      "observations_label": "观测数"
     }
   },
   "risk": {
@@ -158,7 +162,8 @@
     "narrative_2022": "2022年1月。美联储加息。",
     "chart_title": "投资组合轨迹",
     "comparison_title": "与优化组合的比较",
-    "to_recover": "恢复所需"
+    "to_recover": "恢复所需",
+    "days_suffix": " 天"
   },
   "report": {
     "title": "AI 报告",
@@ -219,7 +224,23 @@
     "volatility_label": "波动率",
     "threshold": "阈值",
     "creating_alert": "创建中...",
-    "select_portfolio_for_alert": "请选择投资组合以创建警报。"
+    "select_portfolio_for_alert": "请选择投资组合以创建警报。",
+    "label_preservation": "保本",
+    "label_balance": "平衡收益/风险",
+    "label_growth": "最大化增长",
+    "label_beginner": "初学者",
+    "label_intermediate": "中级",
+    "label_expert": "专家",
+    "metric_sharpe": "Sharpe",
+    "metric_volatility": "波动率",
+    "label_court": "短期 (< 2年)",
+    "label_moyen": "中期 (2-5年)",
+    "label_long": "长期 (> 5年)",
+    "label_faible": "低 (< 10%)",
+    "label_modere": "中等 (10-25%)",
+    "label_eleve": "高 (> 25%)",
+    "label_equilibre": "平衡收益/风险",
+    "metric_var_95": "VaR 95%"
   },
   "portfolio": {
     "title": "投资组合",
@@ -305,7 +326,19 @@
     "stat_crises": "个历史危机测试",
     "stat_metrics": "个风险指标分析",
     "nav_demo": "演示",
-    "nav_about": "关于"
+    "nav_about": "关于",
+    "tag_var": "VaR",
+    "tag_cvar": "CVaR",
+    "tag_montecarlo": "Monte Carlo",
+    "tag_mistral": "Mistral AI",
+    "tag_explanations": "解释",
+    "tag_mode": "初学者/专家模式",
+    "tag_frontier": "有效前沿",
+    "tag_max_sharpe": "Max Sharpe",
+    "tag_min_variance": "Min Variance",
+    "tag_stress": "压力测试",
+    "tag_crisis": "历史危机",
+    "tag_recovery": "恢复分析"
   },
   "auth": {
     "login_title": "欢迎回来",
@@ -321,7 +354,8 @@
     "already_account": "已有账户？",
     "create_account": "创建账户",
     "sign_in": "登录",
-    "confirm_password": "确认密码"
+    "confirm_password": "确认密码",
+    "login_error": "邮箱或密码错误"
   },
   "risk_profiler": {
     "intro": "欢迎使用 RiskLens。在开始之前，让我们了解您的投资者档案。",
@@ -405,5 +439,16 @@
     "return_expert": "Annualized Return — geometric mean of daily returns scaled to 252 trading days.",
     "recovery_beginner": "恢复到危机前水平所需的天数。",
     "recovery_expert": "Recovery period — trading days from the trough back to the pre-crisis peak."
+  },
+  "charts": {
+    "trading_days": "交易日",
+    "portfolio_value": "投资组合价值",
+    "final_value": "投资组合最终价值",
+    "frequency": "频率",
+    "count": "数量",
+    "annualized_volatility": "年化波动率",
+    "expected_return": "预期收益",
+    "current_portfolio": "当前",
+    "max_sharpe_optimised": "最大Sharpe优化"
   }
 }

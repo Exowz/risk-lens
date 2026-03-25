@@ -109,7 +109,7 @@ export default function DashboardPage() {
         {/* VaR 95% — large card spanning 2 cols */}
         <div className="md:col-span-2 rounded-xl">
           <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
-            <MetricTooltip metricKey="var_95" label="VaR 95% (1-day)">
+            <MetricTooltip metricKey="var_95" label={t(`metrics.${mode}.var_95`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (
@@ -122,7 +122,7 @@ export default function DashboardPage() {
             </MetricTooltip>
             {summary && mode === "expert" && (
               <span className="text-xs text-muted-foreground">
-                Parametric:{" "}
+                {t('risk.parametric')}:{" "}
                 <NumberTicker value={summary.var_95_parametric * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
             )}
@@ -132,7 +132,7 @@ export default function DashboardPage() {
         {/* Sharpe Ratio */}
         <div className="rounded-xl">
           <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
-            <MetricTooltip metricKey="sharpe" label="Sharpe Ratio">
+            <MetricTooltip metricKey="sharpe" label={t(`metrics.${mode}.sharpe`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (
@@ -154,10 +154,10 @@ export default function DashboardPage() {
             {summary && mode === "beginner" && (
               <span className="text-xs text-muted-foreground">
                 {summary.sharpe_ratio >= 1
-                  ? "Bon rendement ajusté au risque"
+                  ? t('dashboard.sharpe_good')
                   : summary.sharpe_ratio >= 0.5
-                    ? "Acceptable"
-                    : "En dessous de la moyenne"}
+                    ? t('dashboard.sharpe_acceptable')
+                    : t('dashboard.sharpe_below_avg')}
               </span>
             )}
           </MagicCard>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
         {/* Annualized Return */}
         <div className="rounded-xl">
           <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
-            <MetricTooltip metricKey="return" label="Annualized Return">
+            <MetricTooltip metricKey="return" label={t(`metrics.${mode}.annual_return`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (
@@ -195,7 +195,7 @@ export default function DashboardPage() {
         {/* Volatility */}
         <div className="rounded-xl">
           <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
-            <MetricTooltip metricKey="volatility" label="Annualized Volatility">
+            <MetricTooltip metricKey="volatility" label={t(`metrics.${mode}.volatility`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (

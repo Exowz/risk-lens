@@ -20,6 +20,7 @@
 
 import * as d3 from "d3";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslations } from "next-intl";
 
 import type {
   FrontierPoint,
@@ -65,6 +66,7 @@ export function EfficientFrontier({
   onPointClick,
   currentWeights,
 }: EfficientFrontierProps) {
+  const t = useTranslations();
   const containerRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const scalesRef = useRef<{
@@ -201,7 +203,7 @@ export function EfficientFrontier({
         .attr("text-anchor", "middle")
         .attr("fill", "currentColor")
         .attr("font-size", "12px")
-        .text("Annualized Volatility");
+        .text(t('charts.annualized_volatility'));
 
       g.append("text")
         .attr("x", -innerHeight / 2)
@@ -210,7 +212,7 @@ export function EfficientFrontier({
         .attr("transform", "rotate(-90)")
         .attr("fill", "currentColor")
         .attr("font-size", "12px")
-        .text("Expected Return");
+        .text(t('charts.expected_return'));
 
       // Frontier curve
       const line = d3
@@ -311,7 +313,7 @@ export function EfficientFrontier({
         minVariance.volatility,
         minVariance.expected_return,
         "hsl(142, 71%, 45%)",
-        "Min Variance",
+        t('metrics.expert.min_variance'),
         4,
         {
           point_type: "min_variance",
@@ -326,7 +328,7 @@ export function EfficientFrontier({
         maxSharpe.volatility,
         maxSharpe.expected_return,
         "hsl(221, 83%, 53%)",
-        "Max Sharpe",
+        t('metrics.expert.max_sharpe'),
         -8,
         {
           point_type: "max_sharpe",
@@ -346,7 +348,7 @@ export function EfficientFrontier({
         currentPortfolio.volatility,
         currentPortfolio.expected_return,
         "hsl(0, 84%, 60%)",
-        "Current",
+        t('charts.current_portfolio'),
         4,
         {
           point_type: "current",
@@ -376,7 +378,7 @@ export function EfficientFrontier({
         d3.select(svgRef.current).selectAll("*").remove();
       }
     };
-  }, [frontierPoints, minVariance, maxSharpe, currentPortfolio, onPointClick, currentWeights]);
+  }, [frontierPoints, minVariance, maxSharpe, currentPortfolio, onPointClick, currentWeights, t]);
 
   const handleMouseMove = useCallback(
     (e: React.MouseEvent<SVGSVGElement>) => {

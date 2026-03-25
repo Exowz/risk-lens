@@ -206,7 +206,7 @@ export function VaRCards({ portfolioId, openCard, onOpenCard }: VaRCardsProps) {
 
         {mode === "expert" && (
           <KpiExpandableCard
-            label="Observations"
+            label={t('metrics.expert.observations_label')}
             value={data.n_observations}
             decimals={0}
             valueColor="foreground"

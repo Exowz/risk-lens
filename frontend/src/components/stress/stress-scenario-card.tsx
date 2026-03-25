@@ -11,6 +11,7 @@
  */
 
 import { useCallback } from "react";
+import { useTranslations } from "next-intl";
 
 import { KpiExpandableCard } from "@/components/shared/kpi-expandable-card";
 import { fetchMetricExplanation } from "@/lib/api/explain";
@@ -31,6 +32,7 @@ export function StressScenarioCard({
   onOpenCard,
 }: StressScenarioCardProps) {
   const { mode } = useMode();
+  const t = useTranslations();
   const prefix = scenario.scenario_name.replace(/\s+/g, "-").toLowerCase();
 
   const mkAnalyze = useCallback(
@@ -62,7 +64,7 @@ export function StressScenarioCard({
 
       <div className="space-y-2">
         <KpiExpandableCard
-          label={mode === "beginner" ? "Rendement total" : "Total Return"}
+          label={t(`metrics.${mode}.total_return`)}
           value={scenario.total_return * 100}
           valuePrefix={scenario.total_return >= 0 ? "+" : ""}
           valueSuffix="%"
@@ -77,7 +79,7 @@ export function StressScenarioCard({
         />
 
         <KpiExpandableCard
-          label={mode === "beginner" ? "Pire chute" : "Max Drawdown"}
+          label={t(`metrics.${mode}.max_drawdown`)}
           value={scenario.max_drawdown * 100}
           valueSuffix="%"
           valueColor="red"
@@ -92,11 +94,11 @@ export function StressScenarioCard({
 
         {(mode === "expert" || scenario.recovery_days !== null) && (
           <KpiExpandableCard
-            label={mode === "beginner" ? "Temps de récupération" : "Recovery Days"}
+            label={t(`metrics.${mode}.recovery_days`)}
             value={scenario.recovery_days ?? 0}
             decimals={0}
             valueSuffix={scenario.recovery_days !== null
-              ? (mode === "beginner" ? " jours" : " days")
+              ? t('stress.days_suffix')
               : undefined}
             valueColor="foreground"
             metricKey={`${prefix}-recovery`}

@@ -10,6 +10,7 @@
  * Used by: components/risk/monte-carlo-panel.tsx
  */
 
+import { useTranslations } from "next-intl";
 import {
   CartesianGrid,
   Line,
@@ -40,6 +41,7 @@ interface MonteCarloChartProps {
 }
 
 function ChartContent({ samplePaths, nDays }: { samplePaths: number[][]; nDays: number }) {
+  const t = useTranslations();
   const chartData = Array.from({ length: nDays + 1 }, (_, dayIdx) => {
     const row: Record<string, number> = { day: dayIdx };
     for (let i = 0; i < samplePaths.length; i++) {
@@ -56,7 +58,7 @@ function ChartContent({ samplePaths, nDays }: { samplePaths: number[][]; nDays: 
           dataKey="day"
           tick={{ fontSize: 11 }}
           label={{
-            value: "Trading Days",
+            value: t('charts.trading_days'),
             position: "insideBottom",
             offset: -5,
             fontSize: 11,
@@ -66,7 +68,7 @@ function ChartContent({ samplePaths, nDays }: { samplePaths: number[][]; nDays: 
           tick={{ fontSize: 11 }}
           domain={["auto", "auto"]}
           label={{
-            value: "Portfolio Value",
+            value: t('charts.portfolio_value'),
             angle: -90,
             position: "insideLeft",
             fontSize: 11,
@@ -80,7 +82,7 @@ function ChartContent({ samplePaths, nDays }: { samplePaths: number[][]; nDays: 
           y={1}
           stroke="hsl(0, 0%, 50%)"
           strokeDasharray="5 5"
-          label={{ value: "Initial", fontSize: 10 }}
+          label={{ value: t('risk.charts.initial'), fontSize: 10 }}
         />
         {samplePaths.map((_, i) => (
           <Line

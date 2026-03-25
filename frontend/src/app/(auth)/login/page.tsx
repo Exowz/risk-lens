@@ -42,7 +42,7 @@ function LoginForm() {
     });
 
     if (result.error) {
-      setServerError(result.error.message ?? "Email ou mot de passe incorrect");
+      setServerError(result.error.message ?? t('auth.login_error'));
       return;
     }
 

@@ -9,6 +9,7 @@
  * Used by: components/risk/monte-carlo-panel.tsx
  */
 
+import { useTranslations } from "next-intl";
 import {
   Bar,
   BarChart,
@@ -64,6 +65,7 @@ function buildHistogram(
 }
 
 function HistogramContent({ finalValues, var95 }: { finalValues: number[]; var95: number }) {
+  const t = useTranslations();
   const histogram = buildHistogram(finalValues, 50);
   const varLine = 1 + var95;
 
@@ -76,7 +78,7 @@ function HistogramContent({ finalValues, var95 }: { finalValues: number[]; var95
           tick={{ fontSize: 10 }}
           tickFormatter={(v: number) => v.toFixed(2)}
           label={{
-            value: "Final Portfolio Value",
+            value: t('charts.final_value'),
             position: "insideBottom",
             offset: -5,
             fontSize: 11,
@@ -85,14 +87,14 @@ function HistogramContent({ finalValues, var95 }: { finalValues: number[]; var95
         <YAxis
           tick={{ fontSize: 10 }}
           label={{
-            value: "Frequency",
+            value: t('charts.frequency'),
             angle: -90,
             position: "insideLeft",
             fontSize: 11,
           }}
         />
         <Tooltip
-          formatter={(value) => [value, "Count"]}
+          formatter={(value) => [value, t('charts.count')]}
           labelFormatter={(label) => `Value: ${Number(label).toFixed(4)}`}
         />
         <Bar dataKey="count" fill="hsl(221, 83%, 53%)" opacity={0.7} />
