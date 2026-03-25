@@ -280,6 +280,7 @@ export const NavbarButton = ({
     <Tag
       href={href || undefined}
       className={cn(baseStyles, variantStyles[variant], className)}
+      suppressHydrationWarning
       {...props}
     >
       {children}
