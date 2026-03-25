@@ -51,7 +51,7 @@ export function ExpandableMetric({
         <button
           type="button"
           onClick={() => setOpen(!open)}
-          className="text-xs text-white/30 hover:text-white/60 transition-colors ml-4"
+          className="text-xs text-[var(--layout-text-faint)] hover:text-[var(--layout-text-muted)] transition-colors ml-4"
         >
           {open ? "▲" : "?"}
         </button>

@@ -67,8 +67,8 @@ function QuestionStep({
             onClick={() => onSelect(option.value)}
             className={`rounded-xl border p-5 text-left transition-all cursor-pointer ${
               selected === option.value
-                ? "border-white/30 bg-white/5 shadow-[0_0_20px_rgba(255,255,255,0.05)]"
-                : "border-border bg-card hover:border-white/20 hover:scale-[1.02]"
+                ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(0,0,0,0.05)] dark:shadow-[0_0_20px_rgba(255,255,255,0.05)]"
+                : "border-border bg-card hover:border-muted-foreground hover:scale-[1.02]"
             }`}
           >
             <p className="text-sm font-medium text-foreground">

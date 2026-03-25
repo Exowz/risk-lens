@@ -110,7 +110,7 @@ export function AiChartExplanation({
         type="button"
         onClick={handleClick}
         disabled={isPending}
-        className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-white/20 rounded-lg px-3 py-1.5 hover:border-white/40 transition-all"
+        className="text-xs text-muted-foreground hover:text-foreground border border-dashed border-border rounded-lg px-3 py-1.5 hover:border-muted-foreground transition-all"
       >
         {isError ? t('common.retry') : t('common.analyze')}
       </button>

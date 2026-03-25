@@ -138,7 +138,8 @@
       "frontier_title": "📊 Frontier Portfolio",
       "allocation": "Allocation",
       "suggested_action": "Suggested action",
-      "apply": "Apply this allocation"
+      "apply": "Apply this allocation",
+      "applying": "Applying..."
     }
   },
   "stress": {
@@ -230,6 +231,9 @@
     "label_growth": "Maximize growth",
     "label_beginner": "Beginner",
     "label_intermediate": "Intermediate",
+    "label_croissance": "Maximize growth",
+    "label_debutant": "Beginner",
+    "label_intermediaire": "Intermediate",
     "label_expert": "Expert",
     "metric_sharpe": "Sharpe",
     "metric_volatility": "Volatility",
@@ -430,7 +434,9 @@
     "preferences_saved": "Preferences saved",
     "portfolio_created": "Portfolio created",
     "portfolio_deleted": "Portfolio deleted",
-    "computing": "Computing..."
+    "computing": "Computing...",
+    "allocation_applied": "Allocation applied ✓",
+    "allocation_failed": "Failed to apply allocation"
   },
   "tooltips": {
     "var_95_beginner": "In 20 trading days, you'll lose more than this amount once.",

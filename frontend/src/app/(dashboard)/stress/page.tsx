@@ -406,7 +406,7 @@ export default function StressPage() {
                     <span className="font-medium text-foreground">{crisis.title}</span>
                   </div>
                   <p className="text-xs text-muted-foreground mb-1">{crisis.period}</p>
-                  <p className="text-sm text-white/60">{crisis.phrase}</p>
+                  <p className="text-sm text-muted-foreground">{crisis.phrase}</p>
                 </button>
               );
             })}
@@ -437,7 +437,7 @@ export default function StressPage() {
                     exit={{ opacity: 0 }}
                     transition={{ duration: 0.3 }}
                   >
-                    <p className="text-lg font-medium text-white/80 bg-black/40 backdrop-blur rounded-xl p-4">
+                    <p className="text-lg font-medium text-foreground bg-black/40 backdrop-blur rounded-xl p-4">
                       {crises.find((c) => c.key === selectedCrisis)?.narrative}
                     </p>
                   </motion.div>
@@ -455,11 +455,11 @@ export default function StressPage() {
                     transition={{ duration: 0.3 }}
                   >
                     {selectedScenario.recovery_days !== null ? (
-                      <p className="text-4xl font-mono text-white/60">
+                      <p className="text-4xl font-mono text-muted-foreground">
                         <NumberTicker value={selectedScenario.recovery_days} decimalPlaces={0} /> {t("stress.days")}
                       </p>
                     ) : (
-                      <p className="text-xl font-mono text-white/60">
+                      <p className="text-xl font-mono text-muted-foreground">
                         {t("stress.not_recovered")}
                       </p>
                     )}
@@ -568,7 +568,7 @@ export default function StressPage() {
                               {chartExplanation}
                             </p>
                             <div className="flex items-center justify-between">
-                              <span className="text-[10px] text-white/20">{t("common.analyzed")}</span>
+                              <span className="text-[10px] text-[var(--layout-text-faint)]">{t("common.analyzed")}</span>
                               <button
                                 type="button"
                                 onClick={handleAnalyzeChart}

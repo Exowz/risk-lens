@@ -79,7 +79,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
     <>
       {/* Overlay */}
       <div
-        className="fixed inset-0 z-[100] bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-[100] bg-black/40 dark:bg-black/60 backdrop-blur-sm"
         onClick={close}
       />
 
@@ -89,35 +89,35 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
         style={{
           width: 560,
           maxHeight: 480,
-          background: "#1a1d24",
-          border: "1px solid rgba(255,255,255,0.1)",
+          background: "var(--layout-canvas)",
+          border: "1px solid var(--layout-surface-border)",
           borderRadius: "1rem",
-          boxShadow: "0 20px 60px rgba(0,0,0,0.6)",
+          boxShadow: "var(--layout-canvas-shadow)",
           overflow: "hidden",
         }}
       >
         <Command shouldFilter={true} value="" onValueChange={() => {}}>
           {/* Search input */}
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-white/[0.06]">
-            <MagnifyingGlass size={16} className="text-white/30 shrink-0" />
+          <div className="flex items-center gap-2 px-4 py-3 border-b border-[var(--layout-separator)]">
+            <MagnifyingGlass size={16} className="text-[var(--layout-text-faint)] shrink-0" />
             <Command.Input
               value={search}
               onValueChange={setSearch}
               placeholder={t('command_palette.placeholder')}
-              className="flex-1 bg-transparent text-sm text-white placeholder:text-white/30 focus:outline-none"
+              className="flex-1 bg-transparent text-sm text-[var(--layout-text)] placeholder:text-[var(--layout-text-faint)] focus:outline-none"
             />
           </div>
 
           {/* Results */}
           <Command.List className="overflow-y-auto max-h-72 py-2">
-            <Command.Empty className="px-4 py-6 text-sm text-white/30 text-center">
+            <Command.Empty className="px-4 py-6 text-sm text-[var(--layout-text-faint)] text-center">
               {t('command_palette.no_results')}
             </Command.Empty>
 
             {/* Navigation */}
             <Command.Group
               heading={t('command_palette.nav_group')}
-              className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
+              className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-[var(--layout-text-faint)] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
             >
               <PaletteItem
                 icon={<HouseLine size={16} />}
@@ -165,7 +165,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {/* Actions */}
             <Command.Group
               heading={t('command_palette.actions_group')}
-              className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
+              className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-[var(--layout-text-faint)] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
             >
               <PaletteItem
                 icon={<Sparkle size={16} />}
@@ -205,7 +205,7 @@ export function CommandPalette({ open, onOpenChange }: CommandPaletteProps) {
             {portfolios && portfolios.length > 0 && (
               <Command.Group
                 heading={t('command_palette.portfolios_group')}
-                className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-white/30 [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
+                className="[&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:text-[var(--layout-text-faint)] [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group-heading]]:tracking-wider [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:py-2"
               >
                 {portfolios.map((p) => (
                   <PaletteItem
@@ -243,11 +243,11 @@ function PaletteItem({
   return (
     <Command.Item
       onSelect={onSelect}
-      className="flex items-center gap-3 px-3 py-2.5 rounded-lg mx-2 my-0.5 cursor-pointer text-white/80 data-[selected=true]:bg-white/10 hover:bg-white/[0.06] transition-colors"
+      className="flex items-center gap-3 px-3 py-2.5 rounded-lg mx-2 my-0.5 cursor-pointer text-[var(--layout-text)] data-[selected=true]:bg-[var(--layout-active)] hover:bg-[var(--layout-hover)] transition-colors"
     >
-      <span className="text-white/40 shrink-0">{icon}</span>
+      <span className="text-[var(--layout-text-muted)] shrink-0">{icon}</span>
       <span className="text-sm flex-1">{label}</span>
-      {hint && <span className="text-xs text-white/25">{hint}</span>}
+      {hint && <span className="text-xs text-[var(--layout-text-faint)]">{hint}</span>}
     </Command.Item>
   );
 }

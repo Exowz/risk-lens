@@ -101,10 +101,10 @@ export function ChartExpandableCard({
       <ExpandableCard
         className="relative rounded-xl transition-colors duration-200"
         style={{
-          background: "#161920",
+          background: "var(--card)",
           border: isOpen
             ? "1px solid rgba(59,130,246,0.4)"
-            : "1px solid rgba(255,255,255,0.07)",
+            : "1px solid var(--border)",
         }}
         collapsedSize={{}}
         expandedSize={{}}
@@ -152,13 +152,13 @@ export function ChartExpandableCard({
               )}
               {explanation && !isLoading && (
                 <>
-                  <div className="overflow-y-auto max-h-[200px] text-sm text-muted-foreground italic leading-relaxed prose prose-invert prose-sm max-w-none break-words">
+                  <div className="overflow-y-auto max-h-[200px] text-sm text-muted-foreground italic leading-relaxed prose dark:prose-invert prose-sm max-w-none break-words">
                     <ReactMarkdown remarkPlugins={[remarkGfm]}>
                       {explanation}
                     </ReactMarkdown>
                   </div>
                   <div className="flex items-center justify-between">
-                    <span className="text-[10px] text-white/20">
+                    <span className="text-[10px] text-[var(--layout-text-faint)]">
                       {t('common.analyzed')}
                     </span>
                     <button

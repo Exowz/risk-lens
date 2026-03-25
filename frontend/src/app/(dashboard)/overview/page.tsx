@@ -1,16 +1,10 @@
 "use client";
 
 /**
- * Dashboard overview page with Aceternity BentoGrid + WobbleCard layout.
+ * Dashboard overview page.
  *
- * Displays KPI cards for VaR 95%, Sharpe ratio, annualized return,
- * volatility, and a mini donut chart for portfolio composition.
- * All numeric values use CountUp animation. Titles use BlurText.
- *
- * Depends on: lib/api/risk.ts, lib/api/portfolios.ts,
- *             lib/store/portfolio-store.ts, lib/store/mode-context.tsx,
- *             Aceternity BentoGrid + WobbleCard, ReactBits CountUp + BlurText
- * Used by: / route
+ * Row 1: 3 equal KPI cards (VaR 95%, Sharpe, Annualized Return)
+ * Row 2: 3 equal sections (Volatility, Live Prices, Portfolio Composition)
  */
 
 import { useEffect } from "react";
@@ -23,9 +17,9 @@ import {
   ResponsiveContainer,
   Tooltip as RechartsTooltip,
 } from "recharts";
+import { motion } from "motion/react";
 
 import { ChartDescription } from "@/components/shared/chart-description";
-import { BentoGrid, BentoGridItem } from "@/components/ui/bento-grid";
 import { MagicCard } from "@/components/ui/magic-card";
 import { NumberTicker } from "@/components/ui/number-ticker";
 import { MetricTooltip } from "@/components/shared/metric-tooltip";
@@ -82,14 +76,12 @@ export default function DashboardPage() {
       <div className="p-6">
         <Card className="border-dashed">
           <CardHeader>
-            <CardTitle>{t('dashboard.welcome')}</CardTitle>
-            <CardDescription>
-              {t('dashboard.welcome_desc')}
-            </CardDescription>
+            <CardTitle>{t("dashboard.welcome")}</CardTitle>
+            <CardDescription>{t("dashboard.welcome_desc")}</CardDescription>
           </CardHeader>
           <CardContent>
             <Link href="/portfolio">
-              <Button>{t('dashboard.create_portfolio')}</Button>
+              <Button>{t("dashboard.create_portfolio")}</Button>
             </Link>
           </CardContent>
         </Card>
@@ -103,12 +95,16 @@ export default function DashboardPage() {
   }));
 
   return (
-    <div className="p-6 space-y-6">
-      {/* KPI Bento Grid */}
-      <BentoGrid className="md:auto-rows-[10rem] md:grid-cols-4">
-        {/* VaR 95% — large card spanning 2 cols */}
-        <div className="md:col-span-2 rounded-xl">
-          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
+    <div className="space-y-4 p-6">
+      {/* Row 1: 3 KPI cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
+        {/* VaR 95% */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0, duration: 0.35, ease: "easeOut" }}
+        >
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-card p-4 flex flex-col justify-between">
             <MetricTooltip metricKey="var_95" label={t(`metrics.${mode}.var_95`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -121,17 +117,21 @@ export default function DashboardPage() {
               )}
             </MetricTooltip>
             {summary && mode === "expert" && (
-              <span className="text-xs text-muted-foreground">
-                {t('risk.parametric')}:{" "}
+              <span className="text-xs text-muted-foreground mt-2">
+                {t("risk.parametric")}:{" "}
                 <NumberTicker value={summary.var_95_parametric * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
             )}
           </MagicCard>
-        </div>
+        </motion.div>
 
         {/* Sharpe Ratio */}
-        <div className="rounded-xl">
-          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.08, duration: 0.35, ease: "easeOut" }}
+        >
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-card p-4 flex flex-col justify-between">
             <MetricTooltip metricKey="sharpe" label={t(`metrics.${mode}.sharpe`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -152,29 +152,31 @@ export default function DashboardPage() {
               )}
             </MetricTooltip>
             {summary && mode === "beginner" && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground mt-2">
                 {summary.sharpe_ratio >= 1
-                  ? t('dashboard.sharpe_good')
+                  ? t("dashboard.sharpe_good")
                   : summary.sharpe_ratio >= 0.5
-                    ? t('dashboard.sharpe_acceptable')
-                    : t('dashboard.sharpe_below_avg')}
+                    ? t("dashboard.sharpe_acceptable")
+                    : t("dashboard.sharpe_below_avg")}
               </span>
             )}
           </MagicCard>
-        </div>
+        </motion.div>
 
         {/* Annualized Return */}
-        <div className="rounded-xl">
-          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.16, duration: 0.35, ease: "easeOut" }}
+        >
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-card p-4 flex flex-col justify-between">
             <MetricTooltip metricKey="return" label={t(`metrics.${mode}.annual_return`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
               ) : summary ? (
                 <p
                   className={`text-2xl font-mono ${
-                    summary.annualized_return >= 0
-                      ? "text-emerald-500"
-                      : "text-red-500"
+                    summary.annualized_return >= 0 ? "text-emerald-500" : "text-red-500"
                   }`}
                 >
                   {summary.annualized_return >= 0 ? "+" : ""}
@@ -185,16 +187,23 @@ export default function DashboardPage() {
               )}
             </MetricTooltip>
             {summary && (
-              <span className="text-xs text-muted-foreground">
-                {summary.n_observations} {t('dashboard.observations')}
+              <span className="text-xs text-muted-foreground mt-2">
+                {summary.n_observations} {t("dashboard.observations")}
               </span>
             )}
           </MagicCard>
-        </div>
+        </motion.div>
+      </div>
 
+      {/* Row 2: Volatility + Live Prices + Composition */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-stretch">
         {/* Volatility */}
-        <div className="rounded-xl">
-          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-[#161920] p-5 flex flex-col justify-between">
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.24, duration: 0.35, ease: "easeOut" }}
+        >
+          <MagicCard gradientColor="#1a2744" className="h-full rounded-xl bg-card p-4 flex flex-col justify-between">
             <MetricTooltip metricKey="volatility" label={t(`metrics.${mode}.volatility`)}>
               {isPending ? (
                 <Skeleton className="h-8 w-24" />
@@ -207,78 +216,76 @@ export default function DashboardPage() {
               )}
             </MetricTooltip>
             {summary && mode === "expert" && (
-              <span className="text-xs text-muted-foreground">
+              <span className="text-xs text-muted-foreground mt-2">
                 CVaR 95%:{" "}
                 <NumberTicker value={summary.cvar_95 * 100} decimalPlaces={2} className="text-muted-foreground" />%
               </span>
             )}
           </MagicCard>
-        </div>
+        </motion.div>
 
-        {/* Live prices — spans 2 cols */}
-        {livePrices && livePrices.length > 0 && (
-          <BentoGridItem
-            className="md:col-span-2"
-            title={
-              <span className="text-base font-medium flex items-center gap-2">
-                {t('dashboard.live_prices')}
-                <span className="flex items-center gap-1 text-xs text-emerald-500 font-normal">
-                  <span className="relative flex h-2 w-2">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-                  </span>
-                  {t('dashboard.live')}
-                </span>
+        {/* Live Prices */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.32, duration: 0.35, ease: "easeOut" }}
+          className="rounded-xl border border-border bg-card p-4 h-full flex flex-col"
+        >
+          <div className="text-base font-medium flex items-center gap-2 mb-3">
+            {t("dashboard.live_prices")}
+            <span className="flex items-center gap-1 text-xs text-emerald-500 font-normal">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
               </span>
-            }
-            description={
-              <div className="space-y-2 mt-1">
-                {livePrices.map((q) => (
-                  <div
-                    key={q.ticker}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-sm font-medium">{q.ticker}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="font-mono text-sm">
-                        {q.price != null
-                          ? `${q.currency === "USD" ? "$" : q.currency} ${q.price.toLocaleString()}`
-                          : "—"}
+              {t("dashboard.live")}
+            </span>
+          </div>
+          <div className="space-y-2 flex-1">
+            {livePrices && livePrices.length > 0 ? (
+              livePrices.map((q) => (
+                <div key={q.ticker} className="flex items-center justify-between">
+                  <span className="text-sm font-medium">{q.ticker}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-sm">
+                      {q.price != null
+                        ? `${q.currency === "USD" ? "$" : q.currency} ${q.price.toLocaleString()}`
+                        : "—"}
+                    </span>
+                    {q.change_pct != null && (
+                      <span
+                        className={`font-mono text-xs ${
+                          q.change_pct >= 0 ? "text-emerald-500" : "text-red-500"
+                        }`}
+                      >
+                        {q.change_pct >= 0 ? "+" : ""}
+                        {q.change_pct.toFixed(2)}%
                       </span>
-                      {q.change_pct != null && (
-                        <span
-                          className={`font-mono text-xs ${
-                            q.change_pct >= 0
-                              ? "text-emerald-500"
-                              : "text-red-500"
-                          }`}
-                        >
-                          {q.change_pct >= 0 ? "+" : ""}
-                          {q.change_pct.toFixed(2)}%
-                        </span>
-                      )}
-                    </div>
+                    )}
                   </div>
-                ))}
-              </div>
-            }
-          />
-        )}
+                </div>
+              ))
+            ) : (
+              <p className="text-sm text-muted-foreground">--</p>
+            )}
+          </div>
+        </motion.div>
 
-        {/* Portfolio composition donut — spans 1 col */}
-        {donutData && donutData.length > 0 && (
-          <BentoGridItem
-            className="md:col-span-1"
-            title={
-              <span className="text-base font-medium">{t('dashboard.composition')}</span>
-            }
-            header={
-              <div>
-                <ChartDescription
-                  beginner="Répartition de votre portefeuille entre vos différents actifs."
-                  expert="Allocation actuelle du portefeuille par actif (pondérations en %)."
-                />
-                <div className="h-32 w-full">
+        {/* Portfolio Composition */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4, duration: 0.35, ease: "easeOut" }}
+          className="rounded-xl border border-border bg-card p-4 h-full flex flex-col"
+        >
+          <span className="text-base font-medium mb-2">{t("dashboard.composition")}</span>
+          <ChartDescription
+            beginner="Répartition de votre portefeuille entre vos différents actifs."
+            expert="Allocation actuelle du portefeuille par actif (pondérations en %)."
+          />
+          {donutData && donutData.length > 0 ? (
+            <>
+              <div className="h-32 w-full flex-1 min-h-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
@@ -292,30 +299,19 @@ export default function DashboardPage() {
                       strokeWidth={2}
                     >
                       {donutData.map((_, i) => (
-                        <Cell
-                          key={i}
-                          fill={DONUT_COLORS[i % DONUT_COLORS.length]}
-                        />
+                        <Cell key={i} fill={DONUT_COLORS[i % DONUT_COLORS.length]} />
                       ))}
                     </Pie>
-                    <RechartsTooltip
-                      formatter={(value) => [`${value}%`, ""]}
-                    />
+                    <RechartsTooltip formatter={(value) => [`${value}%`, ""]} />
                   </PieChart>
                 </ResponsiveContainer>
-                </div>
               </div>
-            }
-            description={
-              <div className="flex flex-wrap gap-x-3 gap-y-1">
+              <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
                 {donutData.map((d, i) => (
                   <div key={d.name} className="flex items-center gap-1">
                     <span
                       className="size-2 rounded-full"
-                      style={{
-                        backgroundColor:
-                          DONUT_COLORS[i % DONUT_COLORS.length],
-                      }}
+                      style={{ backgroundColor: DONUT_COLORS[i % DONUT_COLORS.length] }}
                     />
                     <span className="text-xs">
                       {d.name} {d.value}%
@@ -323,10 +319,12 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-            }
-          />
-        )}
-      </BentoGrid>
+            </>
+          ) : (
+            <p className="text-sm text-muted-foreground">--</p>
+          )}
+        </motion.div>
+      </div>
     </div>
   );
 }

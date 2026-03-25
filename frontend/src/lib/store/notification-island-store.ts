@@ -1,6 +1,6 @@
 import { create } from "zustand";
 
-export type IslandNotificationType = "montecarlo" | "stress" | "report";
+export type IslandNotificationType = "montecarlo" | "stress" | "report" | "allocation";
 
 export interface IslandNotification {
   type: IslandNotificationType;

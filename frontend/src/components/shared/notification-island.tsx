@@ -12,7 +12,7 @@
 
 import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { Lightning, ChartBar, FileText } from "@phosphor-icons/react";
+import { Lightning, ChartBar, ChartPie, FileText } from "@phosphor-icons/react";
 
 import {
   useNotificationIsland,
@@ -24,6 +24,7 @@ const ICONS: Record<IslandNotificationType, typeof ChartBar> = {
   montecarlo: ChartBar,
   stress: Lightning,
   report: FileText,
+  allocation: ChartPie,
 };
 
 export function NotificationIsland() {
@@ -63,12 +64,12 @@ export function NotificationIsland() {
               layoutId="island"
               className="flex items-center gap-2 px-4 py-2 rounded-full"
               style={{
-                background: "#1a1d24",
-                border: "1px solid rgba(255,255,255,0.1)",
+                background: "var(--layout-canvas)",
+                border: "1px solid var(--layout-surface-border)",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
               }}
             >
-              <span className="animate-pulse text-white/60 text-sm">
+              <span className="animate-pulse text-[var(--layout-text-muted)] text-sm">
                 ⚡ Calcul en cours...
               </span>
             </motion.div>
@@ -96,8 +97,8 @@ function CompactIsland({
       transition={{ type: "spring", stiffness: 400, damping: 30 }}
       className="rounded-2xl overflow-hidden"
       style={{
-        background: "#1a1d24",
-        border: "1px solid rgba(255,255,255,0.1)",
+        background: "var(--layout-canvas)",
+        border: "1px solid var(--layout-surface-border)",
         boxShadow: "0 12px 40px rgba(0,0,0,0.5)",
       }}
     >
@@ -119,7 +120,7 @@ function CompactIsland({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="text-sm font-medium text-white truncate"
+            className="text-sm font-medium text-foreground truncate"
           >
             {notification.title}
           </motion.p>
@@ -127,7 +128,7 @@ function CompactIsland({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="text-xs text-white/40 font-mono truncate"
+            className="text-xs text-muted-foreground font-mono truncate"
           >
             {notification.subtitle}
           </motion.p>

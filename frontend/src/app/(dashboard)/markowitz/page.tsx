@@ -47,8 +47,9 @@ import {
   type MarkowitzPointExplanation,
   useMarkowitz,
 } from "@/lib/api/markowitz";
-import { usePortfolio } from "@/lib/api/portfolios";
+import { usePortfolio, useUpdatePortfolio } from "@/lib/api/portfolios";
 import { useMode } from "@/lib/store/mode-context";
+import { useNotificationIsland } from "@/lib/store/notification-island-store";
 import { usePortfolioStore } from "@/lib/store/portfolio-store";
 
 function fmt(value: number, decimals = 2): string {
@@ -59,6 +60,8 @@ export default function MarkowitzPage() {
   const { activePortfolioId } = usePortfolioStore();
   const { mutate, data, isPending, error, reset } = useMarkowitz();
   const { data: portfolio } = usePortfolio(activePortfolioId);
+  const updatePortfolio = useUpdatePortfolio();
+  const { show: showIsland } = useNotificationIsland();
   const { mode } = useMode();
   const [openCard, setOpenCard] = useState<string | null>(null);
   const t = useTranslations();
@@ -445,21 +448,21 @@ export default function MarkowitzPage() {
               transition={{ type: "spring", bounce: 0.1, duration: 0.4 }}
               className="fixed right-0 top-0 bottom-0 z-50 w-full sm:max-w-lg overflow-y-auto border-l"
               style={{
-                background: "#1a1d24",
-                borderColor: "rgba(255,255,255,0.1)",
+                background: "var(--layout-canvas)",
+                borderColor: "var(--layout-surface-border)",
               }}
             >
               <div className="p-6">
                 {/* Close button */}
                 <button
                   onClick={() => setSelectedPoint(null)}
-                  className="absolute top-4 right-4 text-white/30 hover:text-white/60 transition-colors"
+                  className="absolute top-4 right-4 text-[var(--layout-text-faint)] hover:text-[var(--layout-text-muted)] transition-colors"
                 >
                   ✕
                 </button>
 
                 {/* Header */}
-                <h2 className="text-lg font-semibold text-white mb-1">
+                <h2 className="text-lg font-semibold text-foreground mb-1">
                   {selectedPoint.point_type === "min_variance" && t("markowitz.bavard.min_variance_title")}
                   {selectedPoint.point_type === "max_sharpe" && t("markowitz.bavard.max_sharpe_title")}
                   {selectedPoint.point_type === "current" && t("markowitz.bavard.current_title")}
@@ -495,7 +498,7 @@ export default function MarkowitzPage() {
                         <p className="text-sm text-muted-foreground italic leading-relaxed">
                           {pointExplanation.explanation}
                         </p>
-                        <span className="text-[10px] text-white/20">{t("common.analyzed")}</span>
+                        <span className="text-[10px] text-[var(--layout-text-faint)]">{t("common.analyzed")}</span>
                       </>
                     )}
                   </div>
@@ -533,11 +536,48 @@ export default function MarkowitzPage() {
                   )}
                 </div>
 
-                <div className="mt-6">
-                  <Button disabled className="w-full opacity-50">
-                    {t("markowitz.bavard.apply")}
-                  </Button>
-                </div>
+                {Object.keys(selectedPoint.weights).length > 0 && activePortfolioId && portfolio && (
+                  <div className="mt-6">
+                    <Button
+                      className="w-full"
+                      disabled={updatePortfolio.isPending}
+                      onClick={() => {
+                        const assets = Object.entries(selectedPoint.weights).map(
+                          ([ticker, weight]) => ({ ticker, weight })
+                        );
+                        updatePortfolio.mutate(
+                          {
+                            id: activePortfolioId,
+                            data: { name: portfolio.name, assets },
+                          },
+                          {
+                            onSuccess: () => {
+                              showIsland({
+                                type: "allocation",
+                                title: t("toasts.allocation_applied"),
+                                subtitle: assets.map((a) => `${a.ticker} ${(a.weight * 100).toFixed(1)}%`).join(" · "),
+                                positive: true,
+                              });
+                              setSelectedPoint(null);
+                            },
+                            onError: () => {
+                              showIsland({
+                                type: "allocation",
+                                title: t("toasts.allocation_failed"),
+                                subtitle: "",
+                                positive: false,
+                              });
+                            },
+                          }
+                        );
+                      }}
+                    >
+                      {updatePortfolio.isPending
+                        ? t("markowitz.bavard.applying")
+                        : t("markowitz.bavard.apply")}
+                    </Button>
+                  </div>
+                )}
               </div>
             </motion.div>
           </>

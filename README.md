@@ -271,143 +271,36 @@ Pas de préfixe d'URL — locale stockée en cookie + base de données.
 
 ```
 risklens/
-├── docker-compose.yml              # PostgreSQL 16
+├── docker-compose.yml          # PostgreSQL 16
 ├── README.md
-│
 ├── frontend/
-│   ├── package.json                # Dépendances (bun)
-│   ├── next.config.ts              # Next.js 16 + next-intl plugin
-│   ├── components.json             # shadcn/ui config
-│   ├── i18n/
-│   │   └── request.ts              # Détection locale (cookie)
-│   ├── messages/                   # Traductions i18n (350+ clés)
+│   ├── CLAUDE.md
+│   ├── SKILL.md
+│   ├── messages/               # Traductions i18n
 │   │   ├── fr.json
 │   │   ├── en.json
 │   │   ├── es.json
 │   │   └── zh.json
 │   └── src/
-│       ├── proxy.ts                # Auth middleware (protège /dashboard)
 │       ├── app/
-│       │   ├── layout.tsx          # Root layout
-│       │   ├── page.tsx            # Landing page (/)
-│       │   ├── globals.css
-│       │   ├── api/auth/[...betterauth]/
-│       │   │   └── route.ts        # BetterAuth API handler
-│       │   ├── (auth)/
-│       │   │   ├── login/page.tsx
-│       │   │   └── register/page.tsx
-│       │   └── (dashboard)/
-│       │       ├── layout.tsx
-│       │       ├── overview/page.tsx
-│       │       ├── portfolio/page.tsx
-│       │       ├── risk/page.tsx
-│       │       ├── markowitz/page.tsx
-│       │       ├── stress/page.tsx
-│       │       ├── report/page.tsx
-│       │       └── profile/page.tsx
+│       │   ├── page.tsx        # Landing page (public)
+│       │   ├── (auth)/         # login, register
+│       │   └── (dashboard)/    # pages protégées
 │       ├── components/
-│       │   ├── landing/            # Landing page sections (8 composants)
-│       │   │   ├── hero-section.tsx
-│       │   │   ├── landing-navbar.tsx
-│       │   │   ├── mock-dashboard.tsx
-│       │   │   ├── product-section.tsx
-│       │   │   ├── mode-section.tsx
-│       │   │   ├── tech-marquee.tsx
-│       │   │   ├── cta-section.tsx
-│       │   │   └── landing-footer.tsx
-│       │   ├── layout/             # TopBar, SidebarRail, CanvasHeader, AvatarZone
-│       │   ├── shared/             # KpiExpandableCard, ChartExpandableCard, WhyExpandableCard,
-│       │   │                       # CommandPalette, NotificationIsland, RiskProfilerModal...
-│       │   ├── charts/             # EfficientFrontier (D3), MonteCarloChart, VarDistribution,
-│       │   │                       # PerformanceChart, StressBarChart (Recharts)
-│       │   ├── risk/               # MonteCarloPanel, Simulator ("Et si?"), VarCard
-│       │   ├── portfolio/          # PortfolioForm, PortfolioComparison, PortfolioTable
-│       │   ├── stress/             # StressScenarioCard (animation 3 phases)
-│       │   └── ui/                 # 51 composants : shadcn + Aceternity + Magic UI +
-│       │                           # Cult UI + ReactBits (particles, blur-text...)
-│       ├── hooks/
-│       │   └── use-outside-click.tsx
-│       ├── lib/
-│       │   ├── auth/
-│       │   │   ├── client.ts       # BetterAuth client
-│       │   │   └── server.ts       # BetterAuth serveur (Pool PG)
-│       │   ├── api/                # TanStack Query hooks (9 fichiers)
-│       │   │   ├── client.ts       # Instance Axios
-│       │   │   ├── portfolios.ts
-│       │   │   ├── risk.ts
-│       │   │   ├── markowitz.ts
-│       │   │   ├── stress.ts
-│       │   │   ├── report.ts
-│       │   │   ├── profile.ts
-│       │   │   ├── alerts.ts
-│       │   │   └── explain.ts
-│       │   ├── store/              # Zustand stores (5 fichiers)
-│       │   │   ├── mode-context.tsx
-│       │   │   ├── portfolio-store.ts
-│       │   │   ├── locale-store.ts
-│       │   │   ├── sidebar-store.ts
-│       │   │   └── notification-island-store.ts
-│       │   ├── validators/         # Zod schemas
-│       │   │   ├── auth.schema.ts
-│       │   │   └── portfolio.schema.ts
-│       │   └── utils.ts
-│       └── types/                  # Définitions TypeScript (7 fichiers)
-│           ├── api.ts
-│           ├── portfolio.ts
-│           ├── risk.ts
-│           ├── markowitz.ts
-│           ├── stress.ts
-│           ├── report.ts
-│           └── explain.ts
-│
+│       │   ├── layout/         # TopBar, SidebarContainer, CanvasHeader, AvatarZone
+│       │   ├── shared/         # KpiExpandableCard, ChartExpandableCard, WhyExpandableCard...
+│       │   ├── charts/         # Recharts + D3
+│       │   └── ui/             # shadcn + Aceternity + Magic UI + Cult UI + ReactBits
+│       └── lib/
+│           ├── api/            # TanStack Query hooks
+│           └── store/          # Zustand + ModeContext
 └── backend/
-    ├── pyproject.toml              # Dépendances (uv)
-    ├── alembic.ini                 # Config migrations
-    ├── alembic/
-    │   ├── env.py
-    │   └── versions/               # 6 migrations
     └── app/
-        ├── main.py                 # FastAPI init + CORS + lifespan
-        ├── api/v1/
-        │   ├── portfolios.py       # CRUD + performance + live-prices
-        │   ├── risk.py             # VaR, CVaR, simulate, explain
-        │   ├── markowitz.py        # Frontier + Portefeuille Bavard
-        │   ├── stress.py           # 3 scénarios + explain
-        │   ├── report.py           # Génération + latest
-        │   ├── profile.py          # Risk Profiler + préférences
-        │   └── alerts.py           # CRUD alertes + notifications
-        ├── core/
-        │   ├── config.py           # Settings (Pydantic)
-        │   ├── database.py         # AsyncSession + engine
-        │   ├── security.py         # Session lookup (BetterAuth)
-        │   ├── cache.py            # UPSERT SHA-256 (TTL 1h)
-        │   └── exceptions.py
-        ├── models/
-        │   ├── user.py             # BetterAuth user + session
-        │   ├── portfolio.py        # Portefeuille + assets JSON
-        │   ├── report.py           # Rapports IA
-        │   ├── calculation_cache.py
-        │   ├── user_risk_profile.py
-        │   ├── user_preferences.py # mode + locale + MC sims
-        │   └── user_alert.py       # Alertes + notifications
-        ├── schemas/                # Pydantic v2 (8 fichiers)
-        │   ├── portfolio.py
-        │   ├── risk.py
-        │   ├── markowitz.py
-        │   ├── stress.py
-        │   ├── report.py
-        │   ├── profile.py
-        │   ├── alert.py
-        │   └── explain.py
-        └── services/
-            ├── risk_engine.py          # VaR historique + paramétrique, CVaR, Sharpe
-            ├── montecarlo_engine.py    # GBM 10k trajectoires, 252 jours
-            ├── markowitz_engine.py     # PyPortfolioOpt, frontière 100 pts
-            ├── stress_engine.py        # 3 crises historiques
-            ├── mistral_service.py      # Mistral API (rapport narratif)
-            ├── explain_service.py      # Explications métriques + graphiques
-            ├── market_data.py          # yfinance (cache 1h historique, 5min live)
-            └── risk_profiler_service.py # Profil investisseur IA
+        ├── api/v1/             # portfolios, risk, montecarlo, markowitz, stress, report, profile
+        ├── core/               # config, database, security, cache
+        ├── models/             # SQLAlchemy models
+        ├── schemas/            # Pydantic v2
+        └── services/           # engines + mistral + explain
 ```
 
 ---
@@ -602,7 +495,6 @@ WeasyPrint (alternative Python) nécessite des librairies système (Pango, GLib)
 
 - **Mathew Kristoffer Ewan KAPOOR**
   - Bachelor Data & AI — ECE Paris 2025-2026
-  - Internship: Purecontrol (GreenTech, Rennes) — Avril 2026
 
 ---
 

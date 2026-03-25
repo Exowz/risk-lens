@@ -83,8 +83,8 @@ export function SidebarRail() {
       }}
     >
       {/* Logo — icon only */}
-      <div className="w-8 h-8 bg-white/10 rounded-xl flex items-center justify-center shrink-0 mb-2">
-        <span className="text-lg font-bold text-white">R</span>
+      <div className="w-8 h-8 bg-black/10 dark:bg-white/10 rounded-xl flex items-center justify-center shrink-0 mb-2">
+        <span className="text-lg font-bold text-foreground">R</span>
       </div>
 
       {/* Nav items — icons only with tooltips */}
@@ -99,8 +99,8 @@ export function SidebarRail() {
                   <div
                     className={`flex items-center justify-center p-2.5 rounded-lg transition-all duration-150 cursor-pointer ${
                       isActive
-                        ? "bg-white/[0.08] text-white"
-                        : "text-white/40 hover:text-white/60 hover:bg-white/[0.04]"
+                        ? "bg-[var(--layout-active)] text-[var(--layout-active-text)]"
+                        : "text-[var(--layout-text-muted)] hover:text-[var(--layout-text)] hover:bg-[var(--layout-hover)]"
                     }`}
                   >
                     <Icon size={20} weight={isActive ? "fill" : "regular"} />
@@ -120,7 +120,7 @@ export function SidebarRail() {
         <TooltipTrigger asChild>
           <button
             onClick={toggle}
-            className="flex items-center justify-center py-2 rounded-lg text-white/30 hover:text-white/60 hover:bg-white/[0.04] transition-all duration-150 w-full"
+            className="flex items-center justify-center py-2 rounded-lg text-[var(--layout-text-faint)] hover:text-[var(--layout-text-muted)] hover:bg-[var(--layout-hover)] transition-all duration-150 w-full"
           >
             <PushPin
               size={16}
@@ -131,7 +131,7 @@ export function SidebarRail() {
         </TooltipTrigger>
         <TooltipContent side="right" sideOffset={8}>
           {state === "pinned" ? t('command_palette.hide_sidebar') : t('command_palette.pin_sidebar')}
-          <span className="ml-2 text-white/20">⌘B</span>
+          <span className="ml-2 text-[var(--layout-text-faint)]">⌘B</span>
         </TooltipContent>
       </Tooltip>
     </motion.nav>

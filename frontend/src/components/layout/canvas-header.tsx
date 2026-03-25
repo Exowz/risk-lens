@@ -109,7 +109,7 @@ export function CanvasHeader() {
               new KeyboardEvent("keydown", { key: "k", metaKey: true }),
             );
           }}
-          className="text-xs text-white/15 hover:text-white/30 transition-colors px-1.5 py-0.5 rounded border border-white/[0.06] hover:border-white/10"
+          className="text-xs text-[var(--layout-text-faint)] hover:text-[var(--layout-text-muted)] transition-colors px-1.5 py-0.5 rounded border border-[var(--layout-separator)] hover:border-[var(--layout-surface-border)]"
         >
           ⌘K
         </button>

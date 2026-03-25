@@ -138,7 +138,8 @@
       "frontier_title": "📊 前沿上的组合",
       "allocation": "配置",
       "suggested_action": "建议操作",
-      "apply": "应用此配置"
+      "apply": "应用此配置",
+      "applying": "应用中..."
     }
   },
   "stress": {
@@ -230,6 +231,9 @@
     "label_growth": "最大化增长",
     "label_beginner": "初学者",
     "label_intermediate": "中级",
+    "label_croissance": "最大化增长",
+    "label_debutant": "初学者",
+    "label_intermediaire": "中级",
     "label_expert": "专家",
     "metric_sharpe": "Sharpe",
     "metric_volatility": "波动率",
@@ -430,7 +434,9 @@
     "preferences_saved": "偏好已保存",
     "portfolio_created": "投资组合已创建",
     "portfolio_deleted": "投资组合已删除",
-    "computing": "计算中..."
+    "computing": "计算中...",
+    "allocation_applied": "配置已应用 ✓",
+    "allocation_failed": "应用失败"
   },
   "tooltips": {
     "var_95_beginner": "在20个交易日中，您的损失会有一次超过此金额。",

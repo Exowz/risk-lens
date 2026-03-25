@@ -46,6 +46,20 @@ async function createPortfolio(
   });
 }
 
+/** Update an existing portfolio */
+async function updatePortfolio({
+  id,
+  data,
+}: {
+  id: string;
+  data: PortfolioCreateRequest;
+}): Promise<PortfolioResponse> {
+  return apiClient<PortfolioResponse>(`/api/v1/portfolios/${id}`, {
+    method: "PUT",
+    body: data,
+  });
+}
+
 /** Delete a portfolio */
 async function deletePortfolio(id: string): Promise<void> {
   return apiClient<void>(`/api/v1/portfolios/${id}`, {
@@ -87,6 +101,20 @@ export function useCreatePortfolio() {
     mutationFn: createPortfolio,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: PORTFOLIO_KEYS.all });
+    },
+  });
+}
+
+export function useUpdatePortfolio() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: updatePortfolio,
+    onSuccess: (_data, { id }) => {
+      queryClient.invalidateQueries({ queryKey: PORTFOLIO_KEYS.all });
+      queryClient.invalidateQueries({ queryKey: PORTFOLIO_KEYS.detail(id) });
+      queryClient.invalidateQueries({ queryKey: ["risk"] });
+      queryClient.invalidateQueries({ queryKey: ["markowitz"] });
     },
   });
 }

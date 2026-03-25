@@ -5,6 +5,7 @@ Endpoints:
     GET    /portfolios          -- List all portfolios for current user
     POST   /portfolios          -- Create a new portfolio (validates tickers + weights)
     GET    /portfolios/{id}     -- Get a single portfolio with assets
+    PUT    /portfolios/{id}     -- Update a portfolio (name + assets)
     DELETE /portfolios/{id}     -- Delete a portfolio
 
 Depends on: schemas/portfolio.py, models/portfolio.py, core/security.py, services/market_data.py
@@ -137,6 +138,77 @@ async def get_portfolio(
         )
 
     return PortfolioResponse.model_validate(portfolio)
+
+
+@router.put("/{portfolio_id}", response_model=PortfolioResponse)
+async def update_portfolio(
+    portfolio_id: str,
+    request: PortfolioCreateRequest,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+) -> PortfolioResponse:
+    """
+    Update an existing portfolio (name + assets).
+
+    Validates all ticker symbols against yfinance before updating.
+    Replaces all existing assets with the new ones.
+    """
+    result = await db.execute(
+        select(Portfolio)
+        .where(
+            Portfolio.id == portfolio_id,
+            Portfolio.user_id == current_user.id,
+        )
+        .options(selectinload(Portfolio.assets))
+    )
+    portfolio = result.scalar_one_or_none()
+
+    if portfolio is None:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail=f"Portfolio '{portfolio_id}' not found",
+        )
+
+    # Validate all tickers
+    for asset_input in request.assets:
+        await validate_ticker(asset_input.ticker)
+
+    # Update name
+    portfolio.name = request.name
+
+    # Delete old assets
+    for old_asset in portfolio.assets:
+        await db.delete(old_asset)
+    await db.flush()
+
+    # Add new assets
+    for asset_input in request.assets:
+        asset = Asset(
+            portfolio_id=portfolio.id,
+            ticker=asset_input.ticker,
+            weight=asset_input.weight,
+        )
+        db.add(asset)
+
+    await db.flush()
+
+    # Reload with new assets
+    result = await db.execute(
+        select(Portfolio)
+        .where(Portfolio.id == portfolio.id)
+        .options(selectinload(Portfolio.assets))
+    )
+    updated = result.scalar_one()
+
+    logger.info(
+        "Portfolio updated: id=%s name=%s assets=%d user=%s",
+        updated.id,
+        updated.name,
+        len(updated.assets),
+        current_user.id,
+    )
+
+    return PortfolioResponse.model_validate(updated)
 
 
 @router.delete("/{portfolio_id}", status_code=status.HTTP_204_NO_CONTENT)
