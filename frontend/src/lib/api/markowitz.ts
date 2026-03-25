@@ -9,6 +9,7 @@ import { useMutation } from "@tanstack/react-query";
 
 import { apiClient } from "@/lib/api/client";
 import type { MarkowitzResult } from "@/types/markowitz";
+import { useLocaleStore } from "@/lib/store/locale-store";
 
 interface MarkowitzRequest {
   portfolio_id: string;
@@ -46,9 +47,10 @@ export async function fetchMarkowitzPointExplanation(params: {
   expected_return: number;
   weights: Record<string, number>;
   mode: "beginner" | "expert";
+  locale?: string;
 }): Promise<MarkowitzPointExplanation> {
   return apiClient<MarkowitzPointExplanation>("/api/v1/markowitz/explain", {
     method: "POST",
-    body: params,
+    body: { ...params, locale: params.locale ?? useLocaleStore.getState().locale },
   });
 }

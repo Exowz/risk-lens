@@ -27,11 +27,20 @@ _MAX_TOKENS = 800
 _TEMPERATURE = 0.3
 
 
+_LOCALE_INSTRUCTIONS = {
+    "fr": "Réponds en français.",
+    "en": "Reply in English.",
+    "es": "Responde en español.",
+    "zh": "请用中文回答。",
+}
+
+
 async def generate_risk_profile(
     horizon: str,
     loss_tolerance: str,
     objective: str,
     experience: str,
+    locale: str = "fr",
 ) -> dict:
     """
     Generate a personalized risk profile using Mistral.
@@ -48,7 +57,10 @@ async def generate_risk_profile(
     if not settings.mistral_api_key:
         raise RuntimeError("MISTRAL_API_KEY is not configured")
 
+    language_instruction = _LOCALE_INSTRUCTIONS.get(locale, _LOCALE_INSTRUCTIONS["fr"])
+
     prompt = (
+        f"{language_instruction} "
         "Tu es un conseiller financier expert. "
         "Un investisseur a répondu à un questionnaire de profilage de risque.\n\n"
         f"Horizon d'investissement : {horizon} terme\n"

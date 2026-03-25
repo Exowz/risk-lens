@@ -8,6 +8,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { apiClient } from "@/lib/api/client";
+import { useLocaleStore } from "@/lib/store/locale-store";
 
 // ── Types ──
 
@@ -16,6 +17,7 @@ export interface RiskProfilerRequest {
   loss_tolerance: "faible" | "modere" | "eleve";
   objective: "preservation" | "equilibre" | "croissance";
   experience: "debutant" | "intermediaire" | "expert";
+  locale?: string;
 }
 
 export interface SuggestedTicker {
@@ -44,11 +46,13 @@ export interface UserRiskProfileResponse {
 export interface UserPreferencesResponse {
   mode: "beginner" | "expert";
   monte_carlo_simulations: number;
+  locale: string;
 }
 
 export interface UserPreferencesRequest {
   mode: "beginner" | "expert";
   monte_carlo_simulations: number;
+  locale?: string;
 }
 
 const PROFILE_KEYS = {
@@ -63,7 +67,7 @@ async function submitRiskProfiler(
 ): Promise<RiskProfilerResponse> {
   return apiClient<RiskProfilerResponse>("/api/v1/profile/risk-profiler", {
     method: "POST",
-    body: data,
+    body: { ...data, locale: data.locale ?? useLocaleStore.getState().locale },
   });
 }
 
@@ -82,7 +86,7 @@ async function updatePreferences(
 ): Promise<UserPreferencesResponse> {
   return apiClient<UserPreferencesResponse>("/api/v1/profile/preferences", {
     method: "PUT",
-    body: data,
+    body: { ...data, locale: data.locale ?? useLocaleStore.getState().locale },
   });
 }
 

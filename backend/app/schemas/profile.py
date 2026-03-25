@@ -25,6 +25,7 @@ class RiskProfilerRequest(BaseModel):
     experience: Literal["debutant", "intermediaire", "expert"] = Field(
         description="Investment experience level"
     )
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
 
 
 class SuggestedTicker(BaseModel):
@@ -67,6 +68,9 @@ class UserPreferencesRequest(BaseModel):
     monte_carlo_simulations: int = Field(
         default=10000, ge=1000, le=10000, description="Number of Monte Carlo simulations"
     )
+    locale: str = Field(
+        default="fr", description="UI language: fr, en, es, zh"
+    )
 
 
 class UserPreferencesResponse(BaseModel):
@@ -76,3 +80,4 @@ class UserPreferencesResponse(BaseModel):
 
     mode: str
     monte_carlo_simulations: int
+    locale: str = "fr"

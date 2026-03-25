@@ -11,9 +11,11 @@ import { useMutation } from "@tanstack/react-query";
 
 import { apiClient } from "@/lib/api/client";
 import type { ReportResult } from "@/types/report";
+import { useLocaleStore } from "@/lib/store/locale-store";
 
 interface ReportRequest {
   portfolio_id: string;
+  locale?: string;
 }
 
 async function fetchGenerateReport(
@@ -21,7 +23,7 @@ async function fetchGenerateReport(
 ): Promise<ReportResult> {
   return apiClient<ReportResult>("/api/v1/report/generate", {
     method: "POST",
-    body: params,
+    body: { ...params, locale: params.locale ?? useLocaleStore.getState().locale },
   });
 }
 

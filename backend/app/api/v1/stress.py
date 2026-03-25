@@ -110,6 +110,7 @@ async def get_stress_explanation(
         text = await explain_stress_result(
             mode=request.mode,
             scenarios=[s.model_dump() for s in request.scenarios],
+            locale=request.locale,
         )
         return ExplanationResponse(explanation=text)
     except RuntimeError as e:

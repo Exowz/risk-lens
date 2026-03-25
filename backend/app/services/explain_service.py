@@ -26,11 +26,22 @@ _MODEL = "mistral-small-latest"
 _MAX_TOKENS = 300
 _TEMPERATURE = 0.3
 
-_SUFFIX = (
-    "Réponds en français. Ne dépasse pas 4 phrases. "
-    "Ne laisse aucun placeholder. "
-    "Commence directement par l'analyse, pas par une introduction."
-)
+_LOCALE_INSTRUCTIONS = {
+    "fr": "Réponds en français.",
+    "en": "Reply in English.",
+    "es": "Responde en español.",
+    "zh": "请用中文回答。",
+}
+
+
+def _suffix(locale: str = "fr") -> str:
+    """Build the suffix instruction with the correct language directive."""
+    lang = _LOCALE_INSTRUCTIONS.get(locale, _LOCALE_INSTRUCTIONS["fr"])
+    return (
+        f"{lang} Ne dépasse pas 4 phrases. "
+        "Ne laisse aucun placeholder. "
+        "Commence directement par l'analyse, pas par une introduction."
+    )
 
 
 async def _call_mistral(prompt: str) -> str:
@@ -71,6 +82,7 @@ async def explain_montecarlo(
     probability_of_loss: float,
     n_simulations: int,
     n_days: int,
+    locale: str = "fr",
 ) -> str:
     """
     Generate a contextual explanation for Monte Carlo simulation results.
@@ -93,7 +105,7 @@ async def explain_montecarlo(
             f"Valeur finale moyenne : {mean_final_value:.4f} (1.0 = départ). "
             f"Probabilité de perte : {probability_of_loss:.1%}. "
             f"Pire scénario raisonnable (VaR 95%) : {var_95:.2%}. "
-            f"Utilise des analogies simples. {_SUFFIX}"
+            f"Utilise des analogies simples. {_suffix(locale)}"
         )
     else:
         prompt = (
@@ -102,7 +114,7 @@ async def explain_montecarlo(
             f"Mean final value : {mean_final_value:.4f}. "
             f"VaR 95% : {var_95:.4%}. "
             f"P(loss) : {probability_of_loss:.2%}. "
-            f"Commente la distribution et le risk-reward. {_SUFFIX}"
+            f"Commente la distribution et le risk-reward. {_suffix(locale)}"
         )
 
     return await _call_mistral(prompt)
@@ -115,6 +127,7 @@ async def explain_distribution(
     std_final_value: float,
     percentile_5: float,
     percentile_95: float,
+    locale: str = "fr",
 ) -> str:
     """
     Generate a contextual explanation for the loss distribution histogram.
@@ -138,7 +151,7 @@ async def explain_distribution(
             f"En moyenne le portefeuille finit à {mean_final_value:.4f} (1.0 = départ). "
             f"Le pire 5% des cas donne {percentile_5:.4f}, "
             f"le meilleur 5% donne {percentile_95:.4f}. "
-            f"Utilise un langage accessible. {_SUFFIX}"
+            f"Utilise un langage accessible. {_suffix(locale)}"
         )
     else:
         prompt = (
@@ -146,7 +159,7 @@ async def explain_distribution(
             f"Mean : {mean_final_value:.4f}, Std : {std_final_value:.4f}. "
             f"P5 : {percentile_5:.4f}, P95 : {percentile_95:.4f}. "
             f"VaR 95% : {var_95:.4%}. "
-            f"Commente la forme de la distribution (skewness, fat tails). {_SUFFIX}"
+            f"Commente la forme de la distribution (skewness, fat tails). {_suffix(locale)}"
         )
 
     return await _call_mistral(prompt)
@@ -161,6 +174,7 @@ async def explain_markowitz_position(
     max_sharpe_volatility: float,
     max_sharpe_return: float,
     min_variance_volatility: float,
+    locale: str = "fr",
 ) -> str:
     """
     Generate a contextual explanation for the portfolio's position on the frontier.
@@ -186,7 +200,7 @@ async def explain_markowitz_position(
             f"meilleur possible : {max_sharpe_ratio:.2f}. "
             f"Volatilité actuelle : {current_volatility * 100:.1f}%, "
             f"minimum possible : {min_variance_volatility * 100:.1f}%. "
-            f"Explique si le portefeuille est bien ou mal optimisé. {_SUFFIX}"
+            f"Explique si le portefeuille est bien ou mal optimisé. {_suffix(locale)}"
         )
     else:
         prompt = (
@@ -196,7 +210,7 @@ async def explain_markowitz_position(
             f"Max Sharpe : Sharpe={max_sharpe_ratio:.3f}, "
             f"vol={max_sharpe_volatility:.4%}, return={max_sharpe_return:.4%}. "
             f"Min Variance vol={min_variance_volatility:.4%}. "
-            f"Quantifie l'écart d'efficience. {_SUFFIX}"
+            f"Quantifie l'écart d'efficience. {_suffix(locale)}"
         )
 
     return await _call_mistral(prompt)
@@ -208,6 +222,7 @@ async def explain_markowitz_point(
     volatility: float,
     expected_return: float,
     weights: dict[str, float],
+    locale: str = "fr",
 ) -> dict[str, str]:
     """
     Generate a contextual explanation for a specific point on the efficient frontier.
@@ -254,7 +269,7 @@ async def explain_markowitz_point(
             f"Allocation : {weights_text}.\n"
             f"Utilise des analogies simples. Termine par une action concrète suggérée "
             f"en une phrase (commence cette phrase par 'Action suggérée : ').\n"
-            f"{_SUFFIX}"
+            f"{_suffix(locale)}"
         )
     else:
         prompt = (
@@ -265,7 +280,7 @@ async def explain_markowitz_point(
             f"Commente le positionnement risk/return et la concentration. "
             f"Termine par une action concrète suggérée "
             f"en une phrase (commence cette phrase par 'Action suggérée : ').\n"
-            f"{_SUFFIX}"
+            f"{_suffix(locale)}"
         )
 
     text = await _call_mistral(prompt)
@@ -291,6 +306,7 @@ async def explain_metric(
     metric_value: float,
     mode: Literal["beginner", "expert"],
     context: dict | None = None,
+    locale: str = "fr",
 ) -> str:
     """
     Generate a contextual explanation for a single financial metric.
@@ -320,7 +336,7 @@ async def explain_metric(
         prompt += (
             "Utilise des analogies simples et un langage accessible. "
             "Dis si cette valeur est bonne, mauvaise ou neutre. "
-            f"{_SUFFIX}"
+            f"{_suffix(locale)}"
         )
     else:
         prompt = (
@@ -331,7 +347,7 @@ async def explain_metric(
             prompt += f"Contexte :\n{ctx_lines}\n"
         prompt += (
             "Donne une interprétation technique précise et concise. "
-            f"{_SUFFIX}"
+            f"{_suffix(locale)}"
         )
 
     return await _call_mistral(prompt)
@@ -340,6 +356,7 @@ async def explain_metric(
 async def explain_stress_result(
     mode: Literal["beginner", "expert"],
     scenarios: list[dict],
+    locale: str = "fr",
 ) -> str:
     """
     Generate a contextual explanation for stress test results.
@@ -385,7 +402,7 @@ async def explain_stress_result(
             f"Voici ce qui serait arrivé au portefeuille pendant les crises passées :\n"
             f"{scenarios_text}\n"
             f"{comparison_instruction}"
-            f"Utilise des comparaisons simples pour expliquer l'impact. {_SUFFIX}"
+            f"Utilise des comparaisons simples pour expliquer l'impact. {_suffix(locale)}"
         )
     else:
         prompt = (
@@ -393,7 +410,7 @@ async def explain_stress_result(
             f"{scenarios_text}\n"
             f"{comparison_instruction}"
             f"Compare la résilience du portefeuille à travers les différents régimes "
-            f"de marché. Commente les drawdowns et temps de recovery. {_SUFFIX}"
+            f"de marché. Commente les drawdowns et temps de recovery. {_suffix(locale)}"
         )
 
     return await _call_mistral(prompt)

@@ -12,8 +12,14 @@ import { useMutation } from "@tanstack/react-query";
 
 import { apiClient } from "@/lib/api/client";
 import type { ExplanationResponse } from "@/types/explain";
+import { useLocaleStore, type Locale } from "@/lib/store/locale-store";
 
 type Mode = "beginner" | "expert";
+
+/** Helper to get the current locale for API calls (non-hook context). */
+export function getCurrentLocale(): Locale {
+  return useLocaleStore.getState().locale;
+}
 
 // ── API functions ──
 
@@ -24,10 +30,11 @@ export async function fetchMonteCarloExplanation(params: {
   probability_of_loss: number;
   n_simulations: number;
   n_days: number;
+  locale?: string;
 }): Promise<ExplanationResponse> {
   return apiClient<ExplanationResponse>("/api/v1/risk/explain-montecarlo", {
     method: "POST",
-    body: params,
+    body: { ...params, locale: params.locale ?? getCurrentLocale() },
   });
 }
 
@@ -38,10 +45,11 @@ export async function fetchDistributionExplanation(params: {
   std_final_value: number;
   percentile_5: number;
   percentile_95: number;
+  locale?: string;
 }): Promise<ExplanationResponse> {
   return apiClient<ExplanationResponse>("/api/v1/risk/explain-distribution", {
     method: "POST",
-    body: params,
+    body: { ...params, locale: params.locale ?? getCurrentLocale() },
   });
 }
 
@@ -54,10 +62,11 @@ export async function fetchMarkowitzExplanation(params: {
   max_sharpe_volatility: number;
   max_sharpe_return: number;
   min_variance_volatility: number;
+  locale?: string;
 }): Promise<ExplanationResponse> {
   return apiClient<ExplanationResponse>(
     "/api/v1/markowitz/explain-position",
-    { method: "POST", body: params },
+    { method: "POST", body: { ...params, locale: params.locale ?? getCurrentLocale() } },
   );
 }
 
@@ -70,10 +79,11 @@ export async function fetchStressExplanation(params: {
     recovery_days: number | null;
     optimized_drawdown?: number | null;
   }[];
+  locale?: string;
 }): Promise<ExplanationResponse> {
   return apiClient<ExplanationResponse>("/api/v1/stress/explain-result", {
     method: "POST",
-    body: params,
+    body: { ...params, locale: params.locale ?? getCurrentLocale() },
   });
 }
 
@@ -84,11 +94,12 @@ export async function fetchMetricExplanation(params: {
   metric_value: number;
   portfolio_id: string;
   mode: Mode;
+  locale?: string;
   context?: Record<string, number | string | null>;
 }): Promise<string> {
   const res = await apiClient<ExplanationResponse>("/api/v1/risk/explain-metric", {
     method: "POST",
-    body: params,
+    body: { ...params, locale: params.locale ?? getCurrentLocale() },
   });
   return res.explanation;
 }

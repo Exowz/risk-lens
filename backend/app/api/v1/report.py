@@ -116,6 +116,7 @@ async def generate_narrative_report(
             montecarlo=montecarlo,
             markowitz=markowitz,
             stress=stress,
+            locale=request.locale,
         )
     except RuntimeError as e:
         raise HTTPException(

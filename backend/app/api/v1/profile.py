@@ -48,6 +48,7 @@ async def risk_profiler(
             loss_tolerance=request.loss_tolerance,
             objective=request.objective,
             experience=request.experience,
+            locale=request.locale,
         )
     except RuntimeError as e:
         raise HTTPException(
@@ -118,7 +119,7 @@ async def get_preferences(
     )
     prefs = result.scalar_one_or_none()
     if not prefs:
-        return UserPreferencesResponse(mode="beginner", monte_carlo_simulations=10000)
+        return UserPreferencesResponse(mode="beginner", monte_carlo_simulations=10000, locale="fr")
     return UserPreferencesResponse.model_validate(prefs)
 
 
@@ -137,11 +138,13 @@ async def update_preferences(
     if prefs:
         prefs.mode = request.mode
         prefs.monte_carlo_simulations = request.monte_carlo_simulations
+        prefs.locale = request.locale
     else:
         prefs = UserPreferences(
             user_id=current_user.id,
             mode=request.mode,
             monte_carlo_simulations=request.monte_carlo_simulations,
+            locale=request.locale,
         )
         db.add(prefs)
 

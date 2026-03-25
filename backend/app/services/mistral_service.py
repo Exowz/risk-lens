@@ -27,6 +27,14 @@ _MAX_TOKENS = 2500
 _TEMPERATURE = 0.3
 
 
+_LOCALE_INSTRUCTIONS = {
+    "fr": "Réponds en français.",
+    "en": "Reply in English.",
+    "es": "Responde en español.",
+    "zh": "请用中文回答。",
+}
+
+
 def _build_prompt(
     portfolio_name: str,
     assets: list[dict[str, str | float]],
@@ -34,6 +42,7 @@ def _build_prompt(
     montecarlo: dict,
     markowitz: dict,
     stress: dict,
+    locale: str = "fr",
 ) -> str:
     """
     Build the structured prompt for Mistral.
@@ -76,7 +85,10 @@ def _build_prompt(
 
     today = datetime.now().strftime("%d/%m/%Y")
 
-    return f"""Tu es un moteur d'analyse de risque automatisé.
+    language_instruction = _LOCALE_INSTRUCTIONS.get(locale, _LOCALE_INSTRUCTIONS["fr"])
+
+    return f"""{language_instruction}
+Tu es un moteur d'analyse de risque automatisé.
 Ne laisse AUCUN placeholder entre crochets dans ta réponse.
 Utilise uniquement les données fournies ci-dessous.
 N'invente aucune information manquante.
@@ -163,6 +175,7 @@ async def generate_report(
     montecarlo: dict,
     markowitz: dict,
     stress: dict,
+    locale: str = "fr",
 ) -> str:
     """
     Generate a narrative risk report using Mistral AI.
@@ -185,7 +198,7 @@ async def generate_report(
         raise RuntimeError("MISTRAL_API_KEY is not configured")
 
     prompt = _build_prompt(
-        portfolio_name, assets, risk_summary, montecarlo, markowitz, stress,
+        portfolio_name, assets, risk_summary, montecarlo, markowitz, stress, locale,
     )
 
     logger.info("Calling Mistral API (model=%s, max_tokens=%d)", _MODEL, _MAX_TOKENS)

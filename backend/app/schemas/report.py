@@ -14,6 +14,7 @@ class ReportRequest(BaseModel):
     """Request body for report generation."""
 
     portfolio_id: str = Field(description="Portfolio UUID")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
 
 
 class ReportResponse(BaseModel):

@@ -36,3 +36,6 @@ class UserPreferences(Base):
     monte_carlo_simulations: Mapped[int] = mapped_column(
         Integer, nullable=False, default=10000
     )
+    locale: Mapped[str] = mapped_column(
+        String(5), nullable=False, default="fr"
+    )

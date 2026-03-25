@@ -123,6 +123,7 @@ async def get_markowitz_explanation(
             max_sharpe_volatility=request.max_sharpe_volatility,
             max_sharpe_return=request.max_sharpe_return,
             min_variance_volatility=request.min_variance_volatility,
+            locale=request.locale,
         )
         return ExplanationResponse(explanation=text)
     except RuntimeError as e:
@@ -145,6 +146,7 @@ async def explain_markowitz_point_endpoint(
             volatility=request.volatility,
             expected_return=request.expected_return,
             weights=request.weights,
+            locale=request.locale,
         )
         return MarkowitzPointExplanationResponse(**result)
     except RuntimeError as e:

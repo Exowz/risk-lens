@@ -26,6 +26,7 @@ class ExplainMonteCarloRequest(BaseModel):
     """Request body for Monte Carlo explanation."""
 
     mode: Literal["beginner", "expert"] = Field(description="UI mode")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
     mean_final_value: float
     var_95: float
     probability_of_loss: float
@@ -40,6 +41,7 @@ class ExplainDistributionRequest(BaseModel):
     """Request body for loss distribution explanation."""
 
     mode: Literal["beginner", "expert"] = Field(description="UI mode")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
     var_95: float
     mean_final_value: float
     std_final_value: float
@@ -54,6 +56,7 @@ class ExplainMarkowitzRequest(BaseModel):
     """Request body for Markowitz frontier position explanation."""
 
     mode: Literal["beginner", "expert"] = Field(description="UI mode")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
     current_sharpe: float
     current_volatility: float
     current_return: float
@@ -77,6 +80,7 @@ class ExplainMarkowitzPointRequest(BaseModel):
     expected_return: float
     weights: dict[str, float] = Field(default_factory=dict)
     mode: Literal["beginner", "expert"] = Field(description="UI mode")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
 
 
 class MarkowitzPointExplanationResponse(BaseModel):
@@ -106,6 +110,7 @@ class ExplainStressRequest(BaseModel):
     """Request body for stress test explanation."""
 
     mode: Literal["beginner", "expert"] = Field(description="UI mode")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
     scenarios: list[ExplainStressScenario] = Field(min_length=1)
 
 
@@ -119,6 +124,7 @@ class ExplainMetricRequest(BaseModel):
     metric_value: float = Field(description="Current numeric value of the metric")
     portfolio_id: str = Field(description="Portfolio UUID for context")
     mode: Literal["beginner", "expert"] = Field(description="UI mode")
+    locale: str = Field(default="fr", description="Response language: fr, en, es, zh")
     context: dict[str, float | str | int | None] = Field(
         default_factory=dict,
         description="Additional context values (e.g. other metrics for comparison)",

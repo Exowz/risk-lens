@@ -280,6 +280,7 @@ async def get_montecarlo_explanation(
             probability_of_loss=request.probability_of_loss,
             n_simulations=request.n_simulations,
             n_days=request.n_days,
+            locale=request.locale,
         )
         return ExplanationResponse(explanation=text)
     except RuntimeError as exc:
@@ -303,6 +304,7 @@ async def get_distribution_explanation(
             std_final_value=request.std_final_value,
             percentile_5=request.percentile_5,
             percentile_95=request.percentile_95,
+            locale=request.locale,
         )
         return ExplanationResponse(explanation=text)
     except RuntimeError as e:
@@ -324,6 +326,7 @@ async def get_metric_explanation(
             metric_value=request.metric_value,
             mode=request.mode,
             context=request.context,
+            locale=request.locale,
         )
         return ExplanationResponse(explanation=text)
     except RuntimeError as e:
