@@ -13,6 +13,7 @@
  * Used by: / route (public)
  */
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   ShieldWarning,
@@ -68,8 +69,10 @@ const TECH_ITEMS = [
 
 export default function LandingPage() {
   const { data: session } = useSession();
-  const isLoggedIn = !!session;
   const t = useTranslations();
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+  const isLoggedIn = mounted && !!session;
 
   // ── Nav items (inside component to access t()) ──
 
@@ -145,17 +148,11 @@ export default function LandingPage() {
           {/* Right CTAs */}
           <div className="flex items-center gap-2">
             {isLoggedIn ? (
-              <Link href="/overview">
-                <NavbarButton variant="primary">{t("landing.cta_dashboard")}</NavbarButton>
-              </Link>
+              <NavbarButton href="/overview" variant="primary">{t("landing.cta_dashboard")}</NavbarButton>
             ) : (
               <>
-                <Link href="/login">
-                  <NavbarButton variant="secondary">{t("landing.cta_login")}</NavbarButton>
-                </Link>
-                <Link href="/register">
-                  <NavbarButton variant="primary">{t("landing.cta_start")}</NavbarButton>
-                </Link>
+                <NavbarButton href="/login" variant="secondary">{t("landing.cta_login")}</NavbarButton>
+                <NavbarButton href="/register" variant="primary">{t("landing.cta_start")}</NavbarButton>
               </>
             )}
           </div>
